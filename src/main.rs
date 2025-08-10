@@ -8,4 +8,5 @@ fn main() {
         Box::new(ConsolePresenter),
     );
     reporter.fetch_and_report(&Parameters);
+    let unused = 42;
 }
