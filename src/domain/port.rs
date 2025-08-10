@@ -1,3 +1,5 @@
-pub mod geolocation;
+mod geolocation;
+mod weather;
 
 pub use geolocation::GeolocationProvider;
+pub use weather::WeatherProvider;

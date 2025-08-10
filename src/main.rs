@@ -1,8 +1,8 @@
-use what_weather::adapters::FakeGeolocationProvider;
-use what_weather::domain::port::GeolocationProvider;
+use what_weather::adapters::{FakeGeolocationProvider, FakeWeatherProvider};
+use what_weather::domain::port::{GeolocationProvider, WeatherProvider};
 
 fn main() {
     let coordinates = FakeGeolocationProvider.get_current_coordinates();
-    let unused_variable = 0;
+    let weather_report = FakeWeatherProvider.fetch();
     println!("There is some weather at {coordinates:?}");
 }

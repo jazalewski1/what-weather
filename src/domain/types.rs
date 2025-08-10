@@ -1,5 +1,5 @@
-#[derive(Debug)]
-pub struct Coordinates {
-    pub latitude: f64,
-    pub longitude: f64,
-}
+mod coords;
+mod report;
+
+pub use coords::Coordinates;
+pub use report::{WeatherReport, WeatherKind};
