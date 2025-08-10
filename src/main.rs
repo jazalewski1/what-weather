@@ -1,8 +1,7 @@
-use what_weather::adapters::FakeGeolocationProvider;
-use what_weather::domain::port::GeolocationProvider;
+use what_weather::adapters::{FakeGeolocationProvider, FakeWeatherProvider, ConsolePresenter};
+use what_weather::domain::model::{Parameters, Reporter, WeatherReporter};
 
 fn main() {
-    let coordinates = FakeGeolocationProvider.get_current_coordinates();
-    let unused_variable = 0;
-    println!("There is some weather at {coordinates:?}");
+    let reporter = WeatherReporter::new(Box::new(FakeGeolocationProvider), Box::new(FakeWeatherProvider), Box::new(ConsolePresenter));
+    reporter.fetch_and_report(&Parameters);
 }

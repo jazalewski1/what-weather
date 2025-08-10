@@ -1,5 +1,5 @@
 use crate::domain::{
-    port::geolocation::GeolocationProvider,
+    port::GeolocationProvider,
     types::Coordinates,
 };
 
