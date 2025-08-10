@@ -18,9 +18,8 @@ mod tests {
 
     use super::*;
 
-    /// Incorrect on purpose until CI tests are introduced
     #[test]
-    fn fetch_rain_by_default() {
+    fn fetch_sunny_kind_by_default() {
         let query = WeatherQuery {
             coordinates: Coordinates {
                 latitude: 1.2,
@@ -28,6 +27,6 @@ mod tests {
             },
         };
         let report = FakeWeatherProvider.fetch(&query);
-        assert_eq!(report.kind, WeatherKind::Rain);
+        assert_eq!(report.kind, WeatherKind::Sunny);
     }
 }
