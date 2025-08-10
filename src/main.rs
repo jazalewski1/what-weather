@@ -1,10 +1,6 @@
 use what_weather::adapters::{FakeGeolocationProvider, FakeWeatherProvider, ConsolePresenter};
-use what_weather::domain::port::{GeolocationProvider, Presenter, WeatherProvider};
-use what_weather::domain::types::WeatherQuery;
-
+use what_weather::domain::model::{Parameters, Reporter, WeatherReporter};
 fn main() {
-    let coordinates = FakeGeolocationProvider.get_current_coordinates();
-    let query = WeatherQuery { coordinates };
-    let weather_report = FakeWeatherProvider.fetch(&query);
-    ConsolePresenter.display(&weather_report);
+    let reporter = WeatherReporter::new(ConsolePresenter, FakeGeolocationProvider, FakeWeatherProvider);
+    reporter.fetch_and_report(&Parameters);
 }
