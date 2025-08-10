@@ -1,14 +1,14 @@
 mod geolocation;
-mod weather;
 mod output;
+mod weather;
 
 pub use geolocation::GeolocationProvider;
-pub use weather::WeatherProvider;
 pub use output::Presenter;
+pub use weather::WeatherProvider;
 
 #[cfg(test)]
 pub mod mocks {
     pub use super::geolocation::MockGeolocationProvider;
-    pub use super::weather::MockWeatherProvider;
     pub use super::output::MockPresenter;
+    pub use super::weather::MockWeatherProvider;
 }
