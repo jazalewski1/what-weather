@@ -1,5 +1,5 @@
 mod reporter;
 mod weather_reporter;
 
-pub use reporter::{Reporter, Parameters};
+pub use reporter::{Parameters, Reporter};
 pub use weather_reporter::WeatherReporter;

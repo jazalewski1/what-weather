@@ -1,5 +1,5 @@
-use crate::domain::model::{Reporter, Parameters};
-use crate::domain::port::{GeolocationProvider, WeatherProvider, Presenter};
+use crate::domain::model::{Parameters, Reporter};
+use crate::domain::port::{GeolocationProvider, Presenter, WeatherProvider};
 use crate::domain::types::WeatherQuery;
 
 pub struct WeatherReporter {
@@ -10,8 +10,15 @@ pub struct WeatherReporter {
 
 impl WeatherReporter {
     pub fn new(
-        geolocation_provider: Box<dyn GeolocationProvider>, weather_provider: Box<dyn WeatherProvider>, presenter: Box<dyn Presenter>) -> Self {
-        WeatherReporter { geolocation_provider, weather_provider, presenter }
+        geolocation_provider: Box<dyn GeolocationProvider>,
+        weather_provider: Box<dyn WeatherProvider>,
+        presenter: Box<dyn Presenter>,
+    ) -> Self {
+        WeatherReporter {
+            geolocation_provider,
+            weather_provider,
+            presenter,
+        }
     }
 }
 
@@ -36,21 +43,24 @@ mod tests {
         geolocation_provider
             .expect_get_current_coordinates()
             .times(1)
-            .returning(|| Coordinates { latitude: 1.2, longitude: 3.4 });
+            .returning(|| Coordinates {
+                latitude: 1.2,
+                longitude: 3.4,
+            });
 
         let mut weather_provider = MockWeatherProvider::new();
         weather_provider
             .expect_fetch()
             .times(1)
             .returning(|_| WeatherReport {
-                coordinates: Coordinates { latitude: 1.2, longitude: 3.4 },
+                coordinates: Coordinates {
+                    latitude: 1.2,
+                    longitude: 3.4,
+                },
                 kind: WeatherKind::Sunny,
             });
         let mut presenter = MockPresenter::new();
-        presenter
-            .expect_display()
-            .times(1)
-            .return_const(());
+        presenter.expect_display().times(1).return_const(());
 
         let sut = WeatherReporter::new(
             Box::new(geolocation_provider),

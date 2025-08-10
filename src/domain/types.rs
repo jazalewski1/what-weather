@@ -1,7 +1,7 @@
 mod coords;
-mod report;
 mod query;
+mod report;
 
 pub use coords::Coordinates;
-pub use report::{WeatherReport, WeatherKind};
 pub use query::WeatherQuery;
+pub use report::{WeatherKind, WeatherReport};

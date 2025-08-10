@@ -26,7 +26,10 @@ mod tests {
     #[test]
     fn format_sunny_weather() {
         let report = WeatherReport {
-            coordinates: Coordinates { latitude: 1.2, longitude: 3.4 },
+            coordinates: Coordinates {
+                latitude: 1.2,
+                longitude: 3.4,
+            },
             kind: WeatherKind::Sunny,
         };
         let string = format(&report);
@@ -36,7 +39,10 @@ mod tests {
     #[test]
     fn format_rainy_weather() {
         let report = WeatherReport {
-            coordinates: Coordinates { latitude: 1.2, longitude: 3.4 },
+            coordinates: Coordinates {
+                latitude: 1.2,
+                longitude: 3.4,
+            },
             kind: WeatherKind::Rain,
         };
         let string = format(&report);

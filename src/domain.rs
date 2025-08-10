@@ -1,3 +1,3 @@
-pub mod types;
-pub mod port;
 pub mod model;
+pub mod port;
+pub mod types;
