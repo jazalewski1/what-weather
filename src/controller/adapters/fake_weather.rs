@@ -1,32 +1,51 @@
 use crate::domain::port::WeatherProvider;
 use crate::domain::types::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct FakeWeatherProvider;
 
 impl WeatherProvider for FakeWeatherProvider {
     fn fetch(&self, query: &WeatherQuery) -> WeatherReport {
+        let weather_kinds = [
+            WeatherKind::Clouds(Clouds::Clear),
+            WeatherKind::Clouds(Clouds::Light),
+            WeatherKind::Clouds(Clouds::Dense),
+            WeatherKind::Fog(Fog::Normal),
+            WeatherKind::Precipitation(Precipitation {
+                kind: PrecipitationKind::Rain,
+                intensity: PrecipitationIntensity::Moderate,
+                heat: PrecipitationHeat::Normal,
+            }),
+            WeatherKind::Precipitation(Precipitation {
+                kind: PrecipitationKind::Rain,
+                intensity: PrecipitationIntensity::Heavy,
+                heat: PrecipitationHeat::Freezing,
+            }),
+            WeatherKind::Precipitation(Precipitation {
+                kind: PrecipitationKind::Snow,
+                intensity: PrecipitationIntensity::Light,
+                heat: PrecipitationHeat::Normal,
+            }),
+            WeatherKind::Precipitation(Precipitation {
+                kind: PrecipitationKind::Snow,
+                intensity: PrecipitationIntensity::Shower,
+                heat: PrecipitationHeat::Normal,
+            }),
+            WeatherKind::Thunderstorm,
+        ];
+        let weather_kind_index = generate_random_number(0..weather_kinds.len());
         WeatherReport {
             coordinates: query.coordinates,
-            kind: WeatherKind::Clouds(Clouds::Clear),
+            kind: weather_kinds[weather_kind_index],
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::domain::types::Coordinates;
-
-    use super::*;
-
-    #[test]
-    fn fetch_clear_sky_by_default() {
-        let query = WeatherQuery {
-            coordinates: Coordinates {
-                latitude: 1.2,
-                longitude: 3.4,
-            },
-        };
-        let report = FakeWeatherProvider.fetch(&query);
-        assert_eq!(report.kind, WeatherKind::Clouds(Clouds::Clear));
-    }
+fn generate_random_number(range: std::ops::Range<usize>) -> usize {
+    let count = (range.end - range.start) as u128;
+    let milliseconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Failed to get current time")
+        .as_millis();
+    (milliseconds % count) as usize + range.start
 }

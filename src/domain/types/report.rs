@@ -34,14 +34,14 @@ pub enum PrecipitationHeat {
     Normal,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Precipitation {
     pub kind: PrecipitationKind,
     pub intensity: PrecipitationIntensity,
     pub heat: PrecipitationHeat,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum WeatherKind {
     Clouds(Clouds),
     Fog(Fog),
@@ -49,7 +49,7 @@ pub enum WeatherKind {
     Thunderstorm,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct WeatherReport {
     pub coordinates: Coordinates,
     pub kind: WeatherKind,
