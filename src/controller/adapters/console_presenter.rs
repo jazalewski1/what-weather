@@ -3,18 +3,21 @@ use crate::domain::types::*;
 
 pub struct ConsolePresenter;
 
-fn describe_to_string(report: &WeatherReport) -> String {
-    let text: String = match &report.kind {
+fn describe_weather_kind(kind: &WeatherKind) -> String {
+    match kind {
         WeatherKind::Clouds(clouds) => match clouds {
             Clouds::Clear => "The sky is clear".into(),
             Clouds::Light => "The sky is mostly clear".into(),
             Clouds::Moderate => "The sky is moderately cloudy".into(),
             Clouds::Dense => "The sky is overcast".into(),
         },
-        WeatherKind::Fog(fog) => match fog {
-            Fog::Normal => "Fog is present".into(),
-            Fog::Rime => "Rime fog covers the area".into(),
-        },
+        WeatherKind::Fog(fog) => {
+            let kind = match fog {
+                Fog::Normal => "Fog",
+                Fog::Rime => "Rime fog",
+            };
+            format!("{kind} is covering the area")
+        }
         WeatherKind::Precipitation(precipitation) => {
             let heat_and_intensity = match precipitation.heat {
                 PrecipitationHeat::Normal => match precipitation.intensity {
@@ -36,29 +39,25 @@ fn describe_to_string(report: &WeatherReport) -> String {
             };
             format!("{heat_and_intensity} {kind} is falling")
         }
-        WeatherKind::Thunderstorm => "Thunderstorm is raging ".into(),
-    };
-    format!(
-        "{text} at latitude {:.5} and longitude {:.5}.",
-        report.coordinates.latitude, report.coordinates.longitude
-    )
+        WeatherKind::Thunderstorm => "Thunderstorm is raging".into(),
+    }
+}
+
+fn describe(report: &WeatherReport) -> String {
+    let weather_kind_desc = describe_weather_kind(&report.kind);
+    weather_kind_desc
 }
 
 impl Presenter for ConsolePresenter {
     fn display(&self, report: &WeatherReport) {
-        let text = describe_to_string(report);
-        println!("{text}");
+        let desc = describe(report);
+        println!("{desc}");
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    const COORDINATES: Coordinates = Coordinates {
-        latitude: 1.2,
-        longitude: 3.4,
-    };
 
     fn assert_starts_with(string: &str, expected_start: &str) {
         assert!(
@@ -74,81 +73,40 @@ mod tests {
         );
     }
 
-    fn assert_ends_with(string: &str, expected_end: &str) {
-        assert!(
-            string.ends_with(expected_end),
-            "\"{string}\"\nexpected to end with\n\"{expected_end}\""
-        );
-    }
-
-    #[test]
-    fn describe_coordinates() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Clouds(Clouds::Clear),
-        };
-        let string = describe_to_string(&report);
-        assert_ends_with(&string, "at latitude 1.20000 and longitude 3.40000.");
-    }
-
     #[test]
     fn describe_clear_sky() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Clouds(Clouds::Clear),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "The sky is clear ");
+        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Clear));
+        assert_eq!(&string, "The sky is clear");
     }
 
     #[test]
     fn describe_lightly_cloudy_sky() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Clouds(Clouds::Light),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "The sky is mostly clear ");
+        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Light));
+        assert_starts_with(&string, "The sky is mostly clear");
     }
 
     #[test]
     fn describe_moderately_cloudy_sky() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Clouds(Clouds::Moderate),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "The sky is moderately cloudy ");
+        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Moderate));
+        assert_starts_with(&string, "The sky is moderately cloudy");
     }
 
     #[test]
     fn describe_densely_cloudy_sky() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Clouds(Clouds::Dense),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "The sky is overcast ");
+        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Dense));
+        assert_starts_with(&string, "The sky is overcast");
     }
 
     #[test]
     fn describe_normal_fog() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Fog(Fog::Normal),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Fog is present ");
+        let string = describe_weather_kind(&WeatherKind::Fog(Fog::Normal));
+        assert_starts_with(&string, "Fog is covering the area");
     }
 
     #[test]
     fn describe_rime_fog() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Fog(Fog::Rime),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Rime fog covers the area ");
+        let string = describe_weather_kind(&WeatherKind::Fog(Fog::Rime));
+        assert_starts_with(&string, "Rime fog is covering the area");
     }
 
     const INTENSITY_VALUES: [PrecipitationIntensity; 4] = [
@@ -169,12 +127,8 @@ mod tests {
                     intensity,
                     heat,
                 };
-                let report = WeatherReport {
-                    coordinates: COORDINATES,
-                    kind: WeatherKind::Precipitation(precipitation),
-                };
-                let string = describe_to_string(&report);
-                assert_contains(&string, " rain is falling ");
+                let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+                assert_contains(&string, "rain is falling");
             }
         }
     }
@@ -188,12 +142,8 @@ mod tests {
                     intensity,
                     heat,
                 };
-                let report = WeatherReport {
-                    coordinates: COORDINATES,
-                    kind: WeatherKind::Precipitation(precipitation),
-                };
-                let string = describe_to_string(&report);
-                assert_contains(&string, " snow is falling ");
+                let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+                assert_contains(&string, "snow is falling");
             }
         }
     }
@@ -205,12 +155,8 @@ mod tests {
             intensity: PrecipitationIntensity::Light,
             heat: PrecipitationHeat::Normal,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Light ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_starts_with(&string, "Light");
     }
 
     #[test]
@@ -220,12 +166,8 @@ mod tests {
             intensity: PrecipitationIntensity::Moderate,
             heat: PrecipitationHeat::Normal,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Moderate ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_starts_with(&string, "Moderate");
     }
 
     #[test]
@@ -235,12 +177,8 @@ mod tests {
             intensity: PrecipitationIntensity::Heavy,
             heat: PrecipitationHeat::Normal,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Heavy ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_starts_with(&string, "Heavy");
     }
 
     #[test]
@@ -250,12 +188,8 @@ mod tests {
             intensity: PrecipitationIntensity::Shower,
             heat: PrecipitationHeat::Normal,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Shower ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_starts_with(&string, "Shower");
     }
 
     #[test]
@@ -265,12 +199,8 @@ mod tests {
             intensity: PrecipitationIntensity::Light,
             heat: PrecipitationHeat::Freezing,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_contains(&string, "Freezing light rain is falling ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_contains(&string, "Freezing light");
     }
 
     #[test]
@@ -280,12 +210,8 @@ mod tests {
             intensity: PrecipitationIntensity::Moderate,
             heat: PrecipitationHeat::Freezing,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_contains(&string, "Freezing moderate rain is falling ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_contains(&string, "Freezing moderate");
     }
 
     #[test]
@@ -295,12 +221,8 @@ mod tests {
             intensity: PrecipitationIntensity::Heavy,
             heat: PrecipitationHeat::Freezing,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_contains(&string, "Freezing heavy rain is falling ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_contains(&string, "Freezing heavy");
     }
 
     #[test]
@@ -310,21 +232,13 @@ mod tests {
             intensity: PrecipitationIntensity::Shower,
             heat: PrecipitationHeat::Freezing,
         };
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Precipitation(precipitation),
-        };
-        let string = describe_to_string(&report);
-        assert_contains(&string, "Freezing shower rain is falling ");
+        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        assert_contains(&string, "Freezing shower");
     }
 
     #[test]
     fn describe_thunderstorm() {
-        let report = WeatherReport {
-            coordinates: COORDINATES,
-            kind: WeatherKind::Thunderstorm,
-        };
-        let string = describe_to_string(&report);
-        assert_starts_with(&string, "Thunderstorm is raging ");
+        let string = describe_weather_kind(&WeatherKind::Thunderstorm);
+        assert_starts_with(&string, "Thunderstorm is raging");
     }
 }
