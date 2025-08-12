@@ -63,11 +63,32 @@ fn describe_cloud_coverage(coverage: CloudCoverage) -> String {
     }
 }
 
+fn describe_humidity(humidity: i8) -> String {
+    let (definition, with_postfix) = if humidity <= 15 {
+        ("very dry", true)
+    } else if humidity <= 30 {
+        ("dry", true)
+    } else if humidity <= 60 {
+        ("humid", false)
+    } else if humidity <= 85 {
+        ("very humid", false)
+    } else {
+        ("heavy", true)
+    };
+    let label = if with_postfix {
+        format!("{humidity}% humidity")
+    } else {
+        format!("{humidity}%")
+    };
+    format!("The air is {definition} at {label}")
+}
+
 fn describe(report: &WeatherReport) -> String {
     let temperature_desc = describe_temperature(report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
     let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
-    format!("{temperature_desc} and {weather_kind_desc} with {clouds_desc}.")
+    let humidity_desc = describe_humidity(report.humidity);
+    format!("{temperature_desc} and {weather_kind_desc} with {clouds_desc}.\n{humidity_desc}.")
 }
 
 impl Presenter for ConsolePresenter {
@@ -291,7 +312,7 @@ mod tests {
     }
 
     #[test]
-    fn descrive_cloud_coverage_values() {
+    fn describe_cloud_coverage_values() {
         assert_eq!(describe_cloud_coverage(0), "no clouds");
         assert_eq!(
             describe_cloud_coverage(27),
@@ -304,6 +325,24 @@ mod tests {
     }
 
     #[test]
+    fn describe_humidity_values() {
+        assert_eq!(describe_humidity(0), "The air is very dry at 0% humidity");
+        assert_eq!(describe_humidity(15), "The air is very dry at 15% humidity");
+
+        assert_eq!(describe_humidity(16), "The air is dry at 16% humidity");
+        assert_eq!(describe_humidity(30), "The air is dry at 30% humidity");
+
+        assert_eq!(describe_humidity(31), "The air is humid at 31%");
+        assert_eq!(describe_humidity(60), "The air is humid at 60%");
+
+        assert_eq!(describe_humidity(61), "The air is very humid at 61%");
+        assert_eq!(describe_humidity(85), "The air is very humid at 85%");
+
+        assert_eq!(describe_humidity(86), "The air is heavy at 86% humidity");
+        assert_eq!(describe_humidity(100), "The air is heavy at 100% humidity");
+    }
+
+    #[test]
     fn desribe_entire_summary() {
         let report = WeatherReport {
             coordinates: Coordinates {
@@ -313,10 +352,11 @@ mod tests {
             kind: WeatherKind::Clouds(Clouds::Light),
             temperature: 22.4,
             cloud_coverage: 43,
+            humidity: 81,
         };
         let string = describe(&report);
-        let expected =
-            "It's warm at 22.4°C and the sky is mostly clear with clouds covering 43% of the sky.";
+        let expected = "It's warm at 22.4°C and the sky is mostly clear with clouds covering 43% of the sky.\n\
+            The air is very humid at 81%.";
         assert_eq!(string, expected);
     }
 }

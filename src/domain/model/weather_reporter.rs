@@ -60,6 +60,7 @@ mod tests {
                 kind: WeatherKind::Clouds(Clouds::Light),
                 temperature: 24.7,
                 cloud_coverage: 47,
+                humidity: 60,
             });
         let mut presenter = MockPresenter::new();
         presenter.expect_display().times(1).return_const(());

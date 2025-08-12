@@ -11,6 +11,7 @@ impl WeatherProvider for FakeWeatherProvider {
             kind: generate_random_weather_kind(),
             temperature: generate_random_temperature(),
             cloud_coverage: generate_random_cloud_coverage(),
+            humidity: generate_random_humidity(),
         }
     }
 }
@@ -63,5 +64,9 @@ fn generate_random_temperature() -> Temperature {
 }
 
 fn generate_random_cloud_coverage() -> CloudCoverage {
+    generate_random_number(0..101) as i8
+}
+
+fn generate_random_humidity() -> i8 {
     generate_random_number(0..101) as i8
 }
