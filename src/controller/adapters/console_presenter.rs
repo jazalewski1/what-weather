@@ -55,10 +55,19 @@ fn describe_temperature(temperature: Temperature) -> String {
     format!("It's {adjective} at {temperature:.1}°C")
 }
 
+fn describe_cloud_coverage(coverage: CloudCoverage) -> String {
+    if coverage == 0 {
+        "no clouds".into()
+    } else {
+        format!("clouds covering {coverage}% of the sky")
+    }
+}
+
 fn describe(report: &WeatherReport) -> String {
     let temperature_desc = describe_temperature(report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
-    format!("{temperature_desc} and {weather_kind_desc}.")
+    let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
+    format!("{temperature_desc} and {weather_kind_desc} with {clouds_desc}.")
 }
 
 impl Presenter for ConsolePresenter {
@@ -256,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_temperatures() {
+    fn describe_temperature_values() {
         assert_eq!(describe_temperature(-3.0), "It's freezing at -3.0°C");
         assert_eq!(describe_temperature(-0.1), "It's freezing at -0.1°C");
         assert_eq!(describe_temperature(0.0), "It's freezing at 0.0°C");
@@ -282,6 +291,19 @@ mod tests {
     }
 
     #[test]
+    fn descrive_cloud_coverage_values() {
+        assert_eq!(describe_cloud_coverage(0), "no clouds");
+        assert_eq!(
+            describe_cloud_coverage(27),
+            "clouds covering 27% of the sky"
+        );
+        assert_eq!(
+            describe_cloud_coverage(100),
+            "clouds covering 100% of the sky"
+        );
+    }
+
+    #[test]
     fn desribe_entire_summary() {
         let report = WeatherReport {
             coordinates: Coordinates {
@@ -290,9 +312,11 @@ mod tests {
             },
             kind: WeatherKind::Clouds(Clouds::Light),
             temperature: 22.4,
+            cloud_coverage: 43,
         };
         let string = describe(&report);
-        let expected = "It's warm at 22.4°C and the sky is mostly clear.";
+        let expected =
+            "It's warm at 22.4°C and the sky is mostly clear with clouds covering 43% of the sky.";
         assert_eq!(string, expected);
     }
 }

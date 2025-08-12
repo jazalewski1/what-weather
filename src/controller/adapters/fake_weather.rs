@@ -10,6 +10,7 @@ impl WeatherProvider for FakeWeatherProvider {
             coordinates: query.coordinates,
             kind: generate_random_weather_kind(),
             temperature: generate_random_temperature(),
+            cloud_coverage: generate_random_cloud_coverage(),
         }
     }
 }
@@ -59,4 +60,8 @@ fn generate_random_temperature() -> Temperature {
     let fractional = (generate_random_number(0..10) as f32) / 10.0;
     let integral = (generate_random_number(0..40) as f32) - 10.0;
     integral + fractional + 1.3
+}
+
+fn generate_random_cloud_coverage() -> CloudCoverage {
+    generate_random_number(0..101) as i8
 }
