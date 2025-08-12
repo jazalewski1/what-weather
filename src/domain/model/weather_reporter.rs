@@ -58,6 +58,7 @@ mod tests {
                     longitude: 3.4,
                 },
                 kind: WeatherKind::Clouds(Clouds::Light),
+                temperature: 24.7,
             });
         let mut presenter = MockPresenter::new();
         presenter.expect_display().times(1).return_const(());
