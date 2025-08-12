@@ -19,25 +19,20 @@ fn describe_weather_kind(kind: &WeatherKind) -> String {
             format!("{kind} is covering the area")
         }
         WeatherKind::Precipitation(precipitation) => {
-            let heat_and_intensity = match precipitation.heat {
-                PrecipitationHeat::Normal => match precipitation.intensity {
-                    PrecipitationIntensity::Light => "light",
-                    PrecipitationIntensity::Moderate => "moderate",
-                    PrecipitationIntensity::Heavy => "heavy",
-                    PrecipitationIntensity::Shower => "shower",
-                },
-                PrecipitationHeat::Freezing => match precipitation.intensity {
-                    PrecipitationIntensity::Light => "freezing light",
-                    PrecipitationIntensity::Moderate => "freezing moderate",
-                    PrecipitationIntensity::Heavy => "freezing heavy",
-                    PrecipitationIntensity::Shower => "freezing shower",
-                },
+            let intensity = match precipitation.intensity {
+                PrecipitationIntensity::Light => "light",
+                PrecipitationIntensity::Moderate => "moderate",
+                PrecipitationIntensity::Heavy => "heavy",
+                PrecipitationIntensity::Shower => "shower",
             };
             let kind = match precipitation.kind {
                 PrecipitationKind::Rain => "rain",
                 PrecipitationKind::Snow => "snow",
             };
-            format!("{heat_and_intensity} {kind} is falling")
+            match precipitation.heat {
+                PrecipitationHeat::Normal => format!("{intensity} {kind} is falling"),
+                PrecipitationHeat::Freezing => format!("freezing {intensity} {kind} is falling"),
+            }
         }
         WeatherKind::Thunderstorm => "thunderstorm is raging".into(),
     }
