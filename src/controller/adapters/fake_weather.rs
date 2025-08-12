@@ -1,5 +1,5 @@
 use crate::domain::port::WeatherProvider;
-use crate::domain::types::{WeatherKind, WeatherQuery, WeatherReport};
+use crate::domain::types::*;
 
 pub struct FakeWeatherProvider;
 
@@ -7,7 +7,7 @@ impl WeatherProvider for FakeWeatherProvider {
     fn fetch(&self, query: &WeatherQuery) -> WeatherReport {
         WeatherReport {
             coordinates: query.coordinates,
-            kind: WeatherKind::Sunny,
+            kind: WeatherKind::Clouds(Clouds::Clear),
         }
     }
 }
@@ -19,7 +19,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fetch_sunny_kind_by_default() {
+    fn fetch_clear_sky_by_default() {
         let query = WeatherQuery {
             coordinates: Coordinates {
                 latitude: 1.2,
@@ -27,6 +27,6 @@ mod tests {
             },
         };
         let report = FakeWeatherProvider.fetch(&query);
-        assert_eq!(report.kind, WeatherKind::Sunny);
+        assert_eq!(report.kind, WeatherKind::Clouds(Clouds::Clear));
     }
 }
