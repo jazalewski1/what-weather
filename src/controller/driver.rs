@@ -1,13 +1,14 @@
-use crate::adapters::gateways;
-use crate::domain::model;
-use crate::domain::model::Reporter;
-use crate::view;
+use crate::adapters::gateways::{FakeGeolocationProvider, FakeWeatherProvider};
+use crate::domain::model::{Reporter, WeatherReporter};
+use crate::view::ConsoleView;
+use crate::adapters::presenters::SummaryPresenter;
 
 pub fn run() {
-    let reporter = model::WeatherReporter::new(
-        Box::new(gateways::FakeGeolocationProvider),
-        Box::new(gateways::FakeWeatherProvider),
-        Box::new(view::ConsoleView),
+    let presenter = SummaryPresenter::new(Box::new(ConsoleView));
+    let reporter = WeatherReporter::new(
+        Box::new(FakeGeolocationProvider),
+        Box::new(FakeWeatherProvider),
+        Box::new(presenter),
     );
     reporter.report_current_weather();
 }
