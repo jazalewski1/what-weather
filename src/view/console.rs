@@ -2,7 +2,7 @@ use crate::domain::port::Presenter;
 use crate::domain::types::WeatherReport;
 use crate::domain::types::weather::*;
 
-pub struct ConsolePresenter;
+pub struct ConsoleView;
 
 fn describe_weather_kind(kind: &Kind) -> String {
     match kind {
@@ -158,7 +158,7 @@ fn describe(report: &WeatherReport) -> String {
     }
 }
 
-impl Presenter for ConsolePresenter {
+impl Presenter for ConsoleView {
     fn display(&self, report: &WeatherReport) {
         let desc = describe(report);
         println!("{desc}");
