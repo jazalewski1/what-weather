@@ -35,7 +35,8 @@ impl Reporter for WeatherReporter {
 mod tests {
     use super::*;
     use crate::domain::port::mocks::*;
-    use crate::domain::types::{Clouds, Coordinates, WeatherKind, WeatherReport};
+    use crate::domain::types::weather::*;
+    use crate::domain::types::{Coordinates, WeatherReport};
 
     #[test]
     fn fetch_and_display_report() {
@@ -57,7 +58,15 @@ mod tests {
                     latitude: 1.2,
                     longitude: 3.4,
                 },
-                kind: WeatherKind::Clouds(Clouds::Light),
+                kind: Kind::Clouds(Clouds::Light),
+                temperature: 24.7,
+                cloud_coverage: 47,
+                humidity: 60,
+                wind: Wind {
+                    speed: 2.35,
+                    direction: 225.3,
+                },
+                pressure: 1001.5,
             });
         let mut presenter = MockPresenter::new();
         presenter.expect_display().times(1).return_const(());
