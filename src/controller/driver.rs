@@ -1,5 +1,6 @@
 use crate::adapters::gateways::{FakeGeolocationProvider, FakeWeatherProvider};
-use crate::domain::model::{Reporter, WeatherReporter};
+use crate::domain::port::Reporter;
+use crate::domain::interactors::WeatherReporter;
 use crate::view::ConsoleView;
 use crate::adapters::presenters::SummaryPresenter;
 

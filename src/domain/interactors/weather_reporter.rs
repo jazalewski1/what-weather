@@ -1,4 +1,4 @@
-use crate::domain::model::Reporter;
+use crate::domain::port::Reporter;
 use crate::domain::port::{GeolocationProvider, Presenter, WeatherProvider};
 use crate::domain::types::WeatherQuery;
 
