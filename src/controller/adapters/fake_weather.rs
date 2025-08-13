@@ -13,6 +13,7 @@ impl WeatherProvider for FakeWeatherProvider {
             cloud_coverage: generate_random_cloud_coverage(),
             humidity: generate_random_humidity(),
             wind: generate_random_wind(),
+            pressure: generate_random_pressure(),
         }
     }
 }
@@ -84,4 +85,10 @@ fn generate_random_wind() -> Wind {
         integral + fractional
     };
     Wind { speed, direction }
+}
+
+fn generate_random_pressure() -> Pressure {
+    let fractional = (generate_random_number(0..10) as f32) / 10.0;
+    let integral = generate_random_number(990..1040) as f32;
+    integral + fractional
 }

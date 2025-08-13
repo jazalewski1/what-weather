@@ -61,6 +61,8 @@ pub struct Wind {
     pub direction: f32,
 }
 
+pub type Pressure = f32;
+
 #[derive(Clone, Debug)]
 pub struct WeatherReport {
     pub coordinates: Coordinates,
@@ -69,4 +71,5 @@ pub struct WeatherReport {
     pub cloud_coverage: CloudCoverage,
     pub humidity: Humidity,
     pub wind: Wind,
+    pub pressure: Pressure,
 }

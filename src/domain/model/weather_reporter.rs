@@ -65,6 +65,7 @@ mod tests {
                     speed: 2.35,
                     direction: 225.3,
                 },
+                pressure: 1001.5,
             });
         let mut presenter = MockPresenter::new();
         presenter.expect_display().times(1).return_const(());

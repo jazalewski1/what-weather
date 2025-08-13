@@ -120,15 +120,41 @@ fn describe_wind(wind: &Wind) -> String {
     format!("{wind_definition} blowing at {:.1} m/s", wind.speed)
 }
 
+fn describe_pressure(pressure: f32) -> String {
+    let adjective = if pressure <= 1000.0 {
+        "Very low"
+    } else if pressure <= 1010.0 {
+        "Low"
+    } else if pressure <= 1020.0 {
+        "Normal"
+    } else if pressure <= 1030.0 {
+        "High"
+    } else {
+        "Very high"
+    };
+    format!("{adjective} pressure stands at {pressure:.1} hPa")
+}
+
 fn describe(report: &WeatherReport) -> String {
     let temperature_desc = describe_temperature(report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
     let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
     let humidity_desc = describe_humidity(report.humidity);
     let wind_desc = describe_wind(&report.wind);
-    format!(
-        "{temperature_desc} and {weather_kind_desc} with {clouds_desc}.\n{humidity_desc} with {wind_desc}."
-    )
+    let pressure_desc = describe_pressure(report.pressure);
+
+    #[allow(clippy::uninlined_format_args)]
+    {
+        format!(
+            "{} and {} with {}.\n{} with {}.\n{}.",
+            temperature_desc,
+            weather_kind_desc,
+            clouds_desc,
+            humidity_desc,
+            wind_desc,
+            pressure_desc,
+        )
+    }
 }
 
 impl Presenter for ConsolePresenter {
@@ -460,6 +486,66 @@ mod tests {
     }
 
     #[test]
+    fn describe_pressure_values() {
+        assert_eq!(
+            describe_pressure(995.0),
+            "Very low pressure stands at 995.0 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1000.0),
+            "Very low pressure stands at 1000.0 hPa"
+        );
+
+        assert_eq!(
+            describe_pressure(1000.1),
+            "Low pressure stands at 1000.1 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1005.3),
+            "Low pressure stands at 1005.3 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1010.0),
+            "Low pressure stands at 1010.0 hPa"
+        );
+
+        assert_eq!(
+            describe_pressure(1010.1),
+            "Normal pressure stands at 1010.1 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1018.7),
+            "Normal pressure stands at 1018.7 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1020.0),
+            "Normal pressure stands at 1020.0 hPa"
+        );
+
+        assert_eq!(
+            describe_pressure(1020.1),
+            "High pressure stands at 1020.1 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1026.1),
+            "High pressure stands at 1026.1 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1030.0),
+            "High pressure stands at 1030.0 hPa"
+        );
+
+        assert_eq!(
+            describe_pressure(1030.1),
+            "Very high pressure stands at 1030.1 hPa"
+        );
+        assert_eq!(
+            describe_pressure(1035.0),
+            "Very high pressure stands at 1035.0 hPa"
+        );
+    }
+
+    #[test]
     fn desribe_entire_summary() {
         let report = WeatherReport {
             coordinates: Coordinates {
@@ -474,13 +560,15 @@ mod tests {
                 speed: 1.07,
                 direction: 155.5,
             },
+            pressure: 1009.3,
         };
         let string = describe(&report);
         let expected = "It's warm at 22.4°C \
              and the sky is mostly clear \
              with clouds covering 43% of the sky.\n\
              The air is very humid at 81% \
-             with gentle southeast breeze blowing at 1.1 m/s.";
+             with gentle southeast breeze blowing at 1.1 m/s.\n\
+             Low pressure stands at 1009.3 hPa.";
         assert_eq!(string, expected);
     }
 }
