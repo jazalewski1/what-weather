@@ -2,13 +2,13 @@
 *Purpose: this document is intended and stored mostly as a record of requirements during development (i.e. so developer does not forget what to do).*
 
 ## Weather parameters
-1. Data shall contain following weather parameters:
+1. Data shall contain following weather parameters with available units:
     - weather type,
-    - temperature,
-    - pressure,
-    - humidity,
-    - wind speed and direction,
-    - cloud coverage,
+    - temperature \[°C, °F\],
+    - pressure \[hPa\],
+    - humidity \[%\],
+    - wind speed \[km/h, m/s, mph, knots\] and direction \[°, compass directions\],
+    - cloud coverage \[%\],
 
 
 ## Current weather
@@ -77,6 +77,7 @@
     - weather provider API key
     - geolocation provider API key
     - location
+    - units
 
 1. Use config file in home location if present by default.
 
@@ -86,9 +87,10 @@
     ```
 
 ## Miscellaneous
-1. Specify units as metric or imperial.
+1. Specify units for specific parameters.
     ```
-    what-weather <CMD> --units=imperial
+    what-weather <CMD> --speed_unit=mph
+    what-weather <CMD> --temperature_unit=fahrenheit
     ```
 
 1. Specify timezone.
