@@ -1,4 +1,4 @@
-use crate::domain::model::{Parameters, Reporter};
+use crate::domain::port::Reporter;
 use crate::domain::port::{GeolocationProvider, Presenter, WeatherProvider};
 use crate::domain::types::WeatherQuery;
 
@@ -23,7 +23,7 @@ impl WeatherReporter {
 }
 
 impl Reporter for WeatherReporter {
-    fn fetch_and_report(&self, _parameters: &Parameters) {
+    fn report_current_weather(&self) {
         let coordinates = self.geolocation_provider.get_current_coordinates();
         let query = WeatherQuery { coordinates };
         let report = self.weather_provider.fetch(&query);
@@ -39,7 +39,7 @@ mod tests {
     use crate::domain::types::{Coordinates, WeatherReport};
 
     #[test]
-    fn fetch_and_display_report() {
+    fn fetch_and_display_current_weather_report() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         geolocation_provider
             .expect_get_current_coordinates()
@@ -77,6 +77,6 @@ mod tests {
             Box::new(presenter),
         );
 
-        sut.fetch_and_report(&Parameters);
+        sut.report_current_weather();
     }
 }

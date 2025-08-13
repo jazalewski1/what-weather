@@ -1,2 +1,3 @@
-pub mod controller;
+pub mod adapters;
 pub mod domain;
+pub mod view;
