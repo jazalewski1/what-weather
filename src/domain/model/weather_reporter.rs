@@ -35,7 +35,8 @@ impl Reporter for WeatherReporter {
 mod tests {
     use super::*;
     use crate::domain::port::mocks::*;
-    use crate::domain::types::*;
+    use crate::domain::types::weather::*;
+    use crate::domain::types::{Coordinates, WeatherReport};
 
     #[test]
     fn fetch_and_display_report() {

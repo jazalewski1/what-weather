@@ -1,5 +1,6 @@
 use crate::domain::port::Presenter;
-use crate::domain::types::*;
+use crate::domain::types::WeatherReport;
+use crate::domain::types::weather::*;
 
 pub struct ConsolePresenter;
 
@@ -167,6 +168,7 @@ impl Presenter for ConsolePresenter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::types::Coordinates;
 
     fn assert_starts_with(string: &str, expected_start: &str) {
         assert!(
