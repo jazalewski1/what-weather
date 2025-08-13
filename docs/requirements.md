@@ -87,9 +87,10 @@
     ```
 
 ## Miscellaneous
-1. Specify units as metric or imperial.
+1. Specify units for specific parameters.
     ```
-    what-weather <CMD> --units=imperial
+    what-weather <CMD> --speed_unit=mph
+    what-weather <CMD> --temperature_unit=fahrenheit
     ```
 
 1. Specify timezone.
