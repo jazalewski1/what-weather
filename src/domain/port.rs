@@ -13,4 +13,5 @@ pub mod mocks {
     pub use super::geolocation::MockGeolocationProvider;
     pub use super::output::MockPresenter;
     pub use super::weather::MockWeatherProvider;
+    pub use super::reporter::MockReporter;
 }
