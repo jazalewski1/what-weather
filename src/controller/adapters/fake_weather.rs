@@ -28,33 +28,33 @@ fn generate_random_number(range: std::ops::Range<usize>) -> usize {
     (milliseconds % count) as usize + range.start
 }
 
-fn generate_random_weather_kind() -> WeatherKind {
+fn generate_random_weather_kind() -> Kind {
     let weather_kinds = [
-        WeatherKind::Clouds(Clouds::Clear),
-        WeatherKind::Clouds(Clouds::Light),
-        WeatherKind::Clouds(Clouds::Dense),
-        WeatherKind::Fog(Fog::Normal),
-        WeatherKind::Precipitation(Precipitation {
+        Kind::Clouds(Clouds::Clear),
+        Kind::Clouds(Clouds::Light),
+        Kind::Clouds(Clouds::Dense),
+        Kind::Fog(Fog::Normal),
+        Kind::Precipitation(Precipitation {
             kind: PrecipitationKind::Rain,
             intensity: PrecipitationIntensity::Moderate,
             heat: PrecipitationHeat::Normal,
         }),
-        WeatherKind::Precipitation(Precipitation {
+        Kind::Precipitation(Precipitation {
             kind: PrecipitationKind::Rain,
             intensity: PrecipitationIntensity::Heavy,
             heat: PrecipitationHeat::Freezing,
         }),
-        WeatherKind::Precipitation(Precipitation {
+        Kind::Precipitation(Precipitation {
             kind: PrecipitationKind::Snow,
             intensity: PrecipitationIntensity::Light,
             heat: PrecipitationHeat::Normal,
         }),
-        WeatherKind::Precipitation(Precipitation {
+        Kind::Precipitation(Precipitation {
             kind: PrecipitationKind::Snow,
             intensity: PrecipitationIntensity::Shower,
             heat: PrecipitationHeat::Normal,
         }),
-        WeatherKind::Thunderstorm,
+        Kind::Thunderstorm,
     ];
     let weather_kind_index = generate_random_number(0..weather_kinds.len());
     weather_kinds[weather_kind_index]

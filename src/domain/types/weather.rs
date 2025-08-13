@@ -40,7 +40,7 @@ pub struct Precipitation {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum WeatherKind {
+pub enum Kind {
     Clouds(Clouds),
     Fog(Fog),
     Precipitation(Precipitation),

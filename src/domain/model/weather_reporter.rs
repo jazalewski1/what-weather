@@ -58,7 +58,7 @@ mod tests {
                     latitude: 1.2,
                     longitude: 3.4,
                 },
-                kind: WeatherKind::Clouds(Clouds::Light),
+                kind: Kind::Clouds(Clouds::Light),
                 temperature: 24.7,
                 cloud_coverage: 47,
                 humidity: 60,

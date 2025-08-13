@@ -4,22 +4,22 @@ use crate::domain::types::weather::*;
 
 pub struct ConsolePresenter;
 
-fn describe_weather_kind(kind: &WeatherKind) -> String {
+fn describe_weather_kind(kind: &Kind) -> String {
     match kind {
-        WeatherKind::Clouds(clouds) => match clouds {
+        Kind::Clouds(clouds) => match clouds {
             Clouds::Clear => "the sky is clear".into(),
             Clouds::Light => "the sky is mostly clear".into(),
             Clouds::Moderate => "the sky is moderately cloudy".into(),
             Clouds::Dense => "the sky is overcast".into(),
         },
-        WeatherKind::Fog(fog) => {
+        Kind::Fog(fog) => {
             let kind = match fog {
                 Fog::Normal => "fog",
                 Fog::Rime => "rime fog",
             };
             format!("{kind} is covering the area")
         }
-        WeatherKind::Precipitation(precipitation) => {
+        Kind::Precipitation(precipitation) => {
             let intensity = match precipitation.intensity {
                 PrecipitationIntensity::Light => "light",
                 PrecipitationIntensity::Moderate => "moderate",
@@ -35,7 +35,7 @@ fn describe_weather_kind(kind: &WeatherKind) -> String {
                 PrecipitationHeat::Freezing => format!("freezing {intensity} {kind} is falling"),
             }
         }
-        WeatherKind::Thunderstorm => "thunderstorm is raging".into(),
+        Kind::Thunderstorm => "thunderstorm is raging".into(),
     }
 }
 
@@ -186,37 +186,37 @@ mod tests {
 
     #[test]
     fn describe_clear_sky() {
-        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Clear));
+        let string = describe_weather_kind(&Kind::Clouds(Clouds::Clear));
         assert_eq!(&string, "the sky is clear");
     }
 
     #[test]
     fn describe_lightly_cloudy_sky() {
-        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Light));
+        let string = describe_weather_kind(&Kind::Clouds(Clouds::Light));
         assert_starts_with(&string, "the sky is mostly clear");
     }
 
     #[test]
     fn describe_moderately_cloudy_sky() {
-        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Moderate));
+        let string = describe_weather_kind(&Kind::Clouds(Clouds::Moderate));
         assert_starts_with(&string, "the sky is moderately cloudy");
     }
 
     #[test]
     fn describe_densely_cloudy_sky() {
-        let string = describe_weather_kind(&WeatherKind::Clouds(Clouds::Dense));
+        let string = describe_weather_kind(&Kind::Clouds(Clouds::Dense));
         assert_starts_with(&string, "the sky is overcast");
     }
 
     #[test]
     fn describe_normal_fog() {
-        let string = describe_weather_kind(&WeatherKind::Fog(Fog::Normal));
+        let string = describe_weather_kind(&Kind::Fog(Fog::Normal));
         assert_starts_with(&string, "fog is covering the area");
     }
 
     #[test]
     fn describe_rime_fog() {
-        let string = describe_weather_kind(&WeatherKind::Fog(Fog::Rime));
+        let string = describe_weather_kind(&Kind::Fog(Fog::Rime));
         assert_starts_with(&string, "rime fog is covering the area");
     }
 
@@ -238,7 +238,7 @@ mod tests {
                     intensity,
                     heat,
                 };
-                let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+                let string = describe_weather_kind(&Kind::Precipitation(precipitation));
                 assert_contains(&string, "rain is falling");
             }
         }
@@ -253,7 +253,7 @@ mod tests {
                     intensity,
                     heat,
                 };
-                let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+                let string = describe_weather_kind(&Kind::Precipitation(precipitation));
                 assert_contains(&string, "snow is falling");
             }
         }
@@ -266,7 +266,7 @@ mod tests {
             intensity: PrecipitationIntensity::Light,
             heat: PrecipitationHeat::Normal,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_starts_with(&string, "light");
     }
 
@@ -277,7 +277,7 @@ mod tests {
             intensity: PrecipitationIntensity::Moderate,
             heat: PrecipitationHeat::Normal,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_starts_with(&string, "moderate");
     }
 
@@ -288,7 +288,7 @@ mod tests {
             intensity: PrecipitationIntensity::Heavy,
             heat: PrecipitationHeat::Normal,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_starts_with(&string, "heavy");
     }
 
@@ -299,7 +299,7 @@ mod tests {
             intensity: PrecipitationIntensity::Shower,
             heat: PrecipitationHeat::Normal,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_starts_with(&string, "shower");
     }
 
@@ -310,7 +310,7 @@ mod tests {
             intensity: PrecipitationIntensity::Light,
             heat: PrecipitationHeat::Freezing,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_contains(&string, "freezing light");
     }
 
@@ -321,7 +321,7 @@ mod tests {
             intensity: PrecipitationIntensity::Moderate,
             heat: PrecipitationHeat::Freezing,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_contains(&string, "freezing moderate");
     }
 
@@ -332,7 +332,7 @@ mod tests {
             intensity: PrecipitationIntensity::Heavy,
             heat: PrecipitationHeat::Freezing,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_contains(&string, "freezing heavy");
     }
 
@@ -343,13 +343,13 @@ mod tests {
             intensity: PrecipitationIntensity::Shower,
             heat: PrecipitationHeat::Freezing,
         };
-        let string = describe_weather_kind(&WeatherKind::Precipitation(precipitation));
+        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_contains(&string, "freezing shower");
     }
 
     #[test]
     fn describe_thunderstorm() {
-        let string = describe_weather_kind(&WeatherKind::Thunderstorm);
+        let string = describe_weather_kind(&Kind::Thunderstorm);
         assert_starts_with(&string, "thunderstorm is raging");
     }
 
@@ -554,7 +554,7 @@ mod tests {
                 latitude: 1.2,
                 longitude: 3.4,
             },
-            kind: WeatherKind::Clouds(Clouds::Light),
+            kind: Kind::Clouds(Clouds::Light),
             temperature: 22.4,
             cloud_coverage: 43,
             humidity: 81,
