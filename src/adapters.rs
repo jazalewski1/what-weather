@@ -1,3 +1,3 @@
+pub mod controllers;
 pub mod gateways;
 pub mod presenters;
-pub mod controllers;

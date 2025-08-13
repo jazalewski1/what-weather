@@ -12,7 +12,10 @@ mod tests {
     #[test]
     fn report_with_reporter() {
         let mut reporter = Box::new(MockReporter::new());
-        reporter.expect_report_current_weather().times(1).return_const(());
+        reporter
+            .expect_report_current_weather()
+            .times(1)
+            .return_const(());
         run(reporter);
     }
 }

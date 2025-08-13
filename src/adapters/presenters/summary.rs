@@ -576,7 +576,8 @@ mod tests {
              with clouds covering 43% of the sky.\n\
              The air is very humid at 81% \
              with gentle southeast breeze blowing at 1.1 m/s.\n\
-             Low pressure stands at 1009.3 hPa.".into();
+             Low pressure stands at 1009.3 hPa."
+            .into();
         let mut view = Box::new(MockView::new());
         view.expect_display().with(eq(expected)).return_const(());
         let sut = SummaryPresenter { view };
