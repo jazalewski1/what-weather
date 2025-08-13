@@ -83,12 +83,52 @@ fn describe_humidity(humidity: i8) -> String {
     format!("The air is {definition} at {label}")
 }
 
+fn describe_wind(wind: &Wind) -> String {
+    if wind.speed <= 0.2 {
+        return "no wind".into();
+    }
+
+    let direction_definition = if wind.direction <= 22.5 {
+        "north"
+    } else if wind.direction <= 67.5 {
+        "northeast"
+    } else if wind.direction <= 112.5 {
+        "east"
+    } else if wind.direction <= 157.5 {
+        "southeast"
+    } else if wind.direction <= 202.5 {
+        "south"
+    } else if wind.direction <= 247.5 {
+        "southwest"
+    } else if wind.direction <= 292.5 {
+        "west"
+    } else if wind.direction <= 337.5 {
+        "northwest"
+    } else {
+        "north"
+    };
+
+    let wind_definition = if wind.speed <= 3.3 {
+        format!("gentle {direction_definition} breeze")
+    } else if wind.speed <= 8.0 {
+        format!("{direction_definition} wind")
+    } else if wind.speed <= 13.8 {
+        format!("strong {direction_definition} wind")
+    } else {
+        format!("very strong {direction_definition} wind")
+    };
+    format!("{wind_definition} blowing at {:.1} m/s", wind.speed)
+}
+
 fn describe(report: &WeatherReport) -> String {
     let temperature_desc = describe_temperature(report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
     let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
     let humidity_desc = describe_humidity(report.humidity);
-    format!("{temperature_desc} and {weather_kind_desc} with {clouds_desc}.\n{humidity_desc}.")
+    let wind_desc = describe_wind(&report.wind);
+    format!(
+        "{temperature_desc} and {weather_kind_desc} with {clouds_desc}.\n{humidity_desc} with {wind_desc}."
+    )
 }
 
 impl Presenter for ConsolePresenter {
@@ -343,6 +383,83 @@ mod tests {
     }
 
     #[test]
+    fn describe_wind_speed() {
+        let assert_string_with_speed = |speed, expected_str| {
+            let wind = Wind {
+                speed,
+                direction: 42.0,
+            };
+            let result = describe_wind(&wind);
+            assert_eq!(result, expected_str);
+        };
+
+        assert_string_with_speed(0.0, "no wind");
+        assert_string_with_speed(0.2, "no wind");
+
+        assert_string_with_speed(0.21, "gentle northeast breeze blowing at 0.2 m/s");
+        assert_string_with_speed(2.9, "gentle northeast breeze blowing at 2.9 m/s");
+        assert_string_with_speed(3.3, "gentle northeast breeze blowing at 3.3 m/s");
+
+        assert_string_with_speed(3.31, "northeast wind blowing at 3.3 m/s");
+        assert_string_with_speed(5.57, "northeast wind blowing at 5.6 m/s");
+        assert_string_with_speed(8.0, "northeast wind blowing at 8.0 m/s");
+
+        assert_string_with_speed(8.01, "strong northeast wind blowing at 8.0 m/s");
+        assert_string_with_speed(10.3, "strong northeast wind blowing at 10.3 m/s");
+        assert_string_with_speed(13.8, "strong northeast wind blowing at 13.8 m/s");
+
+        assert_string_with_speed(13.81, "very strong northeast wind blowing at 13.8 m/s");
+        assert_string_with_speed(15.0, "very strong northeast wind blowing at 15.0 m/s");
+    }
+
+    #[test]
+    fn describe_wind_direction() {
+        let assert_string_with_direction = |direction, expected_str| {
+            let wind = Wind {
+                speed: 5.0,
+                direction,
+            };
+            let result = describe_wind(&wind);
+            assert_eq!(result, expected_str);
+        };
+
+        assert_string_with_direction(337.6, "north wind blowing at 5.0 m/s");
+        assert_string_with_direction(345.0, "north wind blowing at 5.0 m/s");
+        assert_string_with_direction(359.9, "north wind blowing at 5.0 m/s");
+        assert_string_with_direction(0.0, "north wind blowing at 5.0 m/s");
+        assert_string_with_direction(13.1, "north wind blowing at 5.0 m/s");
+        assert_string_with_direction(22.5, "north wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(22.6, "northeast wind blowing at 5.0 m/s");
+        assert_string_with_direction(65.2, "northeast wind blowing at 5.0 m/s");
+        assert_string_with_direction(67.5, "northeast wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(67.6, "east wind blowing at 5.0 m/s");
+        assert_string_with_direction(100.1, "east wind blowing at 5.0 m/s");
+        assert_string_with_direction(112.5, "east wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(112.6, "southeast wind blowing at 5.0 m/s");
+        assert_string_with_direction(121.9, "southeast wind blowing at 5.0 m/s");
+        assert_string_with_direction(157.5, "southeast wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(157.6, "south wind blowing at 5.0 m/s");
+        assert_string_with_direction(200.0, "south wind blowing at 5.0 m/s");
+        assert_string_with_direction(202.5, "south wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(202.6, "southwest wind blowing at 5.0 m/s");
+        assert_string_with_direction(213.3, "southwest wind blowing at 5.0 m/s");
+        assert_string_with_direction(247.5, "southwest wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(247.6, "west wind blowing at 5.0 m/s");
+        assert_string_with_direction(281.4, "west wind blowing at 5.0 m/s");
+        assert_string_with_direction(292.5, "west wind blowing at 5.0 m/s");
+
+        assert_string_with_direction(292.6, "northwest wind blowing at 5.0 m/s");
+        assert_string_with_direction(293.5, "northwest wind blowing at 5.0 m/s");
+        assert_string_with_direction(337.5, "northwest wind blowing at 5.0 m/s");
+    }
+
+    #[test]
     fn desribe_entire_summary() {
         let report = WeatherReport {
             coordinates: Coordinates {
@@ -353,10 +470,17 @@ mod tests {
             temperature: 22.4,
             cloud_coverage: 43,
             humidity: 81,
+            wind: Wind {
+                speed: 1.07,
+                direction: 155.5,
+            },
         };
         let string = describe(&report);
-        let expected = "It's warm at 22.4°C and the sky is mostly clear with clouds covering 43% of the sky.\n\
-            The air is very humid at 81%.";
+        let expected = "It's warm at 22.4°C \
+             and the sky is mostly clear \
+             with clouds covering 43% of the sky.\n\
+             The air is very humid at 81% \
+             with gentle southeast breeze blowing at 1.1 m/s.";
         assert_eq!(string, expected);
     }
 }

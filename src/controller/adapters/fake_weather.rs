@@ -12,6 +12,7 @@ impl WeatherProvider for FakeWeatherProvider {
             temperature: generate_random_temperature(),
             cloud_coverage: generate_random_cloud_coverage(),
             humidity: generate_random_humidity(),
+            wind: generate_random_wind(),
         }
     }
 }
@@ -69,4 +70,18 @@ fn generate_random_cloud_coverage() -> CloudCoverage {
 
 fn generate_random_humidity() -> i8 {
     generate_random_number(0..101) as i8
+}
+
+fn generate_random_wind() -> Wind {
+    let speed = {
+        let fractional = (generate_random_number(0..100) as f32) / 100.0;
+        let integral = generate_random_number(0..15) as f32;
+        integral + fractional
+    };
+    let direction = {
+        let fractional = (generate_random_number(0..10) as f32) / 10.0;
+        let integral = generate_random_number(0..360) as f32;
+        integral + fractional
+    };
+    Wind { speed, direction }
 }

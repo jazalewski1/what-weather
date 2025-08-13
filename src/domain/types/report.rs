@@ -56,10 +56,17 @@ pub type CloudCoverage = i8;
 pub type Humidity = i8;
 
 #[derive(Clone, Debug)]
+pub struct Wind {
+    pub speed: f32,
+    pub direction: f32,
+}
+
+#[derive(Clone, Debug)]
 pub struct WeatherReport {
     pub coordinates: Coordinates,
     pub kind: WeatherKind,
     pub temperature: Temperature,
     pub cloud_coverage: CloudCoverage,
     pub humidity: Humidity,
+    pub wind: Wind,
 }
