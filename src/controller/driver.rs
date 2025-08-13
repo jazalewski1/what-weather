@@ -8,5 +8,5 @@ pub fn run() {
         Box::new(adapters::FakeWeatherProvider),
         Box::new(adapters::ConsolePresenter),
     );
-    reporter.fetch_and_report(&model::Parameters);
+    reporter.report_current_weather();
 }
