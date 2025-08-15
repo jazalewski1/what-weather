@@ -1,7 +1,7 @@
 use crate::types::WeatherReport;
 use crate::types::weather::*;
 
-fn format(report: &WeatherReport) -> String {
+pub fn format(report: &WeatherReport) -> String {
     let kind_desc = describe_kind(&report.kind);
     let temperature_desc = describe_temperature(report.temperature);
     let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
