@@ -1,3 +1,3 @@
-pub mod interactors;
-pub mod port;
-pub mod types;
+mod weather_reporter;
+
+pub use weather_reporter::WeatherReporter;

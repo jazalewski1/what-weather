@@ -1,40 +1,25 @@
-use crate::domain::port::Presenter;
-use crate::domain::types::WeatherReport;
-use crate::domain::types::weather::*;
-use crate::view::View;
+use crate::types::WeatherReport;
+use crate::types::weather::*;
 
-pub struct SummaryPresenter {
-    view: Box<dyn View>,
-}
+pub fn format(report: &WeatherReport) -> String {
+    let temperature_desc = describe_temperature(report.temperature);
+    let weather_kind_desc = describe_weather_kind(&report.kind);
+    let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
+    let humidity_desc = describe_humidity(report.humidity);
+    let wind_desc = describe_wind(&report.wind);
+    let pressure_desc = describe_pressure(report.pressure);
 
-impl SummaryPresenter {
-    pub fn new(view: Box<dyn View>) -> Self {
-        Self { view }
-    }
-}
-
-impl Presenter for SummaryPresenter {
-    fn display(&self, report: &WeatherReport) {
-        let temperature_desc = describe_temperature(report.temperature);
-        let weather_kind_desc = describe_weather_kind(&report.kind);
-        let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
-        let humidity_desc = describe_humidity(report.humidity);
-        let wind_desc = describe_wind(&report.wind);
-        let pressure_desc = describe_pressure(report.pressure);
-
-        #[allow(clippy::uninlined_format_args)]
-        let output = {
-            format!(
-                "{} and {} with {}.\n{} with {}.\n{}.",
-                temperature_desc,
-                weather_kind_desc,
-                clouds_desc,
-                humidity_desc,
-                wind_desc,
-                pressure_desc,
-            )
-        };
-        self.view.display(output);
+    #[allow(clippy::uninlined_format_args)]
+    {
+        format!(
+            "{} and {} with {}.\n{} with {}.\n{}.",
+            temperature_desc,
+            weather_kind_desc,
+            clouds_desc,
+            humidity_desc,
+            wind_desc,
+            pressure_desc,
+        )
     }
 }
 
@@ -173,9 +158,7 @@ fn describe_pressure(pressure: f32) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::types::Coordinates;
-    use crate::view::MockView;
-    use mockall::predicate::eq;
+    use crate::types::Coordinates;
 
     fn assert_starts_with(string: &str, expected_start: &str) {
         assert!(
@@ -555,7 +538,7 @@ mod tests {
     }
 
     #[test]
-    fn desribe_entire_summary() {
+    fn describe_entire_summary() {
         let report = WeatherReport {
             coordinates: Coordinates {
                 latitude: 1.2,
@@ -578,9 +561,7 @@ mod tests {
              with gentle southeast breeze blowing at 1.1 m/s.\n\
              Low pressure stands at 1009.3 hPa."
             .into();
-        let mut view = Box::new(MockView::new());
-        view.expect_display().with(eq(expected)).return_const(());
-        let sut = SummaryPresenter { view };
-        sut.display(&report);
+        let result = format(&report);
+        assert_eq!(result, expected);
     }
 }

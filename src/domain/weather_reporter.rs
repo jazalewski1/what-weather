@@ -1,42 +1,32 @@
-use crate::domain::port::Reporter;
-use crate::domain::port::{GeolocationProvider, Presenter, WeatherProvider};
-use crate::domain::types::WeatherQuery;
+use crate::port::{GeolocationProvider, WeatherProvider};
+use crate::types::{WeatherQuery, WeatherReport};
 
-pub struct WeatherReporter {
-    geolocation_provider: Box<dyn GeolocationProvider>,
-    weather_provider: Box<dyn WeatherProvider>,
-    presenter: Box<dyn Presenter>,
+pub struct WeatherReporter<GP: GeolocationProvider, WP: WeatherProvider> {
+    geolocation_provider: GP,
+    weather_provider: WP,
 }
 
-impl WeatherReporter {
-    pub fn new(
-        geolocation_provider: Box<dyn GeolocationProvider>,
-        weather_provider: Box<dyn WeatherProvider>,
-        presenter: Box<dyn Presenter>,
-    ) -> Self {
-        WeatherReporter {
+impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
+    pub fn new(geolocation_provider: GP, weather_provider: WP) -> Self {
+        Self {
             geolocation_provider,
             weather_provider,
-            presenter,
         }
     }
-}
 
-impl Reporter for WeatherReporter {
-    fn report_current_weather(&self) {
+    pub fn fetch(&self) -> WeatherReport {
         let coordinates = self.geolocation_provider.get_current_coordinates();
         let query = WeatherQuery { coordinates };
-        let report = self.weather_provider.fetch(&query);
-        self.presenter.display(&report);
+        self.weather_provider.fetch(&query)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::port::mocks::*;
-    use crate::domain::types::weather::*;
-    use crate::domain::types::{Coordinates, WeatherReport};
+    use crate::port::mocks::*;
+    use crate::types::weather::*;
+    use crate::types::{Coordinates, WeatherReport};
 
     #[test]
     fn fetch_and_display_current_weather_report() {
@@ -68,15 +58,7 @@ mod tests {
                 },
                 pressure: 1001.5,
             });
-        let mut presenter = MockPresenter::new();
-        presenter.expect_display().times(1).return_const(());
-
-        let sut = WeatherReporter::new(
-            Box::new(geolocation_provider),
-            Box::new(weather_provider),
-            Box::new(presenter),
-        );
-
-        sut.report_current_weather();
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
+        let _report = sut.fetch();
     }
 }
