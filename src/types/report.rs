@@ -1,5 +1,5 @@
-use crate::domain::types::Coordinates;
-use crate::domain::types::weather::*;
+use crate::types::Coordinates;
+use crate::types::weather::*;
 
 #[derive(Clone, Debug)]
 pub struct WeatherReport {

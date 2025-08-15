@@ -1,4 +1,4 @@
-use crate::domain::types::Coordinates;
+use crate::types::Coordinates;
 
 #[mockall::automock]
 pub trait GeolocationProvider {

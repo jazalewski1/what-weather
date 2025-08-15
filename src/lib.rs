@@ -1,3 +1,6 @@
-pub mod adapters;
 pub mod domain;
-pub mod view;
+pub mod external;
+pub mod input;
+pub mod output;
+pub mod port;
+pub mod types;

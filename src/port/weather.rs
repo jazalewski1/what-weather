@@ -1,4 +1,4 @@
-use crate::domain::types::{WeatherQuery, WeatherReport};
+use crate::types::{WeatherQuery, WeatherReport};
 
 #[mockall::automock]
 pub trait WeatherProvider {

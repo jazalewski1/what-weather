@@ -1,6 +1,6 @@
-use crate::domain::port::WeatherProvider;
-use crate::domain::types::weather::*;
-use crate::domain::types::{WeatherQuery, WeatherReport};
+use crate::port::WeatherProvider;
+use crate::types::weather::*;
+use crate::types::{WeatherQuery, WeatherReport};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct FakeWeatherProvider;
