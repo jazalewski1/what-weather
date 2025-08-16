@@ -3,7 +3,6 @@ use crate::types::weather::*;
 
 pub fn format(report: &WeatherReport) -> String {
     let kind_desc = describe_kind(&report.kind);
-    let temperature_desc = describe_temperature(report.temperature);
     let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
     let humidity_desc = describe_humidity(report.humidity);
     let wind_desc = describe_wind(&report.wind);
@@ -17,7 +16,7 @@ pub fn format(report: &WeatherReport) -> String {
         format!(
             "{}\n{}\n{}\n{}\n{}\n{}",
             format!("Weather: {kind_desc}"),
-            format!("Temperature: {temperature_desc}"),
+            format!("Temperature: {:.1}", report.temperature),
             format!("Cloud coverage: {clouds_desc}"),
             format!("Humidity: {humidity_desc}"),
             format!("Wind: {wind_desc}"),
@@ -57,10 +56,6 @@ fn describe_kind(kind: &Kind) -> String {
         }
         Kind::Thunderstorm => "thunderstorm".into(),
     }
-}
-
-fn describe_temperature(value: Temperature) -> String {
-    format!("{value:.1}°C")
 }
 
 fn describe_cloud_coverage(value: CloudCoverage) -> String {
@@ -198,13 +193,6 @@ mod tests {
     }
 
     #[test]
-    fn describe_temperature_values() {
-        assert_eq!(describe_temperature(-13.5), "-13.5°C");
-        assert_eq!(describe_temperature(27.0), "27.0°C");
-        assert_eq!(describe_temperature(1.97), "2.0°C");
-    }
-
-    #[test]
     fn describe_clouds_coverage_values() {
         assert_eq!(describe_cloud_coverage(0), "0%");
         assert_eq!(describe_cloud_coverage(43), "43%");
@@ -241,7 +229,7 @@ mod tests {
                 longitude: 3.4,
             },
             kind: Kind::Clouds(Clouds::Light),
-            temperature: 22.4,
+            temperature: Temperature::new_celsius(22.4),
             cloud_coverage: 43,
             humidity: 81,
             wind: Wind {

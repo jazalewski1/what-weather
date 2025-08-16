@@ -1,8 +1,9 @@
 use crate::types::WeatherReport;
+use crate::types::units::*;
 use crate::types::weather::*;
 
 pub fn format(report: &WeatherReport) -> String {
-    let temperature_desc = describe_temperature(report.temperature);
+    let temperature_desc = describe_temperature(&report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
     let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
     let humidity_desc = describe_humidity(report.humidity);
@@ -58,21 +59,25 @@ fn describe_weather_kind(kind: &Kind) -> String {
     }
 }
 
-fn describe_temperature(temperature: Temperature) -> String {
-    let adjective = if temperature <= 0.0 {
-        "freezing"
-    } else if temperature <= 10.0 {
-        "cold"
-    } else if temperature <= 17.0 {
-        "cool"
-    } else if temperature <= 24.0 {
-        "warm"
-    } else if temperature <= 35.0 {
-        "hot"
-    } else {
-        "very hot"
+fn describe_temperature(temperature: &Temperature) -> String {
+    let adjective = match temperature {
+        Temperature::Celsius(Celsius { value }) => {
+            if *value <= 0.0 {
+                "freezing"
+            } else if *value <= 10.0 {
+                "cold"
+            } else if *value <= 17.0 {
+                "cool"
+            } else if *value <= 24.0 {
+                "warm"
+            } else if *value <= 35.0 {
+                "hot"
+            } else {
+                "very hot"
+            }
+        }
     };
-    format!("It's {adjective} at {temperature:.1}°C")
+    format!("It's {adjective} at {temperature:.1}")
 }
 
 fn describe_cloud_coverage(coverage: CloudCoverage) -> String {
@@ -345,28 +350,79 @@ mod tests {
 
     #[test]
     fn describe_temperature_values() {
-        assert_eq!(describe_temperature(-3.0), "It's freezing at -3.0°C");
-        assert_eq!(describe_temperature(-0.1), "It's freezing at -0.1°C");
-        assert_eq!(describe_temperature(0.0), "It's freezing at 0.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(-3.0)),
+            "It's freezing at -3.0°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(-0.1)),
+            "It's freezing at -0.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(0.0)),
+            "It's freezing at 0.0°C"
+        );
 
-        assert_eq!(describe_temperature(1.0), "It's cold at 1.0°C");
-        assert_eq!(describe_temperature(4.5), "It's cold at 4.5°C");
-        assert_eq!(describe_temperature(10.0), "It's cold at 10.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(1.0)),
+            "It's cold at 1.0°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(4.5)),
+            "It's cold at 4.5°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(10.0)),
+            "It's cold at 10.0°C"
+        );
 
-        assert_eq!(describe_temperature(10.1), "It's cool at 10.1°C");
-        assert_eq!(describe_temperature(13.7), "It's cool at 13.7°C");
-        assert_eq!(describe_temperature(17.0), "It's cool at 17.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(10.1)),
+            "It's cool at 10.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(13.7)),
+            "It's cool at 13.7°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(17.0)),
+            "It's cool at 17.0°C"
+        );
 
-        assert_eq!(describe_temperature(17.1), "It's warm at 17.1°C");
-        assert_eq!(describe_temperature(20.0), "It's warm at 20.0°C");
-        assert_eq!(describe_temperature(24.0), "It's warm at 24.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(17.1)),
+            "It's warm at 17.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(20.0)),
+            "It's warm at 20.0°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(24.0)),
+            "It's warm at 24.0°C"
+        );
 
-        assert_eq!(describe_temperature(24.1), "It's hot at 24.1°C");
-        assert_eq!(describe_temperature(29.9), "It's hot at 29.9°C");
-        assert_eq!(describe_temperature(35.0), "It's hot at 35.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(24.1)),
+            "It's hot at 24.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(29.9)),
+            "It's hot at 29.9°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(35.0)),
+            "It's hot at 35.0°C"
+        );
 
-        assert_eq!(describe_temperature(35.1), "It's very hot at 35.1°C");
-        assert_eq!(describe_temperature(40.2), "It's very hot at 40.2°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(35.1)),
+            "It's very hot at 35.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(40.2)),
+            "It's very hot at 40.2°C"
+        );
     }
 
     #[test]
@@ -545,7 +601,7 @@ mod tests {
                 longitude: 3.4,
             },
             kind: Kind::Clouds(Clouds::Light),
-            temperature: 22.4,
+            temperature: Temperature::new_celsius(22.4),
             cloud_coverage: 43,
             humidity: 81,
             wind: Wind {

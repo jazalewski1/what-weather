@@ -49,7 +49,7 @@ mod tests {
                     longitude: 3.4,
                 },
                 kind: Kind::Clouds(Clouds::Light),
-                temperature: 24.7,
+                temperature: Temperature::new_celsius(24.7),
                 cloud_coverage: 47,
                 humidity: 60,
                 wind: Wind {
