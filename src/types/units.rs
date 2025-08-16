@@ -171,7 +171,7 @@ pub enum CardinalDirection {
 
 impl CardinalDirection {
     pub fn to_symbol(&self) -> String {
-        let s = match self {
+        match self {
             CardinalDirection::North => "N",
             CardinalDirection::Northeast => "NE",
             CardinalDirection::East => "E",
@@ -180,12 +180,12 @@ impl CardinalDirection {
             CardinalDirection::Southwest => "SW",
             CardinalDirection::West => "W",
             CardinalDirection::Northwest => "NW",
-        };
-        s.into()
+        }
+        .into()
     }
 
     pub fn to_name(&self) -> String {
-        let s = match self {
+        match self {
             CardinalDirection::North => "north",
             CardinalDirection::Northeast => "northeast",
             CardinalDirection::East => "east",
@@ -194,8 +194,32 @@ impl CardinalDirection {
             CardinalDirection::Southwest => "southwest",
             CardinalDirection::West => "west",
             CardinalDirection::Northwest => "northwest",
-        };
-        s.into()
+        }
+        .into()
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Hectopascal {
+    pub value: f32,
+}
+
+impl From<f32> for Hectopascal {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<Hectopascal> for f32 {
+    fn from(pressure: Hectopascal) -> Self {
+        pressure.value
+    }
+}
+
+impl Display for Hectopascal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$} hPa", self.value)
     }
 }
 
@@ -222,7 +246,7 @@ mod tests {
     }
 
     #[test]
-    fn display_meters_per_second() {
+    fn display_speed_in_meters_per_second() {
         let speed = Speed::new_meters_per_second(0.0);
         assert_eq!(format!("{speed}"), "0.0 m/s");
         let speed = Speed::new_meters_per_second(12.345);
@@ -380,5 +404,15 @@ mod tests {
         assert_eq!(CardinalDirection::Southwest.to_name(), "southwest");
         assert_eq!(CardinalDirection::West.to_name(), "west");
         assert_eq!(CardinalDirection::Northwest.to_name(), "northwest");
+    }
+
+    #[test]
+    fn display_hectopascals() {
+        let pressure = Hectopascal::from(0.0);
+        assert_eq!(format!("{pressure}"), "0.0 hPa");
+        let pressure = Hectopascal::from(999.99);
+        assert_eq!(format!("{pressure}"), "1000.0 hPa");
+        let pressure = Hectopascal::from(1002.1234);
+        assert_eq!(format!("{pressure:.2}"), "1002.12 hPa");
     }
 }

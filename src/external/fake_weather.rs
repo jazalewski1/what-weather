@@ -17,7 +17,7 @@ impl WeatherProvider for FakeWeatherProvider {
                 speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
                 direction: Azimuth::from(rnd::generate_float(0..360, 1)),
             },
-            pressure: rnd::generate_float(990..1040, 1),
+            pressure: Hectopascal::from(rnd::generate_float(990..1040, 1)),
         }
     }
 }

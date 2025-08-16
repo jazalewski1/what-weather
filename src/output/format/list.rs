@@ -1,25 +1,20 @@
 use crate::types::WeatherReport;
 use crate::types::weather::*;
 
+#[allow(
+    clippy::format_in_format_args,
+    reason = "Fits in one line. Executed only once, so performance is not a concern."
+)]
 pub fn format(report: &WeatherReport) -> String {
-    let kind_desc = describe_kind(&report.kind);
-    let pressure_desc = describe_pressure(report.pressure);
-
-    #[allow(
-        clippy::format_in_format_args,
-        reason = "Fits in one line. Executed only once, so performance is not a concern."
-    )]
-    {
-        format!(
-            "{}\n{}\n{}\n{}\n{}\n{}",
-            format!("Weather: {kind_desc}"),
-            format!("Temperature: {:.1}", report.temperature),
-            format!("Cloud coverage: {}", report.cloud_coverage),
-            format!("Humidity: {}", report.humidity),
-            format!("Wind: {}", describe_wind(&report.wind)),
-            format!("Pressure: {pressure_desc}")
-        )
-    }
+    format!(
+        "{}\n{}\n{}\n{}\n{}\n{}",
+        format!("Weather: {}", describe_kind(&report.kind)),
+        format!("Temperature: {:.1}", report.temperature),
+        format!("Cloud coverage: {}", report.cloud_coverage),
+        format!("Humidity: {}", report.humidity),
+        format!("Wind: {}", describe_wind(&report.wind)),
+        format!("Pressure: {}", report.pressure)
+    )
 }
 
 fn describe_kind(kind: &Kind) -> String {
@@ -62,10 +57,6 @@ fn describe_wind(wind: &Wind) -> String {
         wind.direction,
         wind.direction.to_cardinal_direction().to_symbol()
     )
-}
-
-fn describe_pressure(value: Pressure) -> String {
-    format!("{value:.1} hPa")
 }
 
 #[cfg(test)]
@@ -175,12 +166,6 @@ mod tests {
     }
 
     #[test]
-    fn describe_pressure_values() {
-        assert_eq!(describe_pressure(990.2), "990.2 hPa");
-        assert_eq!(describe_pressure(1015.0), "1015.0 hPa");
-    }
-
-    #[test]
     fn describe_all_parameters() {
         let report = WeatherReport {
             coordinates: Coordinates {
@@ -195,7 +180,7 @@ mod tests {
                 speed: Speed::new_meters_per_second(1.07),
                 direction: Azimuth::from(155.5),
             },
-            pressure: 1009.3,
+            pressure: Hectopascal::from(1009.3),
         };
         let result = format(&report);
         let expected = "Weather: light clouds\n\

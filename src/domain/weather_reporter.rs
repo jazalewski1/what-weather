@@ -57,7 +57,7 @@ mod tests {
                     speed: Speed::new_meters_per_second(2.35),
                     direction: Azimuth::from(225.3),
                 },
-                pressure: 1001.5,
+                pressure: Hectopascal::from(1001.5),
             });
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
         let _report = sut.fetch();

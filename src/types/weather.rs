@@ -54,5 +54,3 @@ pub struct Wind {
     pub speed: Speed,
     pub direction: Azimuth,
 }
-
-pub type Pressure = f32;

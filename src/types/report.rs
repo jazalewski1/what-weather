@@ -10,5 +10,5 @@ pub struct WeatherReport {
     pub cloud_coverage: Percentage,
     pub humidity: Percentage,
     pub wind: Wind,
-    pub pressure: Pressure,
+    pub pressure: Hectopascal,
 }

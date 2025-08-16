@@ -8,7 +8,7 @@ pub fn format(report: &WeatherReport) -> String {
     let clouds_desc = describe_cloud_coverage(&report.cloud_coverage);
     let humidity_desc = describe_humidity(&report.humidity);
     let wind_desc = describe_wind(&report.wind);
-    let pressure_desc = describe_pressure(report.pressure);
+    let pressure_desc = describe_pressure(&report.pressure);
 
     #[allow(clippy::uninlined_format_args)]
     {
@@ -138,19 +138,19 @@ fn describe_wind(wind: &Wind) -> String {
     format!("{adjective} blowing at {:.1}", wind.speed)
 }
 
-fn describe_pressure(pressure: f32) -> String {
-    let adjective = if pressure <= 1000.0 {
+fn describe_pressure(pressure: &Hectopascal) -> String {
+    let adjective = if pressure.value <= 1000.0 {
         "Very low"
-    } else if pressure <= 1010.0 {
+    } else if pressure.value <= 1010.0 {
         "Low"
-    } else if pressure <= 1020.0 {
+    } else if pressure.value <= 1020.0 {
         "Normal"
-    } else if pressure <= 1030.0 {
+    } else if pressure.value <= 1030.0 {
         "High"
     } else {
         "Very high"
     };
-    format!("{adjective} pressure stands at {pressure:.1} hPa")
+    format!("{adjective} pressure stands at {pressure:.1}")
 }
 
 #[cfg(test)]
@@ -508,59 +508,59 @@ mod tests {
     #[test]
     fn describe_pressure_values() {
         assert_eq!(
-            describe_pressure(995.0),
+            describe_pressure(&Hectopascal::from(995.0)),
             "Very low pressure stands at 995.0 hPa"
         );
         assert_eq!(
-            describe_pressure(1000.0),
+            describe_pressure(&Hectopascal::from(1000.0)),
             "Very low pressure stands at 1000.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1000.1),
+            describe_pressure(&Hectopascal::from(1000.1)),
             "Low pressure stands at 1000.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1005.3),
+            describe_pressure(&Hectopascal::from(1005.3)),
             "Low pressure stands at 1005.3 hPa"
         );
         assert_eq!(
-            describe_pressure(1010.0),
+            describe_pressure(&Hectopascal::from(1010.0)),
             "Low pressure stands at 1010.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1010.1),
+            describe_pressure(&Hectopascal::from(1010.1)),
             "Normal pressure stands at 1010.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1018.7),
+            describe_pressure(&Hectopascal::from(1018.7)),
             "Normal pressure stands at 1018.7 hPa"
         );
         assert_eq!(
-            describe_pressure(1020.0),
+            describe_pressure(&Hectopascal::from(1020.0)),
             "Normal pressure stands at 1020.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1020.1),
+            describe_pressure(&Hectopascal::from(1020.1)),
             "High pressure stands at 1020.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1026.1),
+            describe_pressure(&Hectopascal::from(1026.1)),
             "High pressure stands at 1026.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1030.0),
+            describe_pressure(&Hectopascal::from(1030.0)),
             "High pressure stands at 1030.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1030.1),
+            describe_pressure(&Hectopascal::from(1030.1)),
             "Very high pressure stands at 1030.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1035.0),
+            describe_pressure(&Hectopascal::from(1035.0)),
             "Very high pressure stands at 1035.0 hPa"
         );
     }
@@ -580,7 +580,7 @@ mod tests {
                 speed: Speed::new_meters_per_second(1.07),
                 direction: Azimuth::from(155.5),
             },
-            pressure: 1009.3,
+            pressure: Hectopascal::from(1009.3),
         };
         let expected: String = "It's warm at 22.4°C \
              and the sky is mostly clear \
