@@ -37,11 +37,8 @@ impl Temperature {
 
 impl Display for Temperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let precision = f.precision().unwrap_or(1);
         match self {
-            Self::Celsius(celsius) => {
-                write!(f, "{celsius:.precision$}")
-            }
+            Self::Celsius(inner) => inner.fmt(f),
         }
     }
 }
@@ -106,11 +103,8 @@ impl Speed {
 
 impl Display for Speed {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let precision = f.precision().unwrap_or(1);
         match self {
-            Self::MetersPerSecond(inner) => {
-                write!(f, "{inner:.precision$}")
-            }
+            Self::MetersPerSecond(inner) => inner.fmt(f),
         }
     }
 }
@@ -120,14 +114,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn display_celsius() {
-        let temperature = Celsius::from(-4_f32);
+    fn display_temperature_in_celsius() {
+        let temperature = Temperature::new_celsius(-4_f32);
         assert_eq!(format!("{temperature}"), "-4.0°C");
-        let temperature = Celsius::from(0.000);
+        let temperature = Temperature::new_celsius(0.000);
         assert_eq!(format!("{temperature}"), "0.0°C");
-        let temperature = Celsius::from(1.234);
+        let temperature = Temperature::new_celsius(1.234);
         assert_eq!(format!("{temperature:.1}"), "1.2°C");
-        let temperature = Celsius::from(34.56);
+        let temperature = Temperature::new_celsius(34.56);
         assert_eq!(format!("{temperature:.3}"), "34.560°C");
     }
 
@@ -139,9 +133,9 @@ mod tests {
 
     #[test]
     fn display_meters_per_second() {
-        let speed = MetersPerSecond::from(0.0);
+        let speed = Speed::new_meters_per_second(0.0);
         assert_eq!(format!("{speed}"), "0.0 m/s");
-        let speed = MetersPerSecond::from(12.345);
+        let speed = Speed::new_meters_per_second(12.345);
         assert_eq!(format!("{speed:.2}"), "12.35 m/s");
     }
 }
