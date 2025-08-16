@@ -56,28 +56,11 @@ fn describe_kind(kind: &Kind) -> String {
 }
 
 fn describe_wind(wind: &Wind) -> String {
-    let direction_symbol = if wind.direction <= 22.5 {
-        "N"
-    } else if wind.direction <= 67.5 {
-        "NE"
-    } else if wind.direction <= 112.5 {
-        "E"
-    } else if wind.direction <= 157.5 {
-        "SE"
-    } else if wind.direction <= 202.5 {
-        "S"
-    } else if wind.direction <= 247.5 {
-        "SW"
-    } else if wind.direction <= 292.5 {
-        "W"
-    } else if wind.direction <= 337.5 {
-        "NW"
-    } else {
-        "N"
-    };
     format!(
-        "{:.1}, {}° ({direction_symbol})",
-        wind.speed, wind.direction
+        "{:.1}, {} ({})",
+        wind.speed,
+        wind.direction,
+        wind.direction.to_cardinal_direction().to_symbol()
     )
 }
 
@@ -186,7 +169,7 @@ mod tests {
     fn describe_wind_values() {
         let wind = Wind {
             speed: Speed::new_meters_per_second(42.5),
-            direction: 200.2,
+            direction: Azimuth::from(200.2),
         };
         assert_eq!(describe_wind(&wind), "42.5 m/s, 200.2° (S)");
     }
@@ -210,7 +193,7 @@ mod tests {
             humidity: Percentage::from(81),
             wind: Wind {
                 speed: Speed::new_meters_per_second(1.07),
-                direction: 155.5,
+                direction: Azimuth::from(155.5),
             },
             pressure: 1009.3,
         };

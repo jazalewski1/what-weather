@@ -52,7 +52,7 @@ pub enum Kind {
 #[derive(Clone, Debug)]
 pub struct Wind {
     pub speed: Speed,
-    pub direction: f32,
+    pub direction: Azimuth,
 }
 
 pub type Pressure = f32;

@@ -127,26 +127,7 @@ fn describe_wind(wind: &Wind) -> String {
             }
         }
     };
-
-    let direction_definition = if wind.direction <= 22.5 {
-        "north"
-    } else if wind.direction <= 67.5 {
-        "northeast"
-    } else if wind.direction <= 112.5 {
-        "east"
-    } else if wind.direction <= 157.5 {
-        "southeast"
-    } else if wind.direction <= 202.5 {
-        "south"
-    } else if wind.direction <= 247.5 {
-        "southwest"
-    } else if wind.direction <= 292.5 {
-        "west"
-    } else if wind.direction <= 337.5 {
-        "northwest"
-    } else {
-        "north"
-    };
+    let direction_definition = wind.direction.to_cardinal_direction().to_name();
     let adjective = match speed_level {
         SpeedLevel::NoWind => return "no wind".into(),
         SpeedLevel::GentleBreeze => format!("gentle {direction_definition} breeze"),
@@ -499,7 +480,7 @@ mod tests {
         let assert_string_with_speed = |value, expected_str| {
             let wind = Wind {
                 speed: Speed::new_meters_per_second(value),
-                direction: 42.0,
+                direction: Azimuth::from(42.0),
             };
             let result = describe_wind(&wind);
             assert_eq!(result, expected_str);
@@ -522,53 +503,6 @@ mod tests {
 
         assert_string_with_speed(13.81, "very strong northeast wind blowing at 13.8 m/s");
         assert_string_with_speed(15.0, "very strong northeast wind blowing at 15.0 m/s");
-    }
-
-    #[test]
-    fn describe_wind_direction() {
-        let assert_string_with_direction = |direction, expected_str| {
-            let wind = Wind {
-                speed: Speed::new_meters_per_second(5.0),
-                direction,
-            };
-            let result = describe_wind(&wind);
-            assert_eq!(result, expected_str);
-        };
-
-        assert_string_with_direction(337.6, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(345.0, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(359.9, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(0.0, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(13.1, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(22.5, "north wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(22.6, "northeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(65.2, "northeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(67.5, "northeast wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(67.6, "east wind blowing at 5.0 m/s");
-        assert_string_with_direction(100.1, "east wind blowing at 5.0 m/s");
-        assert_string_with_direction(112.5, "east wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(112.6, "southeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(121.9, "southeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(157.5, "southeast wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(157.6, "south wind blowing at 5.0 m/s");
-        assert_string_with_direction(200.0, "south wind blowing at 5.0 m/s");
-        assert_string_with_direction(202.5, "south wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(202.6, "southwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(213.3, "southwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(247.5, "southwest wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(247.6, "west wind blowing at 5.0 m/s");
-        assert_string_with_direction(281.4, "west wind blowing at 5.0 m/s");
-        assert_string_with_direction(292.5, "west wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(292.6, "northwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(293.5, "northwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(337.5, "northwest wind blowing at 5.0 m/s");
     }
 
     #[test]
@@ -644,7 +578,7 @@ mod tests {
             humidity: Percentage::from(81),
             wind: Wind {
                 speed: Speed::new_meters_per_second(1.07),
-                direction: 155.5,
+                direction: Azimuth::from(155.5),
             },
             pressure: 1009.3,
         };
