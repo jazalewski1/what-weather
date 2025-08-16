@@ -156,7 +156,7 @@ fn describe_pressure(pressure: &Hectopascal) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Coordinates;
+    use crate::types::units::Coordinates;
 
     fn assert_starts_with(string: &str, expected_start: &str) {
         assert!(

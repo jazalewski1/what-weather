@@ -62,7 +62,7 @@ fn describe_wind(wind: &Wind) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Coordinates;
+    use crate::types::units::Coordinates;
     use crate::types::units::*;
 
     #[test]

@@ -25,9 +25,9 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
 mod tests {
     use super::*;
     use crate::port::mocks::*;
+    use crate::types::WeatherReport;
     use crate::types::units::*;
     use crate::types::weather::*;
-    use crate::types::{Coordinates, WeatherReport};
 
     #[test]
     fn fetch_and_display_current_weather_report() {
