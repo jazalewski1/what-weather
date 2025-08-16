@@ -21,11 +21,11 @@ impl WeatherProvider for FakeWeatherProvider {
 
 fn generate_random_number(range: std::ops::Range<usize>) -> usize {
     let count = (range.end - range.start) as u128;
-    let milliseconds = SystemTime::now()
+    let random_base = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Failed to get current time")
-        .as_millis();
-    (milliseconds % count) as usize + range.start
+        .as_nanos();
+    (random_base % count) as usize + range.start
 }
 
 fn generate_random_weather_kind() -> Kind {
