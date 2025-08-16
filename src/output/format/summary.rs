@@ -105,9 +105,28 @@ fn describe_humidity(percentage: &Percentage) -> String {
 }
 
 fn describe_wind(wind: &Wind) -> String {
-    if wind.speed <= 0.2 {
-        return "no wind".into();
+    enum SpeedLevel {
+        NoWind,
+        GentleBreeze,
+        NormalWind,
+        StrongWind,
+        VeryStrongWind,
     }
+    let speed_level = match wind.speed {
+        Speed::MetersPerSecond(MetersPerSecond { value }) => {
+            if value <= 0.2 {
+                SpeedLevel::NoWind
+            } else if value <= 3.3 {
+                SpeedLevel::GentleBreeze
+            } else if value <= 8.0 {
+                SpeedLevel::NormalWind
+            } else if value <= 13.8 {
+                SpeedLevel::StrongWind
+            } else {
+                SpeedLevel::VeryStrongWind
+            }
+        }
+    };
 
     let direction_definition = if wind.direction <= 22.5 {
         "north"
@@ -128,17 +147,14 @@ fn describe_wind(wind: &Wind) -> String {
     } else {
         "north"
     };
-
-    let wind_definition = if wind.speed <= 3.3 {
-        format!("gentle {direction_definition} breeze")
-    } else if wind.speed <= 8.0 {
-        format!("{direction_definition} wind")
-    } else if wind.speed <= 13.8 {
-        format!("strong {direction_definition} wind")
-    } else {
-        format!("very strong {direction_definition} wind")
+    let adjective = match speed_level {
+        SpeedLevel::NoWind => return "no wind".into(),
+        SpeedLevel::GentleBreeze => format!("gentle {direction_definition} breeze"),
+        SpeedLevel::NormalWind => format!("{direction_definition} wind"),
+        SpeedLevel::StrongWind => format!("strong {direction_definition} wind"),
+        SpeedLevel::VeryStrongWind => format!("very strong {direction_definition} wind"),
     };
-    format!("{wind_definition} blowing at {:.1} m/s", wind.speed)
+    format!("{adjective} blowing at {:.1}", wind.speed)
 }
 
 fn describe_pressure(pressure: f32) -> String {
@@ -479,10 +495,10 @@ mod tests {
     }
 
     #[test]
-    fn describe_wind_speed() {
-        let assert_string_with_speed = |speed, expected_str| {
+    fn describe_wind_speed_in_meters_per_second() {
+        let assert_string_with_speed = |value, expected_str| {
             let wind = Wind {
-                speed,
+                speed: Speed::new_meters_per_second(value),
                 direction: 42.0,
             };
             let result = describe_wind(&wind);
@@ -512,7 +528,7 @@ mod tests {
     fn describe_wind_direction() {
         let assert_string_with_direction = |direction, expected_str| {
             let wind = Wind {
-                speed: 5.0,
+                speed: Speed::new_meters_per_second(5.0),
                 direction,
             };
             let result = describe_wind(&wind);
@@ -627,7 +643,7 @@ mod tests {
             cloud_coverage: Percentage::from(43),
             humidity: Percentage::from(81),
             wind: Wind {
-                speed: 1.07,
+                speed: Speed::new_meters_per_second(1.07),
                 direction: 155.5,
             },
             pressure: 1009.3,

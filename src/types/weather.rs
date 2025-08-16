@@ -1,3 +1,5 @@
+use crate::types::units::*;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Clouds {
     Clear,
@@ -49,7 +51,7 @@ pub enum Kind {
 
 #[derive(Clone, Debug)]
 pub struct Wind {
-    pub speed: f32,
+    pub speed: Speed,
     pub direction: f32,
 }
 

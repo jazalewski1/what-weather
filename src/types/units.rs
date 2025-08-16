@@ -69,6 +69,52 @@ impl From<Percentage> for i8 {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct MetersPerSecond {
+    pub value: f32,
+}
+
+impl Display for MetersPerSecond {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$} m/s", self.value)
+    }
+}
+
+impl From<f32> for MetersPerSecond {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<MetersPerSecond> for f32 {
+    fn from(speed: MetersPerSecond) -> Self {
+        speed.value
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Speed {
+    MetersPerSecond(MetersPerSecond),
+}
+
+impl Speed {
+    pub fn new_meters_per_second(value: f32) -> Self {
+        Self::MetersPerSecond(MetersPerSecond::from(value))
+    }
+}
+
+impl Display for Speed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        match self {
+            Self::MetersPerSecond(inner) => {
+                write!(f, "{inner:.precision$}")
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -89,5 +135,13 @@ mod tests {
     fn display_percentage() {
         let percentage = Percentage::from(27);
         assert_eq!(format!("{percentage}"), "27%");
+    }
+
+    #[test]
+    fn display_meters_per_second() {
+        let speed = MetersPerSecond::from(0.0);
+        assert_eq!(format!("{speed}"), "0.0 m/s");
+        let speed = MetersPerSecond::from(12.345);
+        assert_eq!(format!("{speed:.2}"), "12.35 m/s");
     }
 }

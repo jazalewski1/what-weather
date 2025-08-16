@@ -3,7 +3,6 @@ use crate::types::weather::*;
 
 pub fn format(report: &WeatherReport) -> String {
     let kind_desc = describe_kind(&report.kind);
-    let wind_desc = describe_wind(&report.wind);
     let pressure_desc = describe_pressure(report.pressure);
 
     #[allow(
@@ -17,7 +16,7 @@ pub fn format(report: &WeatherReport) -> String {
             format!("Temperature: {:.1}", report.temperature),
             format!("Cloud coverage: {}", report.cloud_coverage),
             format!("Humidity: {}", report.humidity),
-            format!("Wind: {wind_desc}"),
+            format!("Wind: {}", describe_wind(&report.wind)),
             format!("Pressure: {pressure_desc}")
         )
     }
@@ -77,7 +76,7 @@ fn describe_wind(wind: &Wind) -> String {
         "N"
     };
     format!(
-        "{} m/s, {}° ({direction_symbol})",
+        "{:.1}, {}° ({direction_symbol})",
         wind.speed, wind.direction
     )
 }
@@ -186,7 +185,7 @@ mod tests {
     #[test]
     fn describe_wind_values() {
         let wind = Wind {
-            speed: 42.5,
+            speed: Speed::new_meters_per_second(42.5),
             direction: 200.2,
         };
         assert_eq!(describe_wind(&wind), "42.5 m/s, 200.2° (S)");
@@ -210,7 +209,7 @@ mod tests {
             cloud_coverage: Percentage::from(43),
             humidity: Percentage::from(81),
             wind: Wind {
-                speed: 1.07,
+                speed: Speed::new_meters_per_second(1.07),
                 direction: 155.5,
             },
             pressure: 1009.3,
@@ -220,7 +219,7 @@ mod tests {
              Temperature: 22.4°C\n\
              Cloud coverage: 43%\n\
              Humidity: 81%\n\
-             Wind: 1.07 m/s, 155.5° (SE)\n\
+             Wind: 1.1 m/s, 155.5° (SE)\n\
              Pressure: 1009.3 hPa";
         assert_eq!(result, expected);
     }

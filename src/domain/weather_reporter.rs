@@ -54,7 +54,7 @@ mod tests {
                 cloud_coverage: Percentage::from(47),
                 humidity: Percentage::from(60),
                 wind: Wind {
-                    speed: 2.35,
+                    speed: Speed::new_meters_per_second(2.35),
                     direction: 225.3,
                 },
                 pressure: 1001.5,

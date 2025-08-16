@@ -10,11 +10,11 @@ impl WeatherProvider for FakeWeatherProvider {
         WeatherReport {
             coordinates: query.coordinates,
             kind: generate_random_weather_kind(),
-            temperature: Temperature::Celsius(Celsius::from(rnd::generate_float(-10..40, 1))),
+            temperature: Temperature::new_celsius(rnd::generate_float(-10..40, 1)),
             cloud_coverage: Percentage::from(rnd::generate_integer(0..101) as i8),
             humidity: Percentage::from(rnd::generate_integer(0..101) as i8),
             wind: Wind {
-                speed: rnd::generate_float(0..16, 2),
+                speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
                 direction: rnd::generate_float(0..360, 1),
             },
             pressure: rnd::generate_float(990..1040, 1),
