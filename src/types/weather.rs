@@ -73,10 +73,6 @@ impl Display for Temperature {
     }
 }
 
-pub type CloudCoverage = i8;
-
-pub type Humidity = i8;
-
 #[derive(Clone, Debug)]
 pub struct Wind {
     pub speed: f32,

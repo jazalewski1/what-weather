@@ -25,6 +25,7 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
 mod tests {
     use super::*;
     use crate::port::mocks::*;
+    use crate::types::units::*;
     use crate::types::weather::*;
     use crate::types::{Coordinates, WeatherReport};
 
@@ -50,8 +51,8 @@ mod tests {
                 },
                 kind: Kind::Clouds(Clouds::Light),
                 temperature: Temperature::new_celsius(24.7),
-                cloud_coverage: 47,
-                humidity: 60,
+                cloud_coverage: Percentage::from(47),
+                humidity: Percentage::from(60),
                 wind: Wind {
                     speed: 2.35,
                     direction: 225.3,

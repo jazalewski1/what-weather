@@ -24,6 +24,29 @@ impl From<Celsius> for f32 {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct Percentage {
+    pub value: i8,
+}
+
+impl Display for Percentage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}%", self.value)
+    }
+}
+
+impl From<i8> for Percentage {
+    fn from(value: i8) -> Self {
+        Self { value }
+    }
+}
+
+impl From<Percentage> for i8 {
+    fn from(percentage: Percentage) -> Self {
+        percentage.value
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -38,5 +61,11 @@ mod tests {
         assert_eq!(format!("{temperature:.1}"), "1.2°C");
         let temperature = Celsius::from(34.56);
         assert_eq!(format!("{temperature:.3}"), "34.560°C");
+    }
+
+    #[test]
+    fn display_percentage() {
+        let percentage = Percentage::from(27);
+        assert_eq!(format!("{percentage}"), "27%");
     }
 }

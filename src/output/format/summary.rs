@@ -5,8 +5,8 @@ use crate::types::weather::*;
 pub fn format(report: &WeatherReport) -> String {
     let temperature_desc = describe_temperature(&report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
-    let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
-    let humidity_desc = describe_humidity(report.humidity);
+    let clouds_desc = describe_cloud_coverage(&report.cloud_coverage);
+    let humidity_desc = describe_humidity(&report.humidity);
     let wind_desc = describe_wind(&report.wind);
     let pressure_desc = describe_pressure(report.pressure);
 
@@ -80,32 +80,28 @@ fn describe_temperature(temperature: &Temperature) -> String {
     format!("It's {adjective} at {temperature:.1}")
 }
 
-fn describe_cloud_coverage(coverage: CloudCoverage) -> String {
-    if coverage == 0 {
+fn describe_cloud_coverage(coverage: &Percentage) -> String {
+    if coverage.value == 0 {
         "no clouds".into()
     } else {
-        format!("clouds covering {coverage}% of the sky")
+        format!("clouds covering {coverage} of the sky")
     }
 }
 
-fn describe_humidity(humidity: i8) -> String {
-    let (definition, with_postfix) = if humidity <= 15 {
-        ("very dry", true)
-    } else if humidity <= 30 {
-        ("dry", true)
-    } else if humidity <= 60 {
-        ("humid", false)
-    } else if humidity <= 85 {
-        ("very humid", false)
+fn describe_humidity(percentage: &Percentage) -> String {
+    let make_without_humidity = |adjective| format!("The air is {adjective} at {percentage}");
+    let make_with_humidity = |adjective| format!("{} humidity", make_without_humidity(adjective));
+    if percentage.value <= 15 {
+        make_with_humidity("very dry")
+    } else if percentage.value <= 30 {
+        make_with_humidity("dry")
+    } else if percentage.value <= 60 {
+        make_without_humidity("humid")
+    } else if percentage.value <= 85 {
+        make_without_humidity("very humid")
     } else {
-        ("heavy", true)
-    };
-    let label = if with_postfix {
-        format!("{humidity}% humidity")
-    } else {
-        format!("{humidity}%")
-    };
-    format!("The air is {definition} at {label}")
+        make_with_humidity("heavy")
+    }
 }
 
 fn describe_wind(wind: &Wind) -> String {
@@ -427,33 +423,59 @@ mod tests {
 
     #[test]
     fn describe_cloud_coverage_values() {
-        assert_eq!(describe_cloud_coverage(0), "no clouds");
+        assert_eq!(describe_cloud_coverage(&Percentage::from(0)), "no clouds");
         assert_eq!(
-            describe_cloud_coverage(27),
+            describe_cloud_coverage(&Percentage::from(27)),
             "clouds covering 27% of the sky"
-        );
-        assert_eq!(
-            describe_cloud_coverage(100),
-            "clouds covering 100% of the sky"
         );
     }
 
     #[test]
     fn describe_humidity_values() {
-        assert_eq!(describe_humidity(0), "The air is very dry at 0% humidity");
-        assert_eq!(describe_humidity(15), "The air is very dry at 15% humidity");
+        assert_eq!(
+            describe_humidity(&Percentage::from(0)),
+            "The air is very dry at 0% humidity"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(15)),
+            "The air is very dry at 15% humidity"
+        );
 
-        assert_eq!(describe_humidity(16), "The air is dry at 16% humidity");
-        assert_eq!(describe_humidity(30), "The air is dry at 30% humidity");
+        assert_eq!(
+            describe_humidity(&Percentage::from(16)),
+            "The air is dry at 16% humidity"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(30)),
+            "The air is dry at 30% humidity"
+        );
 
-        assert_eq!(describe_humidity(31), "The air is humid at 31%");
-        assert_eq!(describe_humidity(60), "The air is humid at 60%");
+        assert_eq!(
+            describe_humidity(&Percentage::from(31)),
+            "The air is humid at 31%"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(60)),
+            "The air is humid at 60%"
+        );
 
-        assert_eq!(describe_humidity(61), "The air is very humid at 61%");
-        assert_eq!(describe_humidity(85), "The air is very humid at 85%");
+        assert_eq!(
+            describe_humidity(&Percentage::from(61)),
+            "The air is very humid at 61%"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(85)),
+            "The air is very humid at 85%"
+        );
 
-        assert_eq!(describe_humidity(86), "The air is heavy at 86% humidity");
-        assert_eq!(describe_humidity(100), "The air is heavy at 100% humidity");
+        assert_eq!(
+            describe_humidity(&Percentage::from(86)),
+            "The air is heavy at 86% humidity"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(100)),
+            "The air is heavy at 100% humidity"
+        );
     }
 
     #[test]
@@ -602,8 +624,8 @@ mod tests {
             },
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(22.4),
-            cloud_coverage: 43,
-            humidity: 81,
+            cloud_coverage: Percentage::from(43),
+            humidity: Percentage::from(81),
             wind: Wind {
                 speed: 1.07,
                 direction: 155.5,

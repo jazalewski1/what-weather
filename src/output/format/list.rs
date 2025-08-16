@@ -3,8 +3,6 @@ use crate::types::weather::*;
 
 pub fn format(report: &WeatherReport) -> String {
     let kind_desc = describe_kind(&report.kind);
-    let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
-    let humidity_desc = describe_humidity(report.humidity);
     let wind_desc = describe_wind(&report.wind);
     let pressure_desc = describe_pressure(report.pressure);
 
@@ -17,8 +15,8 @@ pub fn format(report: &WeatherReport) -> String {
             "{}\n{}\n{}\n{}\n{}\n{}",
             format!("Weather: {kind_desc}"),
             format!("Temperature: {:.1}", report.temperature),
-            format!("Cloud coverage: {clouds_desc}"),
-            format!("Humidity: {humidity_desc}"),
+            format!("Cloud coverage: {}", report.cloud_coverage),
+            format!("Humidity: {}", report.humidity),
             format!("Wind: {wind_desc}"),
             format!("Pressure: {pressure_desc}")
         )
@@ -58,14 +56,6 @@ fn describe_kind(kind: &Kind) -> String {
     }
 }
 
-fn describe_cloud_coverage(value: CloudCoverage) -> String {
-    format!("{value}%")
-}
-
-fn describe_humidity(value: Humidity) -> String {
-    format!("{value}%")
-}
-
 fn describe_wind(wind: &Wind) -> String {
     let direction_symbol = if wind.direction <= 22.5 {
         "N"
@@ -100,6 +90,7 @@ fn describe_pressure(value: Pressure) -> String {
 mod tests {
     use super::*;
     use crate::types::Coordinates;
+    use crate::types::units::*;
 
     #[test]
     fn describe_clouds_kind_values() {
@@ -193,20 +184,6 @@ mod tests {
     }
 
     #[test]
-    fn describe_clouds_coverage_values() {
-        assert_eq!(describe_cloud_coverage(0), "0%");
-        assert_eq!(describe_cloud_coverage(43), "43%");
-        assert_eq!(describe_cloud_coverage(100), "100%");
-    }
-
-    #[test]
-    fn describe_humidity_values() {
-        assert_eq!(describe_humidity(0), "0%");
-        assert_eq!(describe_humidity(66), "66%");
-        assert_eq!(describe_humidity(100), "100%");
-    }
-
-    #[test]
     fn describe_wind_values() {
         let wind = Wind {
             speed: 42.5,
@@ -230,8 +207,8 @@ mod tests {
             },
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(22.4),
-            cloud_coverage: 43,
-            humidity: 81,
+            cloud_coverage: Percentage::from(43),
+            humidity: Percentage::from(81),
             wind: Wind {
                 speed: 1.07,
                 direction: 155.5,
