@@ -25,8 +25,9 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
 mod tests {
     use super::*;
     use crate::port::mocks::*;
+    use crate::types::WeatherReport;
+    use crate::types::units::*;
     use crate::types::weather::*;
-    use crate::types::{Coordinates, WeatherReport};
 
     #[test]
     fn fetch_and_display_current_weather_report() {
@@ -49,14 +50,14 @@ mod tests {
                     longitude: 3.4,
                 },
                 kind: Kind::Clouds(Clouds::Light),
-                temperature: 24.7,
-                cloud_coverage: 47,
-                humidity: 60,
+                temperature: Temperature::new_celsius(24.7),
+                cloud_coverage: Percentage::from(47),
+                humidity: Percentage::from(60),
                 wind: Wind {
-                    speed: 2.35,
-                    direction: 225.3,
+                    speed: Speed::new_meters_per_second(2.35),
+                    direction: Azimuth::from(225.3),
                 },
-                pressure: 1001.5,
+                pressure: Hectopascal::from(1001.5),
             });
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
         let _report = sut.fetch();

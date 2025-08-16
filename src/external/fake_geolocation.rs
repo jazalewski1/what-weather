@@ -1,5 +1,5 @@
 use crate::port::GeolocationProvider;
-use crate::types::Coordinates;
+use crate::types::units::Coordinates;
 
 pub struct FakeGeolocationProvider;
 

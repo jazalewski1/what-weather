@@ -1,3 +1,5 @@
+use crate::types::units::*;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Clouds {
     Clear,
@@ -47,16 +49,8 @@ pub enum Kind {
     Thunderstorm,
 }
 
-pub type Temperature = f32;
-
-pub type CloudCoverage = i8;
-
-pub type Humidity = i8;
-
 #[derive(Clone, Debug)]
 pub struct Wind {
-    pub speed: f32,
-    pub direction: f32,
+    pub speed: Speed,
+    pub direction: Azimuth,
 }
-
-pub type Pressure = f32;

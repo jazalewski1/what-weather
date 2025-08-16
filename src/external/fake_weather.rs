@@ -1,7 +1,7 @@
 use crate::port::WeatherProvider;
+use crate::types::units::*;
 use crate::types::weather::*;
 use crate::types::{WeatherQuery, WeatherReport};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct FakeWeatherProvider;
 
@@ -10,22 +10,16 @@ impl WeatherProvider for FakeWeatherProvider {
         WeatherReport {
             coordinates: query.coordinates,
             kind: generate_random_weather_kind(),
-            temperature: generate_random_temperature(),
-            cloud_coverage: generate_random_cloud_coverage(),
-            humidity: generate_random_humidity(),
-            wind: generate_random_wind(),
-            pressure: generate_random_pressure(),
+            temperature: Temperature::new_celsius(rnd::generate_float(-10..40, 1)),
+            cloud_coverage: Percentage::from(rnd::generate_integer(0..101) as i8),
+            humidity: Percentage::from(rnd::generate_integer(0..101) as i8),
+            wind: Wind {
+                speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
+                direction: Azimuth::from(rnd::generate_float(0..360, 1)),
+            },
+            pressure: Hectopascal::from(rnd::generate_float(990..1040, 1)),
         }
     }
-}
-
-fn generate_random_number(range: std::ops::Range<usize>) -> usize {
-    let count = (range.end - range.start) as u128;
-    let random_base = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Failed to get current time")
-        .as_nanos();
-    (random_base % count) as usize + range.start
 }
 
 fn generate_random_weather_kind() -> Kind {
@@ -56,40 +50,31 @@ fn generate_random_weather_kind() -> Kind {
         }),
         Kind::Thunderstorm,
     ];
-    let weather_kind_index = generate_random_number(0..weather_kinds.len());
+    let weather_kind_index = rnd::generate_integer(0..weather_kinds.len() as i64) as usize;
     weather_kinds[weather_kind_index]
 }
 
-fn generate_random_temperature() -> Temperature {
-    let fractional = (generate_random_number(0..10) as f32) / 10.0;
-    let integral = (generate_random_number(0..40) as f32) - 10.0;
-    integral + fractional + 1.3
-}
+/// This module uses obviously naive random generators, but is good enough for fake data,
+/// and will be removed in the future anyway.
+mod rnd {
+    use std::time::{SystemTime, UNIX_EPOCH};
 
-fn generate_random_cloud_coverage() -> CloudCoverage {
-    generate_random_number(0..101) as i8
-}
+    pub fn generate_integer(range: std::ops::Range<i64>) -> i64 {
+        let span = (range.end - range.start) as u128;
+        let random_base = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Failed to get current time")
+            .as_nanos();
+        (random_base % span) as i64 + range.start
+    }
 
-fn generate_random_humidity() -> i8 {
-    generate_random_number(0..101) as i8
-}
-
-fn generate_random_wind() -> Wind {
-    let speed = {
-        let fractional = (generate_random_number(0..100) as f32) / 100.0;
-        let integral = generate_random_number(0..15) as f32;
-        integral + fractional
-    };
-    let direction = {
-        let fractional = (generate_random_number(0..10) as f32) / 10.0;
-        let integral = generate_random_number(0..360) as f32;
-        integral + fractional
-    };
-    Wind { speed, direction }
-}
-
-fn generate_random_pressure() -> Pressure {
-    let fractional = (generate_random_number(0..10) as f32) / 10.0;
-    let integral = generate_random_number(990..1040) as f32;
-    integral + fractional
+    pub fn generate_float(range: std::ops::Range<i64>, precision: u8) -> f32 {
+        let random_integer = {
+            let multiplier = 10_i64.pow(precision.into());
+            let range = (range.start * multiplier)..(range.end * multiplier);
+            generate_integer(range)
+        };
+        let divider = 10_f32.powi(precision.into());
+        random_integer as f32 / divider
+    }
 }

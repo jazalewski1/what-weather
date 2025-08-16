@@ -1,13 +1,14 @@
 use crate::types::WeatherReport;
+use crate::types::units::*;
 use crate::types::weather::*;
 
 pub fn format(report: &WeatherReport) -> String {
-    let temperature_desc = describe_temperature(report.temperature);
+    let temperature_desc = describe_temperature(&report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
-    let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
-    let humidity_desc = describe_humidity(report.humidity);
+    let clouds_desc = describe_cloud_coverage(&report.cloud_coverage);
+    let humidity_desc = describe_humidity(&report.humidity);
     let wind_desc = describe_wind(&report.wind);
-    let pressure_desc = describe_pressure(report.pressure);
+    let pressure_desc = describe_pressure(&report.pressure);
 
     #[allow(clippy::uninlined_format_args)]
     {
@@ -58,107 +59,104 @@ fn describe_weather_kind(kind: &Kind) -> String {
     }
 }
 
-fn describe_temperature(temperature: Temperature) -> String {
-    let adjective = if temperature <= 0.0 {
-        "freezing"
-    } else if temperature <= 10.0 {
-        "cold"
-    } else if temperature <= 17.0 {
-        "cool"
-    } else if temperature <= 24.0 {
-        "warm"
-    } else if temperature <= 35.0 {
-        "hot"
-    } else {
-        "very hot"
+fn describe_temperature(temperature: &Temperature) -> String {
+    let adjective = match temperature {
+        Temperature::Celsius(Celsius { value }) => {
+            if *value <= 0.0 {
+                "freezing"
+            } else if *value <= 10.0 {
+                "cold"
+            } else if *value <= 17.0 {
+                "cool"
+            } else if *value <= 24.0 {
+                "warm"
+            } else if *value <= 35.0 {
+                "hot"
+            } else {
+                "very hot"
+            }
+        }
     };
-    format!("It's {adjective} at {temperature:.1}°C")
+    format!("It's {adjective} at {temperature:.1}")
 }
 
-fn describe_cloud_coverage(coverage: CloudCoverage) -> String {
-    if coverage == 0 {
+fn describe_cloud_coverage(coverage: &Percentage) -> String {
+    if coverage.value == 0 {
         "no clouds".into()
     } else {
-        format!("clouds covering {coverage}% of the sky")
+        format!("clouds covering {coverage} of the sky")
     }
 }
 
-fn describe_humidity(humidity: i8) -> String {
-    let (definition, with_postfix) = if humidity <= 15 {
-        ("very dry", true)
-    } else if humidity <= 30 {
-        ("dry", true)
-    } else if humidity <= 60 {
-        ("humid", false)
-    } else if humidity <= 85 {
-        ("very humid", false)
+fn describe_humidity(percentage: &Percentage) -> String {
+    let make_without_humidity = |adjective| format!("The air is {adjective} at {percentage}");
+    let make_with_humidity = |adjective| format!("{} humidity", make_without_humidity(adjective));
+    if percentage.value <= 15 {
+        make_with_humidity("very dry")
+    } else if percentage.value <= 30 {
+        make_with_humidity("dry")
+    } else if percentage.value <= 60 {
+        make_without_humidity("humid")
+    } else if percentage.value <= 85 {
+        make_without_humidity("very humid")
     } else {
-        ("heavy", true)
-    };
-    let label = if with_postfix {
-        format!("{humidity}% humidity")
-    } else {
-        format!("{humidity}%")
-    };
-    format!("The air is {definition} at {label}")
+        make_with_humidity("heavy")
+    }
 }
 
 fn describe_wind(wind: &Wind) -> String {
-    if wind.speed <= 0.2 {
-        return "no wind".into();
+    enum SpeedLevel {
+        NoWind,
+        GentleBreeze,
+        NormalWind,
+        StrongWind,
+        VeryStrongWind,
     }
-
-    let direction_definition = if wind.direction <= 22.5 {
-        "north"
-    } else if wind.direction <= 67.5 {
-        "northeast"
-    } else if wind.direction <= 112.5 {
-        "east"
-    } else if wind.direction <= 157.5 {
-        "southeast"
-    } else if wind.direction <= 202.5 {
-        "south"
-    } else if wind.direction <= 247.5 {
-        "southwest"
-    } else if wind.direction <= 292.5 {
-        "west"
-    } else if wind.direction <= 337.5 {
-        "northwest"
-    } else {
-        "north"
+    let speed_level = match wind.speed {
+        Speed::MetersPerSecond(MetersPerSecond { value }) => {
+            if value <= 0.2 {
+                SpeedLevel::NoWind
+            } else if value <= 3.3 {
+                SpeedLevel::GentleBreeze
+            } else if value <= 8.0 {
+                SpeedLevel::NormalWind
+            } else if value <= 13.8 {
+                SpeedLevel::StrongWind
+            } else {
+                SpeedLevel::VeryStrongWind
+            }
+        }
     };
-
-    let wind_definition = if wind.speed <= 3.3 {
-        format!("gentle {direction_definition} breeze")
-    } else if wind.speed <= 8.0 {
-        format!("{direction_definition} wind")
-    } else if wind.speed <= 13.8 {
-        format!("strong {direction_definition} wind")
-    } else {
-        format!("very strong {direction_definition} wind")
+    let direction_definition = wind.direction.to_cardinal_direction().to_name();
+    let adjective = match speed_level {
+        SpeedLevel::NoWind => return "no wind".into(),
+        SpeedLevel::GentleBreeze => format!("gentle {direction_definition} breeze"),
+        SpeedLevel::NormalWind => format!("{direction_definition} wind"),
+        SpeedLevel::StrongWind => format!("strong {direction_definition} wind"),
+        SpeedLevel::VeryStrongWind => format!("very strong {direction_definition} wind"),
     };
-    format!("{wind_definition} blowing at {:.1} m/s", wind.speed)
+    format!("{adjective} blowing at {:.1}", wind.speed)
 }
 
-fn describe_pressure(pressure: f32) -> String {
-    let adjective = if pressure <= 1000.0 {
+fn describe_pressure(pressure: &Hectopascal) -> String {
+    let adjective = if pressure.value <= 1000.0 {
         "Very low"
-    } else if pressure <= 1010.0 {
+    } else if pressure.value <= 1010.0 {
         "Low"
-    } else if pressure <= 1020.0 {
+    } else if pressure.value <= 1020.0 {
         "Normal"
-    } else if pressure <= 1030.0 {
+    } else if pressure.value <= 1030.0 {
         "High"
     } else {
         "Very high"
     };
-    format!("{adjective} pressure stands at {pressure:.1} hPa")
+    format!("{adjective} pressure stands at {pressure:.1}")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Coordinates;
+    use crate::types::units::Coordinates;
 
     fn assert_starts_with(string: &str, expected_start: &str) {
         assert!(
@@ -345,67 +343,144 @@ mod tests {
 
     #[test]
     fn describe_temperature_values() {
-        assert_eq!(describe_temperature(-3.0), "It's freezing at -3.0°C");
-        assert_eq!(describe_temperature(-0.1), "It's freezing at -0.1°C");
-        assert_eq!(describe_temperature(0.0), "It's freezing at 0.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(-3.0)),
+            "It's freezing at -3.0°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(-0.1)),
+            "It's freezing at -0.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(0.0)),
+            "It's freezing at 0.0°C"
+        );
 
-        assert_eq!(describe_temperature(1.0), "It's cold at 1.0°C");
-        assert_eq!(describe_temperature(4.5), "It's cold at 4.5°C");
-        assert_eq!(describe_temperature(10.0), "It's cold at 10.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(1.0)),
+            "It's cold at 1.0°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(4.5)),
+            "It's cold at 4.5°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(10.0)),
+            "It's cold at 10.0°C"
+        );
 
-        assert_eq!(describe_temperature(10.1), "It's cool at 10.1°C");
-        assert_eq!(describe_temperature(13.7), "It's cool at 13.7°C");
-        assert_eq!(describe_temperature(17.0), "It's cool at 17.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(10.1)),
+            "It's cool at 10.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(13.7)),
+            "It's cool at 13.7°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(17.0)),
+            "It's cool at 17.0°C"
+        );
 
-        assert_eq!(describe_temperature(17.1), "It's warm at 17.1°C");
-        assert_eq!(describe_temperature(20.0), "It's warm at 20.0°C");
-        assert_eq!(describe_temperature(24.0), "It's warm at 24.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(17.1)),
+            "It's warm at 17.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(20.0)),
+            "It's warm at 20.0°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(24.0)),
+            "It's warm at 24.0°C"
+        );
 
-        assert_eq!(describe_temperature(24.1), "It's hot at 24.1°C");
-        assert_eq!(describe_temperature(29.9), "It's hot at 29.9°C");
-        assert_eq!(describe_temperature(35.0), "It's hot at 35.0°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(24.1)),
+            "It's hot at 24.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(29.9)),
+            "It's hot at 29.9°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(35.0)),
+            "It's hot at 35.0°C"
+        );
 
-        assert_eq!(describe_temperature(35.1), "It's very hot at 35.1°C");
-        assert_eq!(describe_temperature(40.2), "It's very hot at 40.2°C");
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(35.1)),
+            "It's very hot at 35.1°C"
+        );
+        assert_eq!(
+            describe_temperature(&Temperature::new_celsius(40.2)),
+            "It's very hot at 40.2°C"
+        );
     }
 
     #[test]
     fn describe_cloud_coverage_values() {
-        assert_eq!(describe_cloud_coverage(0), "no clouds");
+        assert_eq!(describe_cloud_coverage(&Percentage::from(0)), "no clouds");
         assert_eq!(
-            describe_cloud_coverage(27),
+            describe_cloud_coverage(&Percentage::from(27)),
             "clouds covering 27% of the sky"
-        );
-        assert_eq!(
-            describe_cloud_coverage(100),
-            "clouds covering 100% of the sky"
         );
     }
 
     #[test]
     fn describe_humidity_values() {
-        assert_eq!(describe_humidity(0), "The air is very dry at 0% humidity");
-        assert_eq!(describe_humidity(15), "The air is very dry at 15% humidity");
+        assert_eq!(
+            describe_humidity(&Percentage::from(0)),
+            "The air is very dry at 0% humidity"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(15)),
+            "The air is very dry at 15% humidity"
+        );
 
-        assert_eq!(describe_humidity(16), "The air is dry at 16% humidity");
-        assert_eq!(describe_humidity(30), "The air is dry at 30% humidity");
+        assert_eq!(
+            describe_humidity(&Percentage::from(16)),
+            "The air is dry at 16% humidity"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(30)),
+            "The air is dry at 30% humidity"
+        );
 
-        assert_eq!(describe_humidity(31), "The air is humid at 31%");
-        assert_eq!(describe_humidity(60), "The air is humid at 60%");
+        assert_eq!(
+            describe_humidity(&Percentage::from(31)),
+            "The air is humid at 31%"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(60)),
+            "The air is humid at 60%"
+        );
 
-        assert_eq!(describe_humidity(61), "The air is very humid at 61%");
-        assert_eq!(describe_humidity(85), "The air is very humid at 85%");
+        assert_eq!(
+            describe_humidity(&Percentage::from(61)),
+            "The air is very humid at 61%"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(85)),
+            "The air is very humid at 85%"
+        );
 
-        assert_eq!(describe_humidity(86), "The air is heavy at 86% humidity");
-        assert_eq!(describe_humidity(100), "The air is heavy at 100% humidity");
+        assert_eq!(
+            describe_humidity(&Percentage::from(86)),
+            "The air is heavy at 86% humidity"
+        );
+        assert_eq!(
+            describe_humidity(&Percentage::from(100)),
+            "The air is heavy at 100% humidity"
+        );
     }
 
     #[test]
-    fn describe_wind_speed() {
-        let assert_string_with_speed = |speed, expected_str| {
+    fn describe_wind_speed_in_meters_per_second() {
+        let assert_string_with_speed = |value, expected_str| {
             let wind = Wind {
-                speed,
-                direction: 42.0,
+                speed: Speed::new_meters_per_second(value),
+                direction: Azimuth::from(42.0),
             };
             let result = describe_wind(&wind);
             assert_eq!(result, expected_str);
@@ -431,108 +506,61 @@ mod tests {
     }
 
     #[test]
-    fn describe_wind_direction() {
-        let assert_string_with_direction = |direction, expected_str| {
-            let wind = Wind {
-                speed: 5.0,
-                direction,
-            };
-            let result = describe_wind(&wind);
-            assert_eq!(result, expected_str);
-        };
-
-        assert_string_with_direction(337.6, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(345.0, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(359.9, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(0.0, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(13.1, "north wind blowing at 5.0 m/s");
-        assert_string_with_direction(22.5, "north wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(22.6, "northeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(65.2, "northeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(67.5, "northeast wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(67.6, "east wind blowing at 5.0 m/s");
-        assert_string_with_direction(100.1, "east wind blowing at 5.0 m/s");
-        assert_string_with_direction(112.5, "east wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(112.6, "southeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(121.9, "southeast wind blowing at 5.0 m/s");
-        assert_string_with_direction(157.5, "southeast wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(157.6, "south wind blowing at 5.0 m/s");
-        assert_string_with_direction(200.0, "south wind blowing at 5.0 m/s");
-        assert_string_with_direction(202.5, "south wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(202.6, "southwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(213.3, "southwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(247.5, "southwest wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(247.6, "west wind blowing at 5.0 m/s");
-        assert_string_with_direction(281.4, "west wind blowing at 5.0 m/s");
-        assert_string_with_direction(292.5, "west wind blowing at 5.0 m/s");
-
-        assert_string_with_direction(292.6, "northwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(293.5, "northwest wind blowing at 5.0 m/s");
-        assert_string_with_direction(337.5, "northwest wind blowing at 5.0 m/s");
-    }
-
-    #[test]
     fn describe_pressure_values() {
         assert_eq!(
-            describe_pressure(995.0),
+            describe_pressure(&Hectopascal::from(995.0)),
             "Very low pressure stands at 995.0 hPa"
         );
         assert_eq!(
-            describe_pressure(1000.0),
+            describe_pressure(&Hectopascal::from(1000.0)),
             "Very low pressure stands at 1000.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1000.1),
+            describe_pressure(&Hectopascal::from(1000.1)),
             "Low pressure stands at 1000.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1005.3),
+            describe_pressure(&Hectopascal::from(1005.3)),
             "Low pressure stands at 1005.3 hPa"
         );
         assert_eq!(
-            describe_pressure(1010.0),
+            describe_pressure(&Hectopascal::from(1010.0)),
             "Low pressure stands at 1010.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1010.1),
+            describe_pressure(&Hectopascal::from(1010.1)),
             "Normal pressure stands at 1010.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1018.7),
+            describe_pressure(&Hectopascal::from(1018.7)),
             "Normal pressure stands at 1018.7 hPa"
         );
         assert_eq!(
-            describe_pressure(1020.0),
+            describe_pressure(&Hectopascal::from(1020.0)),
             "Normal pressure stands at 1020.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1020.1),
+            describe_pressure(&Hectopascal::from(1020.1)),
             "High pressure stands at 1020.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1026.1),
+            describe_pressure(&Hectopascal::from(1026.1)),
             "High pressure stands at 1026.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1030.0),
+            describe_pressure(&Hectopascal::from(1030.0)),
             "High pressure stands at 1030.0 hPa"
         );
 
         assert_eq!(
-            describe_pressure(1030.1),
+            describe_pressure(&Hectopascal::from(1030.1)),
             "Very high pressure stands at 1030.1 hPa"
         );
         assert_eq!(
-            describe_pressure(1035.0),
+            describe_pressure(&Hectopascal::from(1035.0)),
             "Very high pressure stands at 1035.0 hPa"
         );
     }
@@ -545,14 +573,14 @@ mod tests {
                 longitude: 3.4,
             },
             kind: Kind::Clouds(Clouds::Light),
-            temperature: 22.4,
-            cloud_coverage: 43,
-            humidity: 81,
+            temperature: Temperature::new_celsius(22.4),
+            cloud_coverage: Percentage::from(43),
+            humidity: Percentage::from(81),
             wind: Wind {
-                speed: 1.07,
-                direction: 155.5,
+                speed: Speed::new_meters_per_second(1.07),
+                direction: Azimuth::from(155.5),
             },
-            pressure: 1009.3,
+            pressure: Hectopascal::from(1009.3),
         };
         let expected: String = "It's warm at 22.4°C \
              and the sky is mostly clear \

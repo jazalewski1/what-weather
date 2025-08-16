@@ -1,29 +1,20 @@
 use crate::types::WeatherReport;
 use crate::types::weather::*;
 
+#[allow(
+    clippy::format_in_format_args,
+    reason = "Fits in one line. Executed only once, so performance is not a concern."
+)]
 pub fn format(report: &WeatherReport) -> String {
-    let kind_desc = describe_kind(&report.kind);
-    let temperature_desc = describe_temperature(report.temperature);
-    let clouds_desc = describe_cloud_coverage(report.cloud_coverage);
-    let humidity_desc = describe_humidity(report.humidity);
-    let wind_desc = describe_wind(&report.wind);
-    let pressure_desc = describe_pressure(report.pressure);
-
-    #[allow(
-        clippy::format_in_format_args,
-        reason = "Fits in one line. Executed only once, so performance is not a concern."
-    )]
-    {
-        format!(
-            "{}\n{}\n{}\n{}\n{}\n{}",
-            format!("Weather: {kind_desc}"),
-            format!("Temperature: {temperature_desc}"),
-            format!("Cloud coverage: {clouds_desc}"),
-            format!("Humidity: {humidity_desc}"),
-            format!("Wind: {wind_desc}"),
-            format!("Pressure: {pressure_desc}")
-        )
-    }
+    format!(
+        "{}\n{}\n{}\n{}\n{}\n{}",
+        format!("Weather: {}", describe_kind(&report.kind)),
+        format!("Temperature: {:.1}", report.temperature),
+        format!("Cloud coverage: {}", report.cloud_coverage),
+        format!("Humidity: {}", report.humidity),
+        format!("Wind: {}", describe_wind(&report.wind)),
+        format!("Pressure: {}", report.pressure)
+    )
 }
 
 fn describe_kind(kind: &Kind) -> String {
@@ -59,52 +50,20 @@ fn describe_kind(kind: &Kind) -> String {
     }
 }
 
-fn describe_temperature(value: Temperature) -> String {
-    format!("{value:.1}°C")
-}
-
-fn describe_cloud_coverage(value: CloudCoverage) -> String {
-    format!("{value}%")
-}
-
-fn describe_humidity(value: Humidity) -> String {
-    format!("{value}%")
-}
-
 fn describe_wind(wind: &Wind) -> String {
-    let direction_symbol = if wind.direction <= 22.5 {
-        "N"
-    } else if wind.direction <= 67.5 {
-        "NE"
-    } else if wind.direction <= 112.5 {
-        "E"
-    } else if wind.direction <= 157.5 {
-        "SE"
-    } else if wind.direction <= 202.5 {
-        "S"
-    } else if wind.direction <= 247.5 {
-        "SW"
-    } else if wind.direction <= 292.5 {
-        "W"
-    } else if wind.direction <= 337.5 {
-        "NW"
-    } else {
-        "N"
-    };
     format!(
-        "{} m/s, {}° ({direction_symbol})",
-        wind.speed, wind.direction
+        "{:.1}, {} ({})",
+        wind.speed,
+        wind.direction,
+        wind.direction.to_cardinal_direction().to_symbol()
     )
-}
-
-fn describe_pressure(value: Pressure) -> String {
-    format!("{value:.1} hPa")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Coordinates;
+    use crate::types::units::Coordinates;
+    use crate::types::units::*;
 
     #[test]
     fn describe_clouds_kind_values() {
@@ -198,39 +157,12 @@ mod tests {
     }
 
     #[test]
-    fn describe_temperature_values() {
-        assert_eq!(describe_temperature(-13.5), "-13.5°C");
-        assert_eq!(describe_temperature(27.0), "27.0°C");
-        assert_eq!(describe_temperature(1.97), "2.0°C");
-    }
-
-    #[test]
-    fn describe_clouds_coverage_values() {
-        assert_eq!(describe_cloud_coverage(0), "0%");
-        assert_eq!(describe_cloud_coverage(43), "43%");
-        assert_eq!(describe_cloud_coverage(100), "100%");
-    }
-
-    #[test]
-    fn describe_humidity_values() {
-        assert_eq!(describe_humidity(0), "0%");
-        assert_eq!(describe_humidity(66), "66%");
-        assert_eq!(describe_humidity(100), "100%");
-    }
-
-    #[test]
     fn describe_wind_values() {
         let wind = Wind {
-            speed: 42.5,
-            direction: 200.2,
+            speed: Speed::new_meters_per_second(42.5),
+            direction: Azimuth::from(200.2),
         };
         assert_eq!(describe_wind(&wind), "42.5 m/s, 200.2° (S)");
-    }
-
-    #[test]
-    fn describe_pressure_values() {
-        assert_eq!(describe_pressure(990.2), "990.2 hPa");
-        assert_eq!(describe_pressure(1015.0), "1015.0 hPa");
     }
 
     #[test]
@@ -241,21 +173,21 @@ mod tests {
                 longitude: 3.4,
             },
             kind: Kind::Clouds(Clouds::Light),
-            temperature: 22.4,
-            cloud_coverage: 43,
-            humidity: 81,
+            temperature: Temperature::new_celsius(22.4),
+            cloud_coverage: Percentage::from(43),
+            humidity: Percentage::from(81),
             wind: Wind {
-                speed: 1.07,
-                direction: 155.5,
+                speed: Speed::new_meters_per_second(1.07),
+                direction: Azimuth::from(155.5),
             },
-            pressure: 1009.3,
+            pressure: Hectopascal::from(1009.3),
         };
         let result = format(&report);
         let expected = "Weather: light clouds\n\
              Temperature: 22.4°C\n\
              Cloud coverage: 43%\n\
              Humidity: 81%\n\
-             Wind: 1.07 m/s, 155.5° (SE)\n\
+             Wind: 1.1 m/s, 155.5° (SE)\n\
              Pressure: 1009.3 hPa";
         assert_eq!(result, expected);
     }
