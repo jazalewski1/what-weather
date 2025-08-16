@@ -1,8 +1,8 @@
-use crate::types::WeatherReport;
+use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
 
-pub fn format(report: &WeatherReport) -> String {
+pub fn describe(report: &FullReport) -> String {
     let temperature_desc = describe_temperature(&report.temperature);
     let weather_kind_desc = describe_weather_kind(&report.kind);
     let clouds_desc = describe_cloud_coverage(&report.cloud_coverage);
@@ -156,7 +156,6 @@ fn describe_pressure(pressure: &Hectopascal) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::units::Coordinates;
 
     fn assert_starts_with(string: &str, expected_start: &str) {
         assert!(
@@ -567,11 +566,7 @@ mod tests {
 
     #[test]
     fn describe_entire_summary() {
-        let report = WeatherReport {
-            coordinates: Coordinates {
-                latitude: 1.2,
-                longitude: 3.4,
-            },
+        let report = FullReport {
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(22.4),
             cloud_coverage: Percentage::from(43),
@@ -589,7 +584,7 @@ mod tests {
              with gentle southeast breeze blowing at 1.1 m/s.\n\
              Low pressure stands at 1009.3 hPa."
             .into();
-        let result = format(&report);
+        let result = describe(&report);
         assert_eq!(result, expected);
     }
 }
