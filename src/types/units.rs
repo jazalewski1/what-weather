@@ -135,26 +135,27 @@ impl Display for Degrees {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Azimuth {
-    pub angle: f32,
+    pub angle: Degrees,
 }
 
 impl Azimuth {
     pub fn to_cardinal_direction(&self) -> CardinalDirection {
-        if self.angle <= 22.5 {
+        let degrees = self.angle.value;
+        if degrees <= 22.5 {
             CardinalDirection::North
-        } else if self.angle <= 67.5 {
+        } else if degrees <= 67.5 {
             CardinalDirection::Northeast
-        } else if self.angle <= 112.5 {
+        } else if degrees <= 112.5 {
             CardinalDirection::East
-        } else if self.angle <= 157.5 {
+        } else if degrees <= 157.5 {
             CardinalDirection::Southeast
-        } else if self.angle <= 202.5 {
+        } else if degrees <= 202.5 {
             CardinalDirection::South
-        } else if self.angle <= 247.5 {
+        } else if degrees <= 247.5 {
             CardinalDirection::Southwest
-        } else if self.angle <= 292.5 {
+        } else if degrees <= 292.5 {
             CardinalDirection::West
-        } else if self.angle <= 337.5 {
+        } else if degrees <= 337.5 {
             CardinalDirection::Northwest
         } else {
             CardinalDirection::North
@@ -163,21 +164,22 @@ impl Azimuth {
 }
 
 impl From<f32> for Azimuth {
-    fn from(angle: f32) -> Self {
-        Self { angle }
+    fn from(degrees: f32) -> Self {
+        Self {
+            angle: Degrees::from(degrees),
+        }
     }
 }
 
 impl From<Azimuth> for f32 {
     fn from(azimuth: Azimuth) -> Self {
-        azimuth.angle
+        azimuth.angle.value
     }
 }
 
 impl Display for Azimuth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let precision = f.precision().unwrap_or(1);
-        write!(f, "{:.precision$}°", self.angle)
+        self.angle.fmt(f)
     }
 }
 
