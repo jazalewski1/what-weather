@@ -21,11 +21,11 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         self.weather_provider.fetch_all(&query)
     }
 
-    pub fn fetch_selected(&self, parameters: &WeatherParameterSet) -> PartialReport {
+    pub fn fetch_selected(&self, attributes: &WeatherAttributeSet) -> PartialReport {
         let coordinates = self.geolocation_provider.get_current_coordinates();
         let query = PartialQuery {
             coordinates,
-            parameters: parameters.clone(),
+            attributes: attributes.clone(),
         };
         self.weather_provider.fetch_selected(&query)
     }
@@ -41,7 +41,7 @@ mod tests {
     use crate::types::weather::*;
 
     #[test]
-    fn fetch_coordinates_and_all_parameters() {
+    fn fetch_coordinates_and_all_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates {
             latitude: 1.2,
@@ -74,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn fetch_coordinates_and_selected_parameters() {
+    fn fetch_coordinates_and_selected_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates {
             latitude: 1.2,
@@ -86,15 +86,15 @@ mod tests {
             .return_const(coordinates.clone());
 
         let mut weather_provider = MockWeatherProvider::new();
-        let requested_paramaters = WeatherParameterSet::from([
-            WeatherParameter::WeatherKind,
-            WeatherParameter::Temperature,
-            WeatherParameter::Pressure,
-            WeatherParameter::Humidity,
+        let requested_attributes = WeatherAttributeSet::from([
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
         ]);
         let query = PartialQuery {
             coordinates,
-            parameters: requested_paramaters.clone(),
+            attributes: requested_attributes.clone(),
         };
         let report = PartialReport {
             kind: Some(Kind::Clouds(Clouds::Light)),
@@ -111,6 +111,6 @@ mod tests {
             .return_const(report);
 
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
-        let _report = sut.fetch_selected(&requested_paramaters);
+        let _report = sut.fetch_selected(&requested_attributes);
     }
 }

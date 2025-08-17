@@ -10,11 +10,11 @@ pub struct FullQuery {
 #[derive(Clone, Debug, PartialEq)]
 pub struct PartialQuery {
     pub coordinates: Coordinates,
-    pub parameters: WeatherParameterSet,
+    pub attributes: WeatherAttributeSet,
 }
 
 #[derive(Clone, Copy, Debug, EnumIter, PartialEq, Eq, Hash)]
-pub enum WeatherParameter {
+pub enum WeatherAttribute {
     WeatherKind,
     Temperature,
     CloudCoverage,
@@ -23,4 +23,4 @@ pub enum WeatherParameter {
     Pressure,
 }
 
-pub type WeatherParameterSet = HashSet<WeatherParameter>;
+pub type WeatherAttributeSet = HashSet<WeatherAttribute>;

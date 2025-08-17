@@ -191,7 +191,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_all_parameters() {
+    fn describe_all_attributes() {
         let report = PartialReport {
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(22.4)),
@@ -214,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_selected_parameters() {
+    fn describe_selected_attributes() {
         let report = PartialReport {
             kind: None,
             temperature: Some(Temperature::new_celsius(22.4)),

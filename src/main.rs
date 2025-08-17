@@ -17,8 +17,8 @@ fn run(
             let report = reporter.fetch_all();
             summary::describe(&report)
         }
-        cli::ReportType::List(parameters) => {
-            let report = reporter.fetch_selected(&parameters);
+        cli::ReportType::List(attributes) => {
+            let report = reporter.fetch_selected(&attributes);
             list::describe(&report)
         }
     };

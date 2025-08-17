@@ -20,26 +20,26 @@ impl WeatherProvider for FakeWeatherProvider {
 
     fn fetch_selected(&self, query: &PartialQuery) -> PartialReport {
         let mut report = PartialReport::default();
-        for param in query.parameters.iter() {
-            match param {
-                WeatherParameter::WeatherKind => {
+        for attribute in query.attributes.iter() {
+            match attribute {
+                WeatherAttribute::WeatherKind => {
                     report.kind.replace(generate_random_weather_kind());
                 }
-                WeatherParameter::Temperature => {
+                WeatherAttribute::Temperature => {
                     report.temperature.replace(generate_random_temperature());
                 }
-                WeatherParameter::CloudCoverage => {
+                WeatherAttribute::CloudCoverage => {
                     report
                         .cloud_coverage
                         .replace(generate_random_cloud_coverage());
                 }
-                WeatherParameter::Humidity => {
+                WeatherAttribute::Humidity => {
                     report.humidity.replace(generate_random_humidity());
                 }
-                WeatherParameter::Wind => {
+                WeatherAttribute::Wind => {
                     report.wind.replace(generate_random_wind());
                 }
-                WeatherParameter::Pressure => {
+                WeatherAttribute::Pressure => {
                     report.pressure.replace(generate_random_pressure());
                 }
             }

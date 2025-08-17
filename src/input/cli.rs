@@ -3,7 +3,7 @@ use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
 use strum::IntoEnumIterator;
 
-impl ValueEnum for WeatherParameter {
+impl ValueEnum for WeatherAttribute {
     fn to_possible_value(&self) -> Option<PossibleValue> {
         match self {
             Self::WeatherKind => Some(PossibleValue::new("weather_kind")),
@@ -31,13 +31,13 @@ impl ValueEnum for WeatherParameter {
 enum Command {
     /// Report current weather
     Now {
-        /// Report all parameters as summary
+        /// Report all attributes as summary
         #[arg(long, group = "now_format")]
         summary: bool,
 
-        /// Report all or selected parameters as a list
+        /// Report all or selected attributes as a list
         #[arg(long, group = "now_format", value_delimiter=',', num_args=0..)]
-        list: Option<Vec<WeatherParameter>>,
+        list: Option<Vec<WeatherAttribute>>,
     },
 }
 
@@ -51,18 +51,18 @@ struct Args {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ReportType {
     Summary,
-    List(WeatherParameterSet),
+    List(WeatherAttributeSet),
 }
 
 pub struct Parameters {
     pub report_type: ReportType,
 }
 
-fn convert_to_parameter_selection(params: &[WeatherParameter]) -> WeatherParameterSet {
-    if params.is_empty() {
-        WeatherParameter::iter().collect()
+fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
+    if attributes.is_empty() {
+        WeatherAttribute::iter().collect()
     } else {
-        params.iter().cloned().collect()
+        attributes.iter().cloned().collect()
     }
 }
 
@@ -73,9 +73,9 @@ impl From<Args> for Parameters {
             Some(Command::Now { summary, list }) => {
                 if summary {
                     ReportType::Summary
-                } else if let Some(weather_parameters) = list {
-                    let selection = convert_to_parameter_selection(&weather_parameters);
-                    ReportType::List(selection)
+                } else if let Some(attributes) = list {
+                    let attribute_set = convert_to_attribute_set(&attributes);
+                    ReportType::List(attribute_set)
                 } else {
                     ReportType::Summary
                 }
@@ -126,9 +126,9 @@ mod tests {
     }
 
     #[test]
-    fn parse_now_command_with_list_report_without_parameters() {
-        let expected_parameter_set: WeatherParameterSet = WeatherParameter::iter().collect();
-        let expected = ReportType::List(expected_parameter_set);
+    fn parse_now_command_with_list_report_without_attributes() {
+        let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
+        let expected = ReportType::List(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Now {
@@ -141,20 +141,20 @@ mod tests {
     }
 
     #[test]
-    fn parse_now_command_with_list_report_with_parameters() {
-        let requested_paramaters = vec![
-            WeatherParameter::WeatherKind,
-            WeatherParameter::Temperature,
-            WeatherParameter::Pressure,
-            WeatherParameter::Humidity,
+    fn parse_now_command_with_list_report_with_attributes() {
+        let requested_attributes = vec![
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
         ];
-        let expected_parameter_set = requested_paramaters.iter().cloned().collect();
-        let expected = ReportType::List(expected_parameter_set);
+        let expected_attribute_set = requested_attributes.iter().cloned().collect();
+        let expected = ReportType::List(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Now {
                 summary: false,
-                list: Some(requested_paramaters),
+                list: Some(requested_attributes),
             }),
         };
         let params: Parameters = args.into();
@@ -162,10 +162,10 @@ mod tests {
     }
 
     #[test]
-    fn verify_all_weather_parameters_variants_are_covered() {
-        let result: WeatherParameterSet =
-            WeatherParameter::value_variants().iter().cloned().collect();
-        let expected: WeatherParameterSet = WeatherParameter::iter().collect();
+    fn verify_all_weather_attributes_variants_are_covered() {
+        let result: WeatherAttributeSet =
+            WeatherAttribute::value_variants().iter().cloned().collect();
+        let expected: WeatherAttributeSet = WeatherAttribute::iter().collect();
         assert_eq!(result, expected);
     }
 }
