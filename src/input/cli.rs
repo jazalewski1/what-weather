@@ -1,14 +1,30 @@
 use crate::types::query::*;
+use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
+use strum::IntoEnumIterator;
 
-#[derive(Debug, Clone, Copy, ValueEnum)]
-enum WeatherParameter {
-    WeatherKind,
-    Temperature,
-    CloudCoverage,
-    Humidity,
-    Wind,
-    Pressure,
+impl ValueEnum for WeatherParameter {
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        match self {
+            Self::WeatherKind => Some(PossibleValue::new("weather_kind")),
+            Self::Temperature => Some(PossibleValue::new("temperature")),
+            Self::CloudCoverage => Some(PossibleValue::new("cloud_coverage")),
+            Self::Humidity => Some(PossibleValue::new("humidity")),
+            Self::Wind => Some(PossibleValue::new("wind")),
+            Self::Pressure => Some(PossibleValue::new("pressure")),
+        }
+    }
+
+    fn value_variants<'a>() -> &'a [Self] {
+        &[
+            Self::WeatherKind,
+            Self::Temperature,
+            Self::CloudCoverage,
+            Self::Humidity,
+            Self::Wind,
+            Self::Pressure,
+        ]
+    }
 }
 
 #[derive(Subcommand)]
@@ -35,36 +51,18 @@ struct Args {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ReportType {
     Summary,
-    List(ParameterSelection),
+    List(WeatherParameterSet),
 }
 
 pub struct Parameters {
     pub report_type: ReportType,
 }
 
-fn convert_to_parameter_selection(params: &[WeatherParameter]) -> ParameterSelection {
+fn convert_to_parameter_selection(params: &[WeatherParameter]) -> WeatherParameterSet {
     if params.is_empty() {
-        ParameterSelection {
-            with_kind: true,
-            with_temperature: true,
-            with_cloud_coverage: true,
-            with_humidity: true,
-            with_wind: true,
-            with_pressure: true,
-        }
+        WeatherParameter::iter().collect()
     } else {
-        let mut selection = ParameterSelection::default();
-        for param in params {
-            match param {
-                WeatherParameter::WeatherKind => selection.with_kind = true,
-                WeatherParameter::Temperature => selection.with_temperature = true,
-                WeatherParameter::CloudCoverage => selection.with_cloud_coverage = true,
-                WeatherParameter::Humidity => selection.with_humidity = true,
-                WeatherParameter::Wind => selection.with_wind = true,
-                WeatherParameter::Pressure => selection.with_pressure = true,
-            }
-        }
-        selection
+        params.iter().cloned().collect()
     }
 }
 
@@ -129,6 +127,9 @@ mod tests {
 
     #[test]
     fn parse_now_command_with_list_report_without_parameters() {
+        let expected_parameter_set: WeatherParameterSet = WeatherParameter::iter().collect();
+        let expected = ReportType::List(expected_parameter_set);
+
         let args = Args {
             command: Some(Command::Now {
                 summary: false,
@@ -136,14 +137,6 @@ mod tests {
             }),
         };
         let params: Parameters = args.into();
-        let expected = ReportType::List(ParameterSelection {
-            with_kind: true,
-            with_temperature: true,
-            with_cloud_coverage: true,
-            with_humidity: true,
-            with_wind: true,
-            with_pressure: true,
-        });
         assert_eq!(params.report_type, expected);
     }
 
@@ -155,6 +148,9 @@ mod tests {
             WeatherParameter::Pressure,
             WeatherParameter::Humidity,
         ];
+        let expected_parameter_set = requested_paramaters.iter().cloned().collect();
+        let expected = ReportType::List(expected_parameter_set);
+
         let args = Args {
             command: Some(Command::Now {
                 summary: false,
@@ -162,14 +158,14 @@ mod tests {
             }),
         };
         let params: Parameters = args.into();
-        let expected = ReportType::List(ParameterSelection {
-            with_kind: true,
-            with_temperature: true,
-            with_cloud_coverage: false,
-            with_humidity: true,
-            with_wind: false,
-            with_pressure: true,
-        });
         assert_eq!(params.report_type, expected);
+    }
+
+    #[test]
+    fn verify_all_weather_parameters_variants_are_covered() {
+        let result: WeatherParameterSet =
+            WeatherParameter::value_variants().iter().cloned().collect();
+        let expected: WeatherParameterSet = WeatherParameter::iter().collect();
+        assert_eq!(result, expected);
     }
 }

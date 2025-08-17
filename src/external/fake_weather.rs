@@ -17,26 +17,34 @@ impl WeatherProvider for FakeWeatherProvider {
             pressure: generate_random_pressure(),
         }
     }
+
     fn fetch_selected(&self, query: &PartialQuery) -> PartialReport {
-        let selection = &query.parameter_selection;
-        PartialReport {
-            kind: selection
-                .with_kind
-                .then_some(generate_random_weather_kind()),
-            temperature: selection
-                .with_temperature
-                .then_some(generate_random_temperature()),
-            cloud_coverage: selection
-                .with_cloud_coverage
-                .then_some(generate_random_cloud_coverage()),
-            humidity: selection
-                .with_humidity
-                .then_some(generate_random_humidity()),
-            wind: selection.with_wind.then_some(generate_random_wind()),
-            pressure: selection
-                .with_pressure
-                .then_some(generate_random_pressure()),
+        let mut report = PartialReport::default();
+        for param in query.parameters.iter() {
+            match param {
+                WeatherParameter::WeatherKind => {
+                    report.kind.replace(generate_random_weather_kind());
+                }
+                WeatherParameter::Temperature => {
+                    report.temperature.replace(generate_random_temperature());
+                }
+                WeatherParameter::CloudCoverage => {
+                    report
+                        .cloud_coverage
+                        .replace(generate_random_cloud_coverage());
+                }
+                WeatherParameter::Humidity => {
+                    report.humidity.replace(generate_random_humidity());
+                }
+                WeatherParameter::Wind => {
+                    report.wind.replace(generate_random_wind());
+                }
+                WeatherParameter::Pressure => {
+                    report.pressure.replace(generate_random_pressure());
+                }
+            }
         }
+        report
     }
 }
 

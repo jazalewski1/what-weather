@@ -21,11 +21,11 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         self.weather_provider.fetch_all(&query)
     }
 
-    pub fn fetch_selected(&self, parameter_selection: ParameterSelection) -> PartialReport {
+    pub fn fetch_selected(&self, parameters: &WeatherParameterSet) -> PartialReport {
         let coordinates = self.geolocation_provider.get_current_coordinates();
         let query = PartialQuery {
             coordinates,
-            parameter_selection,
+            parameters: parameters.clone(),
         };
         self.weather_provider.fetch_selected(&query)
     }
@@ -86,17 +86,15 @@ mod tests {
             .return_const(coordinates.clone());
 
         let mut weather_provider = MockWeatherProvider::new();
-        let selection = ParameterSelection {
-            with_kind: true,
-            with_temperature: true,
-            with_cloud_coverage: false,
-            with_humidity: true,
-            with_wind: false,
-            with_pressure: true,
-        };
+        let requested_paramaters = WeatherParameterSet::from([
+            WeatherParameter::WeatherKind,
+            WeatherParameter::Temperature,
+            WeatherParameter::Pressure,
+            WeatherParameter::Humidity,
+        ]);
         let query = PartialQuery {
             coordinates,
-            parameter_selection: selection.clone(),
+            parameters: requested_paramaters.clone(),
         };
         let report = PartialReport {
             kind: Some(Kind::Clouds(Clouds::Light)),
@@ -113,6 +111,6 @@ mod tests {
             .return_const(report);
 
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
-        let _report = sut.fetch_selected(selection);
+        let _report = sut.fetch_selected(&requested_paramaters);
     }
 }

@@ -11,7 +11,7 @@ pub struct FullReport {
     pub pressure: Hectopascal,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct PartialReport {
     pub kind: Option<Kind>,
     pub temperature: Option<Temperature>,
