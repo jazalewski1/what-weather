@@ -3,7 +3,8 @@ use what_weather::external::{FakeGeolocationProvider, FakeWeatherProvider};
 use what_weather::input::cli;
 use what_weather::output::format::{list, summary};
 use what_weather::output::{ConsoleView, View};
-use what_weather::port::{GeolocationProvider, WeatherProvider};
+use what_weather::port::geolocation::GeolocationProvider;
+use what_weather::port::weather::WeatherProvider;
 
 fn run(
     geolocation_provider: impl GeolocationProvider,

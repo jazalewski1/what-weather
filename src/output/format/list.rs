@@ -21,23 +21,26 @@ impl StringBuilder {
 }
 
 pub fn describe(report: &PartialReport) -> String {
+    let response = &report.response;
     let mut builder = StringBuilder::default();
-    if let Some(kind) = report.kind {
+
+    builder.add("Coordinates", &format!("{:.5}", report.coordinates));
+    if let Some(kind) = response.kind {
         builder.add("Weather", &describe_kind(&kind));
     }
-    if let Some(temperature) = report.temperature {
+    if let Some(temperature) = response.temperature {
         builder.add("Temperature", &format!("{temperature:.1}"));
     }
-    if let Some(coverage) = report.cloud_coverage {
+    if let Some(coverage) = response.cloud_coverage {
         builder.add("Cloud coverage", &format!("{coverage}"));
     }
-    if let Some(humidity) = report.humidity {
+    if let Some(humidity) = response.humidity {
         builder.add("Humidity", &format!("{humidity}"));
     }
-    if let Some(wind) = &report.wind {
+    if let Some(wind) = &response.wind {
         builder.add("Wind", &describe_wind(wind));
     }
-    if let Some(pressure) = report.pressure {
+    if let Some(pressure) = response.pressure {
         builder.add("Pressure", &format!("{pressure}"));
     }
     builder.string()
@@ -88,6 +91,7 @@ fn describe_wind(wind: &Wind) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::port::weather::PartialResponse;
     use crate::types::units::*;
 
     #[test]
@@ -192,7 +196,8 @@ mod tests {
 
     #[test]
     fn describes_all_attributes() {
-        let report = PartialReport {
+        let coordinates = Coordinates::new(1.2345, 67.89);
+        let response = PartialResponse {
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(22.4)),
             cloud_coverage: Some(Percentage::from(43)),
@@ -203,19 +208,25 @@ mod tests {
             }),
             pressure: Some(Hectopascal::from(1009.3)),
         };
+        let report = PartialReport {
+            coordinates,
+            response,
+        };
         let result = describe(&report);
-        let expected = "Weather: light clouds\n\
-             Temperature: 22.4°C\n\
-             Cloud coverage: 43%\n\
-             Humidity: 81%\n\
-             Wind: 1.1 m/s, 155.5° (SE)\n\
-             Pressure: 1009.3 hPa";
+        let expected = "Coordinates: 1.23450°, 67.89000°\n\
+            Weather: light clouds\n\
+            Temperature: 22.4°C\n\
+            Cloud coverage: 43%\n\
+            Humidity: 81%\n\
+            Wind: 1.1 m/s, 155.5° (SE)\n\
+            Pressure: 1009.3 hPa";
         assert_eq!(result, expected);
     }
 
     #[test]
     fn describes_only_selected_attributes() {
-        let report = PartialReport {
+        let coordinates = Coordinates::new(1.2345, 67.89);
+        let response = PartialResponse {
             kind: None,
             temperature: Some(Temperature::new_celsius(22.4)),
             cloud_coverage: None,
@@ -226,10 +237,15 @@ mod tests {
             }),
             pressure: None,
         };
+        let report = PartialReport {
+            coordinates,
+            response,
+        };
         let result = describe(&report);
-        let expected = "Temperature: 22.4°C\n\
-             Humidity: 81%\n\
-             Wind: 1.1 m/s, 155.5° (SE)";
+        let expected = "Coordinates: 1.23450°, 67.89000°\n\
+            Temperature: 22.4°C\n\
+            Humidity: 81%\n\
+            Wind: 1.1 m/s, 155.5° (SE)";
         assert_eq!(result, expected);
     }
 }
