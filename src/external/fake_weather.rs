@@ -1,14 +1,13 @@
-use crate::port::WeatherProvider;
-use crate::types::query::*;
-use crate::types::report::*;
+use crate::port::weather::*;
+use crate::types::attributes::*;
 use crate::types::units::*;
 use crate::types::weather::*;
 
 pub struct FakeWeatherProvider;
 
 impl WeatherProvider for FakeWeatherProvider {
-    fn fetch_all(&self, _query: &FullQuery) -> FullReport {
-        FullReport {
+    fn fetch_all(&self, _request: &FullRequest) -> FullResponse {
+        FullResponse {
             kind: generate_random_weather_kind(),
             temperature: generate_random_temperature(),
             cloud_coverage: generate_random_cloud_coverage(),
@@ -18,9 +17,9 @@ impl WeatherProvider for FakeWeatherProvider {
         }
     }
 
-    fn fetch_selected(&self, query: &PartialQuery) -> PartialReport {
-        let mut report = PartialReport::default();
-        for attribute in query.attributes.iter() {
+    fn fetch_selected(&self, request: &PartialRequest) -> PartialResponse {
+        let mut report = PartialResponse::default();
+        for attribute in request.attributes.iter() {
             match attribute {
                 WeatherAttribute::WeatherKind => {
                     report.kind.replace(generate_random_weather_kind());

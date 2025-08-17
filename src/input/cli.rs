@@ -1,4 +1,4 @@
-use crate::types::query::*;
+use crate::types::attributes::*;
 use crate::types::units::Coordinates;
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
