@@ -1,14 +1,15 @@
-use crate::types::report::*;
+use crate::types::report::FullReport;
 use crate::types::units::*;
 use crate::types::weather::*;
 
 pub fn describe(report: &FullReport) -> String {
-    let temperature_desc = describe_temperature(&report.temperature);
-    let weather_kind_desc = describe_weather_kind(&report.kind);
-    let clouds_desc = describe_cloud_coverage(&report.cloud_coverage);
-    let humidity_desc = describe_humidity(&report.humidity);
-    let wind_desc = describe_wind(&report.wind);
-    let pressure_desc = describe_pressure(&report.pressure);
+    let response = &report.response;
+    let temperature_desc = describe_temperature(&response.temperature);
+    let weather_kind_desc = describe_weather_kind(&response.kind);
+    let clouds_desc = describe_cloud_coverage(&response.cloud_coverage);
+    let humidity_desc = describe_humidity(&response.humidity);
+    let wind_desc = describe_wind(&response.wind);
+    let pressure_desc = describe_pressure(&response.pressure);
 
     #[allow(clippy::uninlined_format_args)]
     {
@@ -155,6 +156,8 @@ fn describe_pressure(pressure: &Hectopascal) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::port::weather::FullResponse;
+
     use super::*;
 
     #[test]
@@ -361,7 +364,7 @@ mod tests {
 
     #[test]
     fn describes_full_report() {
-        let report = FullReport {
+        let response = FullResponse {
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(22.4),
             cloud_coverage: Percentage::from(43),
@@ -372,6 +375,8 @@ mod tests {
             },
             pressure: Hectopascal::from(1009.3),
         };
+        let report = FullReport { response };
+        let result = describe(&report);
         let expected: String = "It's warm at 22.4°C \
              and the sky is mostly clear \
              with clouds covering 43% of the sky.\n\
@@ -379,7 +384,6 @@ mod tests {
              with gentle southeast breeze blowing at 1.1 m/s.\n\
              Low pressure stands at 1009.3 hPa."
             .into();
-        let result = describe(&report);
         assert_eq!(result, expected);
     }
 }

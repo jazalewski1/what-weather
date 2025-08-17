@@ -109,28 +109,53 @@ impl Display for Speed {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Degrees {
+    pub value: f32,
+}
+
+impl From<f32> for Degrees {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<Degrees> for f32 {
+    fn from(degrees: Degrees) -> Self {
+        degrees.value
+    }
+}
+
+impl Display for Degrees {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$}°", self.value)
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Azimuth {
-    pub angle: f32,
+    pub angle: Degrees,
 }
 
 impl Azimuth {
     pub fn to_cardinal_direction(&self) -> CardinalDirection {
-        if self.angle <= 22.5 {
+        let degrees = self.angle.value;
+        if degrees <= 22.5 {
             CardinalDirection::North
-        } else if self.angle <= 67.5 {
+        } else if degrees <= 67.5 {
             CardinalDirection::Northeast
-        } else if self.angle <= 112.5 {
+        } else if degrees <= 112.5 {
             CardinalDirection::East
-        } else if self.angle <= 157.5 {
+        } else if degrees <= 157.5 {
             CardinalDirection::Southeast
-        } else if self.angle <= 202.5 {
+        } else if degrees <= 202.5 {
             CardinalDirection::South
-        } else if self.angle <= 247.5 {
+        } else if degrees <= 247.5 {
             CardinalDirection::Southwest
-        } else if self.angle <= 292.5 {
+        } else if degrees <= 292.5 {
             CardinalDirection::West
-        } else if self.angle <= 337.5 {
+        } else if degrees <= 337.5 {
             CardinalDirection::Northwest
         } else {
             CardinalDirection::North
@@ -139,21 +164,22 @@ impl Azimuth {
 }
 
 impl From<f32> for Azimuth {
-    fn from(angle: f32) -> Self {
-        Self { angle }
+    fn from(degrees: f32) -> Self {
+        Self {
+            angle: Degrees::from(degrees),
+        }
     }
 }
 
 impl From<Azimuth> for f32 {
-    fn from(speed: Azimuth) -> Self {
-        speed.angle
+    fn from(azimuth: Azimuth) -> Self {
+        azimuth.angle.value
     }
 }
 
 impl Display for Azimuth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let precision = f.precision().unwrap_or(1);
-        write!(f, "{:.precision$}°", self.angle)
+        self.angle.fmt(f)
     }
 }
 
@@ -225,8 +251,28 @@ impl Display for Hectopascal {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinates {
-    pub latitude: f32,
-    pub longitude: f32,
+    pub latitude: Degrees,
+    pub longitude: Degrees,
+}
+
+impl Coordinates {
+    pub fn new<T: Into<Degrees>>(latitude: T, longitude: T) -> Self {
+        Self {
+            latitude: latitude.into(),
+            longitude: longitude.into(),
+        }
+    }
+}
+
+impl Display for Coordinates {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(
+            f,
+            "{:.precision$}, {:.precision$}",
+            self.latitude, self.longitude
+        )
+    }
 }
 
 #[cfg(test)]
@@ -257,6 +303,16 @@ mod tests {
         assert_eq!(format!("{speed}"), "0.0 m/s");
         let speed = Speed::new_meters_per_second(12.345);
         assert_eq!(format!("{speed:.2}"), "12.35 m/s");
+    }
+
+    #[test]
+    fn displays_degrees() {
+        let degrees = Degrees::from(-30.5);
+        assert_eq!(format!("{degrees}"), "-30.5°");
+        let degrees = Degrees::from(0.0);
+        assert_eq!(format!("{degrees}"), "0.0°");
+        let degrees = Degrees::from(12.456);
+        assert_eq!(format!("{degrees:.2}"), "12.46°");
     }
 
     #[test]
@@ -341,5 +397,11 @@ mod tests {
         assert_eq!(format!("{pressure}"), "1000.0 hPa");
         let pressure = Hectopascal::from(1002.1234);
         assert_eq!(format!("{pressure:.2}"), "1002.12 hPa");
+    }
+
+    #[test]
+    fn displays_coordinates() {
+        let coordinates = Coordinates::new(1.234, -56.78);
+        assert_eq!(format!("{coordinates:.5}"), "1.23400°, -56.78000°");
     }
 }

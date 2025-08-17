@@ -1,5 +1,6 @@
-use crate::port::{GeolocationProvider, WeatherProvider};
-use crate::types::query::*;
+use crate::port::geolocation::GeolocationProvider;
+use crate::port::weather::*;
+use crate::types::attributes::*;
 use crate::types::report::*;
 use crate::types::units::Coordinates;
 
@@ -18,8 +19,9 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
 
     pub fn fetch_all(&self, coordinates: &Option<Coordinates>) -> FullReport {
         let coordinates = self.fetch_coordinates(coordinates);
-        let query = FullQuery { coordinates };
-        self.weather_provider.fetch_all(&query)
+        let request = FullRequest { coordinates };
+        let response = self.weather_provider.fetch_all(&request);
+        FullReport { response }
     }
 
     pub fn fetch_selected(
@@ -28,11 +30,15 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         coordinates: &Option<Coordinates>,
     ) -> PartialReport {
         let coordinates = self.fetch_coordinates(coordinates);
-        let query = PartialQuery {
+        let request = PartialRequest {
             coordinates,
             attributes: attributes.clone(),
         };
-        self.weather_provider.fetch_selected(&query)
+        let response = self.weather_provider.fetch_selected(&request);
+        PartialReport {
+            coordinates,
+            response,
+        }
     }
 
     fn fetch_coordinates(&self, coordinates: &Option<Coordinates>) -> Coordinates {
@@ -46,27 +52,23 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
 
 #[cfg(test)]
 mod tests {
-    use mockall::predicate::eq;
-
     use super::*;
     use crate::port::mocks::*;
     use crate::types::units::*;
     use crate::types::weather::*;
+    use mockall::predicate::eq;
 
     #[test]
     fn fetches_coordinates_and_all_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
-        let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
-        };
+        let coordinates = Coordinates::new(1.2, 3.4);
         geolocation_provider
             .expect_get_current_coordinates()
             .times(1)
             .return_const(coordinates.clone());
 
         let mut weather_provider = MockWeatherProvider::new();
-        let report = FullReport {
+        let report = FullResponse {
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(24.7),
             cloud_coverage: Percentage::from(47),
@@ -79,7 +81,7 @@ mod tests {
         };
         weather_provider
             .expect_fetch_all()
-            .with(eq(FullQuery { coordinates }))
+            .with(eq(FullRequest { coordinates }))
             .times(1)
             .return_const(report);
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
@@ -89,10 +91,7 @@ mod tests {
     #[test]
     fn fetches_coordinates_and_selected_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
-        let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
-        };
+        let coordinates = Coordinates::new(1.2, 3.4);
         geolocation_provider
             .expect_get_current_coordinates()
             .times(1)
@@ -105,11 +104,11 @@ mod tests {
             WeatherAttribute::Pressure,
             WeatherAttribute::Humidity,
         ]);
-        let query = PartialQuery {
+        let request = PartialRequest {
             coordinates,
             attributes: requested_attributes.clone(),
         };
-        let report = PartialReport {
+        let report = PartialResponse {
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(24.7)),
             cloud_coverage: None,
@@ -119,7 +118,7 @@ mod tests {
         };
         weather_provider
             .expect_fetch_selected()
-            .with(eq(query))
+            .with(eq(request))
             .times(1)
             .return_const(report);
 
@@ -135,7 +134,7 @@ mod tests {
             .never();
 
         let mut weather_provider = MockWeatherProvider::new();
-        let report = FullReport {
+        let report = FullResponse {
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(24.7),
             cloud_coverage: Percentage::from(47),
@@ -146,14 +145,11 @@ mod tests {
             },
             pressure: Hectopascal::from(1001.5),
         };
-        let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
-        };
-        let query = FullQuery { coordinates };
+        let coordinates = Coordinates::new(1.2, 3.4);
+        let request = FullRequest { coordinates };
         weather_provider
             .expect_fetch_all()
-            .with(eq(query))
+            .with(eq(request))
             .times(1)
             .return_const(report);
 
@@ -170,21 +166,18 @@ mod tests {
             .never();
 
         let mut weather_provider = MockWeatherProvider::new();
-        let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
-        };
+        let coordinates = Coordinates::new(1.2, 3.4);
         let requested_attributes = WeatherAttributeSet::from([
             WeatherAttribute::WeatherKind,
             WeatherAttribute::Temperature,
             WeatherAttribute::Pressure,
             WeatherAttribute::Humidity,
         ]);
-        let query = PartialQuery {
+        let request = PartialRequest {
             coordinates,
             attributes: requested_attributes.clone(),
         };
-        let report = PartialReport {
+        let report = PartialResponse {
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(24.7)),
             cloud_coverage: None,
@@ -194,7 +187,7 @@ mod tests {
         };
         weather_provider
             .expect_fetch_selected()
-            .with(eq(query))
+            .with(eq(request))
             .times(1)
             .return_const(report);
 

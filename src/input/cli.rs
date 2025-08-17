@@ -1,5 +1,5 @@
-use crate::types::query::*;
-use crate::types::units::Coordinates;
+use crate::types::attributes::*;
+use crate::types::units::*;
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
 use std::str::FromStr;
@@ -39,10 +39,7 @@ impl FromStr for Coordinates {
         }
         let latitude: f32 = values[0].trim().parse().map_err(|_| "Invalid latitude")?;
         let longitude: f32 = values[1].trim().parse().map_err(|_| "Invalid longitude")?;
-        Ok(Self {
-            latitude,
-            longitude,
-        })
+        Ok(Self::new(latitude, longitude))
     }
 }
 
@@ -206,16 +203,10 @@ mod tests {
 
     #[test]
     fn parses_coordinate_values() {
-        let coordinates = Coordinates {
-            latitude: 1.23,
-            longitude: 45.67,
-        };
+        let coordinates = Coordinates::new(1.23, 45.67);
         assert_eq!(Coordinates::from_str("1.23,45.67"), Ok(coordinates));
-        let coordinates = Coordinates {
-            latitude: 1.0,
-            longitude: 45.67,
-        };
-        assert_eq!(Coordinates::from_str("1,45.67"), Ok(coordinates));
+        let coordinates = Coordinates::new(1.0, -4.0);
+        assert_eq!(Coordinates::from_str("1,-4"), Ok(coordinates));
     }
 
     #[test]
@@ -227,10 +218,7 @@ mod tests {
 
     #[test]
     fn parses_coordinates() {
-        let coordinates = Coordinates {
-            latitude: 1.23,
-            longitude: 45.67,
-        };
+        let coordinates = Coordinates::new(1.23, 45.67);
         let args = Args {
             command: None,
             coords: Some(coordinates.clone()),
