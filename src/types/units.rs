@@ -109,6 +109,30 @@ impl Display for Speed {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Degrees {
+    pub value: f32,
+}
+
+impl From<f32> for Degrees {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<Degrees> for f32 {
+    fn from(degrees: Degrees) -> Self {
+        degrees.value
+    }
+}
+
+impl Display for Degrees {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$}°", self.value)
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Azimuth {
     pub angle: f32,
@@ -145,8 +169,8 @@ impl From<f32> for Azimuth {
 }
 
 impl From<Azimuth> for f32 {
-    fn from(speed: Azimuth) -> Self {
-        speed.angle
+    fn from(azimuth: Azimuth) -> Self {
+        azimuth.angle
     }
 }
 
@@ -225,8 +249,19 @@ impl Display for Hectopascal {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinates {
-    pub latitude: f32,
-    pub longitude: f32,
+    pub latitude: Degrees,
+    pub longitude: Degrees,
+}
+
+impl Display for Coordinates {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(
+            f,
+            "{:.precision$}, {:.precision$}",
+            self.latitude, self.longitude
+        )
+    }
 }
 
 #[cfg(test)]
@@ -257,6 +292,16 @@ mod tests {
         assert_eq!(format!("{speed}"), "0.0 m/s");
         let speed = Speed::new_meters_per_second(12.345);
         assert_eq!(format!("{speed:.2}"), "12.35 m/s");
+    }
+
+    #[test]
+    fn displays_degrees() {
+        let degrees = Degrees::from(-30.5);
+        assert_eq!(format!("{degrees}"), "-30.5°");
+        let degrees = Degrees::from(0.0);
+        assert_eq!(format!("{degrees}"), "0.0°");
+        let degrees = Degrees::from(12.456);
+        assert_eq!(format!("{degrees:.2}"), "12.46°");
     }
 
     #[test]

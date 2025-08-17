@@ -23,6 +23,8 @@ impl StringBuilder {
 pub fn describe(report: &PartialReport) -> String {
     let response = &report.response;
     let mut builder = StringBuilder::default();
+
+    builder.add("Coordinates", &format!("{:.5}", report.coordinates));
     if let Some(kind) = response.kind {
         builder.add("Weather", &describe_kind(&kind));
     }
@@ -194,8 +196,8 @@ mod tests {
     #[test]
     fn describes_all_attributes() {
         let coordinates = Coordinates {
-            latitude: 1.23,
-            longitude: 45.67,
+            latitude: Degrees::from(1.2345),
+            longitude: Degrees::from(67.89),
         };
         let response = PartialResponse {
             kind: Some(Kind::Clouds(Clouds::Light)),
@@ -213,20 +215,21 @@ mod tests {
             response,
         };
         let result = describe(&report);
-        let expected = "Weather: light clouds\n\
-             Temperature: 22.4°C\n\
-             Cloud coverage: 43%\n\
-             Humidity: 81%\n\
-             Wind: 1.1 m/s, 155.5° (SE)\n\
-             Pressure: 1009.3 hPa";
+        let expected = "Coordinates: 1.23450°, 67.89000°\n\
+            Weather: light clouds\n\
+            Temperature: 22.4°C\n\
+            Cloud coverage: 43%\n\
+            Humidity: 81%\n\
+            Wind: 1.1 m/s, 155.5° (SE)\n\
+            Pressure: 1009.3 hPa";
         assert_eq!(result, expected);
     }
 
     #[test]
     fn describes_only_selected_attributes() {
         let coordinates = Coordinates {
-            latitude: 1.23,
-            longitude: 45.67,
+            latitude: Degrees::from(1.2345),
+            longitude: Degrees::from(67.89),
         };
         let response = PartialResponse {
             kind: None,
@@ -244,9 +247,10 @@ mod tests {
             response,
         };
         let result = describe(&report);
-        let expected = "Temperature: 22.4°C\n\
-             Humidity: 81%\n\
-             Wind: 1.1 m/s, 155.5° (SE)";
+        let expected = "Coordinates: 1.23450°, 67.89000°\n\
+            Temperature: 22.4°C\n\
+            Humidity: 81%\n\
+            Wind: 1.1 m/s, 155.5° (SE)";
         assert_eq!(result, expected);
     }
 }

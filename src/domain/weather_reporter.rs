@@ -62,8 +62,8 @@ mod tests {
     fn fetches_coordinates_and_all_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
+            latitude: Degrees::from(1.2),
+            longitude: Degrees::from(3.4),
         };
         geolocation_provider
             .expect_get_current_coordinates()
@@ -95,8 +95,8 @@ mod tests {
     fn fetches_coordinates_and_selected_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
+            latitude: Degrees::from(1.2),
+            longitude: Degrees::from(3.4),
         };
         geolocation_provider
             .expect_get_current_coordinates()
@@ -152,8 +152,8 @@ mod tests {
             pressure: Hectopascal::from(1001.5),
         };
         let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
+            latitude: Degrees::from(1.2),
+            longitude: Degrees::from(3.4),
         };
         let request = FullRequest { coordinates };
         weather_provider
@@ -176,8 +176,8 @@ mod tests {
 
         let mut weather_provider = MockWeatherProvider::new();
         let coordinates = Coordinates {
-            latitude: 1.2,
-            longitude: 3.4,
+            latitude: Degrees::from(1.2),
+            longitude: Degrees::from(3.4),
         };
         let requested_attributes = WeatherAttributeSet::from([
             WeatherAttribute::WeatherKind,
