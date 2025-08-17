@@ -39,10 +39,7 @@ impl FromStr for Coordinates {
         }
         let latitude: f32 = values[0].trim().parse().map_err(|_| "Invalid latitude")?;
         let longitude: f32 = values[1].trim().parse().map_err(|_| "Invalid longitude")?;
-        Ok(Self {
-            latitude: Degrees::from(latitude),
-            longitude: Degrees::from(longitude),
-        })
+        Ok(Self::new(latitude, longitude))
     }
 }
 

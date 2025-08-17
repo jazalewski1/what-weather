@@ -91,7 +91,8 @@ fn describe_wind(wind: &Wind) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{port::weather::PartialResponse, types::units::*};
+    use crate::port::weather::PartialResponse;
+    use crate::types::units::*;
 
     #[test]
     fn describes_values_of_clouds_kind() {
