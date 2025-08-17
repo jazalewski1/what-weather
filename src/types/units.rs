@@ -398,4 +398,10 @@ mod tests {
         let pressure = Hectopascal::from(1002.1234);
         assert_eq!(format!("{pressure:.2}"), "1002.12 hPa");
     }
+
+    #[test]
+    fn displays_coordinates() {
+        let coordinates = Coordinates::new(1.234, -56.78);
+        assert_eq!(format!("{coordinates:.5}"), "1.23400°, -56.78000°");
+    }
 }
