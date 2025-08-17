@@ -38,7 +38,7 @@ impl FromStr for Coordinates {
             return Err("Coordinates must be in format 'latitude,longitude'".into());
         }
         let latitude: f32 = values[0].trim().parse().map_err(|_| "Invalid latitude")?;
-        let longitude: f32 = values[1].trim().parse().map_err(|_| "Invalid latitude")?;
+        let longitude: f32 = values[1].trim().parse().map_err(|_| "Invalid longitude")?;
         Ok(Self {
             latitude,
             longitude,
