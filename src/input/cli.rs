@@ -95,14 +95,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_now_command_by_default() {
+    fn parses_now_command_when_none_is_provided() {
         let args = Args { command: None };
         let params: Parameters = args.into();
         assert_eq!(params.report_type, ReportType::Summary);
     }
 
     #[test]
-    fn parse_now_command_with_summary_report_by_default() {
+    fn parses_now_command_with_summary_when_type_is_not_specified() {
         let args = Args {
             command: Some(Command::Now {
                 summary: false,
@@ -114,7 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_now_command_with_summary_report() {
+    fn parses_now_command_with_summary_specified() {
         let args = Args {
             command: Some(Command::Now {
                 summary: true,
@@ -126,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_now_command_with_list_report_without_attributes() {
+    fn parses_now_command_with_list_without_attributes_specified() {
         let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
         let expected = ReportType::List(expected_attribute_set);
 
@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_now_command_with_list_report_with_attributes() {
+    fn parses_now_command_with_list_with_attributes_specified() {
         let requested_attributes = vec![
             WeatherAttribute::WeatherKind,
             WeatherAttribute::Temperature,
@@ -162,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn verify_all_weather_attributes_variants_are_covered() {
+    fn provides_all_weather_attribute_values() {
         let result: WeatherAttributeSet =
             WeatherAttribute::value_variants().iter().cloned().collect();
         let expected: WeatherAttributeSet = WeatherAttribute::iter().collect();

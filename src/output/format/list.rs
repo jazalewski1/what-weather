@@ -91,7 +91,7 @@ mod tests {
     use crate::types::units::*;
 
     #[test]
-    fn describe_clouds_kind_values() {
+    fn describes_values_of_clouds_kind() {
         assert_eq!(describe_kind(&Kind::Clouds(Clouds::Clear)), "clear sky");
         assert_eq!(describe_kind(&Kind::Clouds(Clouds::Light)), "light clouds");
         assert_eq!(describe_kind(&Kind::Clouds(Clouds::Moderate)), "cloudy");
@@ -99,13 +99,13 @@ mod tests {
     }
 
     #[test]
-    fn describe_fog_kind_values() {
+    fn describes_values_of_fog_kind() {
         assert_eq!(describe_kind(&Kind::Fog(Fog::Normal)), "fog");
         assert_eq!(describe_kind(&Kind::Fog(Fog::Rime)), "rime fog");
     }
 
     #[test]
-    fn describe_precipitation_kind_values() {
+    fn describes_values_of_precipitation_kind() {
         let precipitation = Precipitation {
             kind: PrecipitationKind::Rain,
             intensity: PrecipitationIntensity::Light,
@@ -127,7 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_precipitation_intensity_values() {
+    fn describes_values_of_precipitation_intensity() {
         let make_rain = |intensity| {
             let precipitation = Precipitation {
                 kind: PrecipitationKind::Rain,
@@ -155,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_precipitation_heat_values() {
+    fn describes_values_of_precipitation_heat() {
         let precipitation = Precipitation {
             kind: PrecipitationKind::Rain,
             intensity: PrecipitationIntensity::Light,
@@ -177,12 +177,12 @@ mod tests {
     }
 
     #[test]
-    fn describe_thunderstorm_values() {
+    fn describes_value_of_thunderstorm() {
         assert_eq!(describe_kind(&Kind::Thunderstorm), "thunderstorm");
     }
 
     #[test]
-    fn describe_wind_values() {
+    fn describes_values_of_wind() {
         let wind = Wind {
             speed: Speed::new_meters_per_second(42.5),
             direction: Azimuth::from(200.2),
@@ -191,7 +191,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_all_attributes() {
+    fn describes_all_attributes() {
         let report = PartialReport {
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(22.4)),
@@ -214,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn describe_selected_attributes() {
+    fn describes_only_selected_attributes() {
         let report = PartialReport {
             kind: None,
             temperature: Some(Temperature::new_celsius(22.4)),
