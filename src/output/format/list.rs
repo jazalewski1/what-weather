@@ -195,10 +195,7 @@ mod tests {
 
     #[test]
     fn describes_all_attributes() {
-        let coordinates = Coordinates {
-            latitude: Degrees::from(1.2345),
-            longitude: Degrees::from(67.89),
-        };
+        let coordinates = Coordinates::new(1.2345, 67.89);
         let response = PartialResponse {
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(22.4)),
@@ -227,10 +224,7 @@ mod tests {
 
     #[test]
     fn describes_only_selected_attributes() {
-        let coordinates = Coordinates {
-            latitude: Degrees::from(1.2345),
-            longitude: Degrees::from(67.89),
-        };
+        let coordinates = Coordinates::new(1.2345, 67.89);
         let response = PartialResponse {
             kind: None,
             temperature: Some(Temperature::new_celsius(22.4)),

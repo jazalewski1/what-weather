@@ -255,6 +255,15 @@ pub struct Coordinates {
     pub longitude: Degrees,
 }
 
+impl Coordinates {
+    pub fn new<T: Into<Degrees>>(latitude: T, longitude: T) -> Self {
+        Self {
+            latitude: latitude.into(),
+            longitude: longitude.into(),
+        }
+    }
+}
+
 impl Display for Coordinates {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let precision = f.precision().unwrap_or(1);

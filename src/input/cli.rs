@@ -206,16 +206,10 @@ mod tests {
 
     #[test]
     fn parses_coordinate_values() {
-        let coordinates = Coordinates {
-            latitude: Degrees::from(1.23),
-            longitude: Degrees::from(45.67),
-        };
+        let coordinates = Coordinates::new(1.23, 45.67);
         assert_eq!(Coordinates::from_str("1.23,45.67"), Ok(coordinates));
-        let coordinates = Coordinates {
-            latitude: Degrees::from(1.0),
-            longitude: Degrees::from(45.67),
-        };
-        assert_eq!(Coordinates::from_str("1,45.67"), Ok(coordinates));
+        let coordinates = Coordinates::new(1.0, -4.0);
+        assert_eq!(Coordinates::from_str("1,-4"), Ok(coordinates));
     }
 
     #[test]
@@ -227,10 +221,7 @@ mod tests {
 
     #[test]
     fn parses_coordinates() {
-        let coordinates = Coordinates {
-            latitude: Degrees::from(1.23),
-            longitude: Degrees::from(45.67),
-        };
+        let coordinates = Coordinates::new(1.23, 45.67);
         let args = Args {
             command: None,
             coords: Some(coordinates.clone()),
