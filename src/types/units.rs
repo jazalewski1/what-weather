@@ -234,7 +234,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn display_temperature_in_celsius() {
+    fn displays_temperature_in_celsius() {
         let temperature = Temperature::new_celsius(-4_f32);
         assert_eq!(format!("{temperature}"), "-4.0°C");
         let temperature = Temperature::new_celsius(0.000);
@@ -246,13 +246,13 @@ mod tests {
     }
 
     #[test]
-    fn display_percentage() {
+    fn displays_percentage() {
         let percentage = Percentage::from(27);
         assert_eq!(format!("{percentage}"), "27%");
     }
 
     #[test]
-    fn display_speed_in_meters_per_second() {
+    fn displays_speed_in_meters_per_second() {
         let speed = Speed::new_meters_per_second(0.0);
         assert_eq!(format!("{speed}"), "0.0 m/s");
         let speed = Speed::new_meters_per_second(12.345);
@@ -260,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn display_azimuth() {
+    fn displays_azimuth() {
         let azimuth = Azimuth::from(-30.5);
         assert_eq!(format!("{azimuth}"), "-30.5°");
         let azimuth = Azimuth::from(0.0);
@@ -270,126 +270,47 @@ mod tests {
     }
 
     #[test]
-    fn describe_wind_direction() {
-        assert_eq!(
-            Azimuth::from(337.6).to_cardinal_direction(),
-            CardinalDirection::North
-        );
-        assert_eq!(
-            Azimuth::from(345.0).to_cardinal_direction(),
-            CardinalDirection::North
-        );
-        assert_eq!(
-            Azimuth::from(359.9).to_cardinal_direction(),
-            CardinalDirection::North
-        );
-        assert_eq!(
-            Azimuth::from(0.0).to_cardinal_direction(),
-            CardinalDirection::North
-        );
-        assert_eq!(
-            Azimuth::from(13.1).to_cardinal_direction(),
-            CardinalDirection::North
-        );
-        assert_eq!(
-            Azimuth::from(22.5).to_cardinal_direction(),
-            CardinalDirection::North
-        );
+    fn converts_azimuth_to_cardinal_direction() {
+        let convert = |value| Azimuth::from(value).to_cardinal_direction();
 
-        assert_eq!(
-            Azimuth::from(22.6).to_cardinal_direction(),
-            CardinalDirection::Northeast
-        );
-        assert_eq!(
-            Azimuth::from(65.2).to_cardinal_direction(),
-            CardinalDirection::Northeast
-        );
-        assert_eq!(
-            Azimuth::from(67.5).to_cardinal_direction(),
-            CardinalDirection::Northeast
-        );
+        assert_eq!(convert(337.6), CardinalDirection::North);
+        assert_eq!(convert(345.0), CardinalDirection::North);
+        assert_eq!(convert(359.9), CardinalDirection::North);
+        assert_eq!(convert(0.0), CardinalDirection::North);
+        assert_eq!(convert(13.1), CardinalDirection::North);
+        assert_eq!(convert(22.5), CardinalDirection::North);
 
-        assert_eq!(
-            Azimuth::from(67.6).to_cardinal_direction(),
-            CardinalDirection::East
-        );
-        assert_eq!(
-            Azimuth::from(100.1).to_cardinal_direction(),
-            CardinalDirection::East
-        );
-        assert_eq!(
-            Azimuth::from(112.5).to_cardinal_direction(),
-            CardinalDirection::East
-        );
+        assert_eq!(convert(22.6), CardinalDirection::Northeast);
+        assert_eq!(convert(65.2), CardinalDirection::Northeast);
+        assert_eq!(convert(67.5), CardinalDirection::Northeast);
 
-        assert_eq!(
-            Azimuth::from(112.6).to_cardinal_direction(),
-            CardinalDirection::Southeast
-        );
-        assert_eq!(
-            Azimuth::from(121.9).to_cardinal_direction(),
-            CardinalDirection::Southeast
-        );
-        assert_eq!(
-            Azimuth::from(157.5).to_cardinal_direction(),
-            CardinalDirection::Southeast
-        );
+        assert_eq!(convert(67.6), CardinalDirection::East);
+        assert_eq!(convert(100.1), CardinalDirection::East);
+        assert_eq!(convert(112.5), CardinalDirection::East);
 
-        assert_eq!(
-            Azimuth::from(157.6).to_cardinal_direction(),
-            CardinalDirection::South
-        );
-        assert_eq!(
-            Azimuth::from(200.0).to_cardinal_direction(),
-            CardinalDirection::South
-        );
-        assert_eq!(
-            Azimuth::from(202.5).to_cardinal_direction(),
-            CardinalDirection::South
-        );
+        assert_eq!(convert(112.6), CardinalDirection::Southeast);
+        assert_eq!(convert(121.9), CardinalDirection::Southeast);
+        assert_eq!(convert(157.5), CardinalDirection::Southeast);
 
-        assert_eq!(
-            Azimuth::from(202.6).to_cardinal_direction(),
-            CardinalDirection::Southwest
-        );
-        assert_eq!(
-            Azimuth::from(213.3).to_cardinal_direction(),
-            CardinalDirection::Southwest
-        );
-        assert_eq!(
-            Azimuth::from(247.5).to_cardinal_direction(),
-            CardinalDirection::Southwest
-        );
+        assert_eq!(convert(157.6), CardinalDirection::South);
+        assert_eq!(convert(200.0), CardinalDirection::South);
+        assert_eq!(convert(202.5), CardinalDirection::South);
 
-        assert_eq!(
-            Azimuth::from(247.6).to_cardinal_direction(),
-            CardinalDirection::West
-        );
-        assert_eq!(
-            Azimuth::from(281.4).to_cardinal_direction(),
-            CardinalDirection::West
-        );
-        assert_eq!(
-            Azimuth::from(292.5).to_cardinal_direction(),
-            CardinalDirection::West
-        );
+        assert_eq!(convert(202.6), CardinalDirection::Southwest);
+        assert_eq!(convert(213.3), CardinalDirection::Southwest);
+        assert_eq!(convert(247.5), CardinalDirection::Southwest);
 
-        assert_eq!(
-            Azimuth::from(292.6).to_cardinal_direction(),
-            CardinalDirection::Northwest
-        );
-        assert_eq!(
-            Azimuth::from(293.5).to_cardinal_direction(),
-            CardinalDirection::Northwest
-        );
-        assert_eq!(
-            Azimuth::from(337.5).to_cardinal_direction(),
-            CardinalDirection::Northwest
-        );
+        assert_eq!(convert(247.6), CardinalDirection::West);
+        assert_eq!(convert(281.4), CardinalDirection::West);
+        assert_eq!(convert(292.5), CardinalDirection::West);
+
+        assert_eq!(convert(292.6), CardinalDirection::Northwest);
+        assert_eq!(convert(293.5), CardinalDirection::Northwest);
+        assert_eq!(convert(337.5), CardinalDirection::Northwest);
     }
 
     #[test]
-    fn cardinal_direction_as_symbol() {
+    fn converts_cardinal_direction_to_symbol() {
         assert_eq!(CardinalDirection::North.to_symbol(), "N");
         assert_eq!(CardinalDirection::Northeast.to_symbol(), "NE");
         assert_eq!(CardinalDirection::East.to_symbol(), "E");
@@ -401,7 +322,7 @@ mod tests {
     }
 
     #[test]
-    fn cardinal_direction_as_name() {
+    fn converts_cardinal_direction_to_name() {
         assert_eq!(CardinalDirection::North.to_name(), "north");
         assert_eq!(CardinalDirection::Northeast.to_name(), "northeast");
         assert_eq!(CardinalDirection::East.to_name(), "east");
@@ -413,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn display_hectopascals() {
+    fn displays_hectopascals() {
         let pressure = Hectopascal::from(0.0);
         assert_eq!(format!("{pressure}"), "0.0 hPa");
         let pressure = Hectopascal::from(999.99);

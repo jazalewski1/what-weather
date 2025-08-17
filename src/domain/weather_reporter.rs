@@ -41,7 +41,7 @@ mod tests {
     use crate::types::weather::*;
 
     #[test]
-    fn fetch_coordinates_and_all_attributes() {
+    fn fetches_coordinates_and_all_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates {
             latitude: 1.2,
@@ -74,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn fetch_coordinates_and_selected_attributes() {
+    fn fetches_coordinates_and_selected_attributes() {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates {
             latitude: 1.2,
