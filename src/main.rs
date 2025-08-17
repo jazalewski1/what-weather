@@ -14,11 +14,11 @@ fn run(
     let reporter = domain::WeatherReporter::new(geolocation_provider, weather_provider);
     let string: String = match parameters.report_type {
         cli::ReportType::Summary => {
-            let report = reporter.fetch_all();
+            let report = reporter.fetch_all(&parameters.coordinates);
             summary::describe(&report)
         }
         cli::ReportType::List(attributes) => {
-            let report = reporter.fetch_selected(&attributes);
+            let report = reporter.fetch_selected(&attributes, &parameters.coordinates);
             list::describe(&report)
         }
     };

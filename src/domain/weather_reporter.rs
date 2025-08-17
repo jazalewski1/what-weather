@@ -1,6 +1,7 @@
 use crate::port::{GeolocationProvider, WeatherProvider};
 use crate::types::query::*;
 use crate::types::report::*;
+use crate::types::units::Coordinates;
 
 pub struct WeatherReporter<GP: GeolocationProvider, WP: WeatherProvider> {
     geolocation_provider: GP,
@@ -15,19 +16,31 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         }
     }
 
-    pub fn fetch_all(&self) -> FullReport {
-        let coordinates = self.geolocation_provider.get_current_coordinates();
+    pub fn fetch_all(&self, coordinates: &Option<Coordinates>) -> FullReport {
+        let coordinates = self.fetch_coordinates(coordinates);
         let query = FullQuery { coordinates };
         self.weather_provider.fetch_all(&query)
     }
 
-    pub fn fetch_selected(&self, attributes: &WeatherAttributeSet) -> PartialReport {
-        let coordinates = self.geolocation_provider.get_current_coordinates();
+    pub fn fetch_selected(
+        &self,
+        attributes: &WeatherAttributeSet,
+        coordinates: &Option<Coordinates>,
+    ) -> PartialReport {
+        let coordinates = self.fetch_coordinates(coordinates);
         let query = PartialQuery {
             coordinates,
             attributes: attributes.clone(),
         };
         self.weather_provider.fetch_selected(&query)
+    }
+
+    fn fetch_coordinates(&self, coordinates: &Option<Coordinates>) -> Coordinates {
+        if let Some(coords) = coordinates {
+            *coords
+        } else {
+            self.geolocation_provider.get_current_coordinates()
+        }
     }
 }
 
@@ -70,7 +83,7 @@ mod tests {
             .times(1)
             .return_const(report);
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
-        let _report = sut.fetch_all();
+        let _report = sut.fetch_all(&None);
     }
 
     #[test]
@@ -111,6 +124,81 @@ mod tests {
             .return_const(report);
 
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
-        let _report = sut.fetch_selected(&requested_attributes);
+        let _report = sut.fetch_selected(&requested_attributes, &None);
+    }
+
+    #[test]
+    fn uses_specified_coordinates_to_fetch_all_attributes() {
+        let mut geolocation_provider = MockGeolocationProvider::new();
+        geolocation_provider
+            .expect_get_current_coordinates()
+            .never();
+
+        let mut weather_provider = MockWeatherProvider::new();
+        let report = FullReport {
+            kind: Kind::Clouds(Clouds::Light),
+            temperature: Temperature::new_celsius(24.7),
+            cloud_coverage: Percentage::from(47),
+            humidity: Percentage::from(60),
+            wind: Wind {
+                speed: Speed::new_meters_per_second(2.35),
+                direction: Azimuth::from(225.3),
+            },
+            pressure: Hectopascal::from(1001.5),
+        };
+        let coordinates = Coordinates {
+            latitude: 1.2,
+            longitude: 3.4,
+        };
+        let query = FullQuery { coordinates };
+        weather_provider
+            .expect_fetch_all()
+            .with(eq(query))
+            .times(1)
+            .return_const(report);
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
+
+        let _report = sut.fetch_all(&Some(coordinates));
+    }
+
+    #[test]
+    fn uses_specified_coordinates_to_fetch_selected_attributes() {
+        let mut geolocation_provider = MockGeolocationProvider::new();
+        geolocation_provider
+            .expect_get_current_coordinates()
+            .never();
+
+        let mut weather_provider = MockWeatherProvider::new();
+        let coordinates = Coordinates {
+            latitude: 1.2,
+            longitude: 3.4,
+        };
+        let requested_attributes = WeatherAttributeSet::from([
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
+        ]);
+        let query = PartialQuery {
+            coordinates,
+            attributes: requested_attributes.clone(),
+        };
+        let report = PartialReport {
+            kind: Some(Kind::Clouds(Clouds::Light)),
+            temperature: Some(Temperature::new_celsius(24.7)),
+            cloud_coverage: None,
+            humidity: Some(Percentage::from(60)),
+            wind: None,
+            pressure: Some(Hectopascal::from(1001.5)),
+        };
+        weather_provider
+            .expect_fetch_selected()
+            .with(eq(query))
+            .times(1)
+            .return_const(report);
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
+        let _report = sut.fetch_selected(&requested_attributes, &Some(coordinates));
     }
 }

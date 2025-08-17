@@ -1,6 +1,8 @@
 use crate::types::query::*;
+use crate::types::units::Coordinates;
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
+use std::str::FromStr;
 use strum::IntoEnumIterator;
 
 impl ValueEnum for WeatherAttribute {
@@ -27,6 +29,23 @@ impl ValueEnum for WeatherAttribute {
     }
 }
 
+impl FromStr for Coordinates {
+    type Err = String;
+
+    fn from_str(string: &str) -> Result<Self, Self::Err> {
+        let values: Vec<&str> = string.split(',').collect();
+        if values.len() != 2 {
+            return Err("Coordinates must be in format 'latitude,longitude'".into());
+        }
+        let latitude: f32 = values[0].trim().parse().map_err(|_| "Invalid latitude")?;
+        let longitude: f32 = values[1].trim().parse().map_err(|_| "Invalid latitude")?;
+        Ok(Self {
+            latitude,
+            longitude,
+        })
+    }
+}
+
 #[derive(Subcommand)]
 enum Command {
     /// Report current weather
@@ -46,6 +65,14 @@ struct Args {
     /// Report type
     #[command(subcommand)]
     command: Option<Command>,
+
+    /// Report from location specified by coordinates
+    #[arg(long, group = "location")]
+    coords: Option<Coordinates>,
+
+    /// Report from current location based on IP
+    #[arg(long, group = "location")]
+    here: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -56,6 +83,7 @@ pub enum ReportType {
 
 pub struct Parameters {
     pub report_type: ReportType,
+    pub coordinates: Option<Coordinates>,
 }
 
 fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
@@ -81,7 +109,10 @@ impl From<Args> for Parameters {
                 }
             }
         };
-        Parameters { report_type }
+        Parameters {
+            report_type,
+            coordinates: value.coords,
+        }
     }
 }
 
@@ -96,7 +127,11 @@ mod tests {
 
     #[test]
     fn parses_now_command_when_none_is_provided() {
-        let args = Args { command: None };
+        let args = Args {
+            command: None,
+            coords: None,
+            here: false,
+        };
         let params: Parameters = args.into();
         assert_eq!(params.report_type, ReportType::Summary);
     }
@@ -108,6 +143,8 @@ mod tests {
                 summary: false,
                 list: None,
             }),
+            coords: None,
+            here: false,
         };
         let params: Parameters = args.into();
         assert_eq!(params.report_type, ReportType::Summary);
@@ -120,6 +157,8 @@ mod tests {
                 summary: true,
                 list: None,
             }),
+            coords: None,
+            here: false,
         };
         let params: Parameters = args.into();
         assert_eq!(params.report_type, ReportType::Summary);
@@ -135,6 +174,8 @@ mod tests {
                 summary: false,
                 list: Some(Vec::new()),
             }),
+            coords: None,
+            here: false,
         };
         let params: Parameters = args.into();
         assert_eq!(params.report_type, expected);
@@ -156,9 +197,47 @@ mod tests {
                 summary: false,
                 list: Some(requested_attributes),
             }),
+            coords: None,
+            here: false,
         };
         let params: Parameters = args.into();
         assert_eq!(params.report_type, expected);
+    }
+
+    #[test]
+    fn parses_coordinate_values() {
+        let coordinates = Coordinates {
+            latitude: 1.23,
+            longitude: 45.67,
+        };
+        assert_eq!(Coordinates::from_str("1.23,45.67"), Ok(coordinates));
+        let coordinates = Coordinates {
+            latitude: 1.0,
+            longitude: 45.67,
+        };
+        assert_eq!(Coordinates::from_str("1,45.67"), Ok(coordinates));
+    }
+
+    #[test]
+    fn raises_error_on_invalid_coordinates() {
+        matches!(Coordinates::from_str("foo,45.67"), Err(_));
+        matches!(Coordinates::from_str("1.23,bar"), Err(_));
+        matches!(Coordinates::from_str("1.2,3.4,5.6"), Err(_));
+    }
+
+    #[test]
+    fn parses_coordinates() {
+        let coordinates = Coordinates {
+            latitude: 1.23,
+            longitude: 45.67,
+        };
+        let args = Args {
+            command: None,
+            coords: Some(coordinates.clone()),
+            here: false,
+        };
+        let params: Parameters = args.into();
+        assert_eq!(params.coordinates, Some(coordinates));
     }
 
     #[test]
