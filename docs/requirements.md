@@ -1,8 +1,8 @@
 # What-Weather user scenarios
-*Purpose: this document is intended and stored mostly as a record of requirements during development (i.e. so developer does not forget what to do).*
+*Purpose: this document is intended mostly as a record of planned features during development.*
 
-## Weather parameters
-1. Data shall contain following weather parameters with available units:
+## Weather attributes
+1. Data shall contain following weather attributes with available units:
     - weather type,
     - temperature \[°C, °F\],
     - pressure \[hPa\],
@@ -15,16 +15,16 @@
 1. View text summary of current weather.
     ```
     what-weather
-    what-weather current --summary
+    what-weather now --summary
     ```
-1. View parameter list of current weather.
+1. View attribute list of current weather.
     ```
-    what-weather current --all
+    what-weather now --list
     ```
-1. View specified parameters of current weather.
+1. View attribute list of specified attributes of current weather.
     ```
-    what-weather current --params=temperature
-    what-weather current --params="pressure,humidity"
+    what-weather now --list=temperature
+    what-weather now --list="pressure,humidity,cloud_coverage"
     ```
 
 ## Forecast
@@ -36,7 +36,7 @@
     what-weather forecast --summary
     ```
 
-1. View forecast parameters for next few days.
+1. View forecast attributes for next few days.
     ```
     what-weather forecast --days=3
     ```
@@ -87,7 +87,7 @@
     ```
 
 ## Miscellaneous
-1. Specify units for specific parameters.
+1. Specify units for specific attributes.
     ```
     what-weather <CMD> --speed_unit=mph
     what-weather <CMD> --temperature_unit=fahrenheit
