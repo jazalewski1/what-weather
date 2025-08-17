@@ -223,7 +223,7 @@ impl Display for Hectopascal {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinates {
     pub latitude: f64,
     pub longitude: f64,

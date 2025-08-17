@@ -1,24 +1,50 @@
 use crate::port::WeatherProvider;
+use crate::types::query::*;
+use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
-use crate::types::{WeatherQuery, WeatherReport};
 
 pub struct FakeWeatherProvider;
 
 impl WeatherProvider for FakeWeatherProvider {
-    fn fetch(&self, query: &WeatherQuery) -> WeatherReport {
-        WeatherReport {
-            coordinates: query.coordinates,
+    fn fetch_all(&self, _query: &FullQuery) -> FullReport {
+        FullReport {
             kind: generate_random_weather_kind(),
-            temperature: Temperature::new_celsius(rnd::generate_float(-10..40, 1)),
-            cloud_coverage: Percentage::from(rnd::generate_integer(0..101) as i8),
-            humidity: Percentage::from(rnd::generate_integer(0..101) as i8),
-            wind: Wind {
-                speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
-                direction: Azimuth::from(rnd::generate_float(0..360, 1)),
-            },
-            pressure: Hectopascal::from(rnd::generate_float(990..1040, 1)),
+            temperature: generate_random_temperature(),
+            cloud_coverage: generate_random_cloud_coverage(),
+            humidity: generate_random_humidity(),
+            wind: generate_random_wind(),
+            pressure: generate_random_pressure(),
         }
+    }
+
+    fn fetch_selected(&self, query: &PartialQuery) -> PartialReport {
+        let mut report = PartialReport::default();
+        for attribute in query.attributes.iter() {
+            match attribute {
+                WeatherAttribute::WeatherKind => {
+                    report.kind.replace(generate_random_weather_kind());
+                }
+                WeatherAttribute::Temperature => {
+                    report.temperature.replace(generate_random_temperature());
+                }
+                WeatherAttribute::CloudCoverage => {
+                    report
+                        .cloud_coverage
+                        .replace(generate_random_cloud_coverage());
+                }
+                WeatherAttribute::Humidity => {
+                    report.humidity.replace(generate_random_humidity());
+                }
+                WeatherAttribute::Wind => {
+                    report.wind.replace(generate_random_wind());
+                }
+                WeatherAttribute::Pressure => {
+                    report.pressure.replace(generate_random_pressure());
+                }
+            }
+        }
+        report
     }
 }
 
@@ -52,6 +78,29 @@ fn generate_random_weather_kind() -> Kind {
     ];
     let weather_kind_index = rnd::generate_integer(0..weather_kinds.len() as i64) as usize;
     weather_kinds[weather_kind_index]
+}
+
+fn generate_random_temperature() -> Temperature {
+    Temperature::new_celsius(rnd::generate_float(-10..40, 1))
+}
+
+fn generate_random_cloud_coverage() -> Percentage {
+    Percentage::from(rnd::generate_integer(0..101) as i8)
+}
+
+fn generate_random_humidity() -> Percentage {
+    Percentage::from(rnd::generate_integer(0..101) as i8)
+}
+
+fn generate_random_wind() -> Wind {
+    Wind {
+        speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
+        direction: Azimuth::from(rnd::generate_float(0..360, 1)),
+    }
+}
+
+fn generate_random_pressure() -> Hectopascal {
+    Hectopascal::from(rnd::generate_float(990..1040, 1))
 }
 
 /// This module uses obviously naive random generators, but is good enough for fake data,

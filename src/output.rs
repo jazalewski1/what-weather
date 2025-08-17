@@ -1,8 +1,7 @@
-mod console;
-mod format;
+pub mod console;
+pub mod format;
 
 pub use console::ConsoleView;
-pub use format::Format;
 
 #[mockall::automock]
 pub trait View {

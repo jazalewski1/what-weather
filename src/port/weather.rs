@@ -1,6 +1,9 @@
-use crate::types::{WeatherQuery, WeatherReport};
+use crate::types::query::*;
+use crate::types::report::*;
 
 #[mockall::automock]
 pub trait WeatherProvider {
-    fn fetch(&self, query: &WeatherQuery) -> WeatherReport;
+    fn fetch_all(&self, query: &FullQuery) -> FullReport;
+
+    fn fetch_selected(&self, query: &PartialQuery) -> PartialReport;
 }
