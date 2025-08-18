@@ -1,5 +1,6 @@
 use crate::types::attributes::*;
 use crate::types::units::*;
+use crate::weather_reporter::{Parameters, ReportType};
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
 use std::str::FromStr;
@@ -70,17 +71,6 @@ struct Args {
     /// Report from current location based on IP
     #[arg(long, group = "location")]
     here: bool,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ReportType {
-    Summary,
-    List(WeatherAttributeSet),
-}
-
-pub struct Parameters {
-    pub report_type: ReportType,
-    pub coordinates: Option<Coordinates>,
 }
 
 fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
