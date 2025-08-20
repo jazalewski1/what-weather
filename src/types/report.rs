@@ -1,12 +1,5 @@
-use crate::port::weather::PartialResponse;
-use crate::types::units::Coordinates;
 use crate::types::units::*;
 use crate::types::weather::*;
-
-pub struct PartialReport {
-    pub coordinates: Coordinates,
-    pub response: PartialResponse,
-}
 
 #[derive(Clone, Debug)]
 pub struct CurrentFullReport {
@@ -16,4 +9,29 @@ pub struct CurrentFullReport {
     pub humidity: Percentage,
     pub wind: Wind,
     pub pressure: Hectopascal,
+}
+
+#[derive(Clone, Debug)]
+pub struct CurrentPartialReport {
+    pub coordinates: Coordinates,
+    pub kind: Option<Kind>,
+    pub temperature: Option<Temperature>,
+    pub cloud_coverage: Option<Percentage>,
+    pub humidity: Option<Percentage>,
+    pub wind: Option<Wind>,
+    pub pressure: Option<Hectopascal>,
+}
+
+impl CurrentPartialReport {
+    pub fn new_empty(coordinates: Coordinates) -> Self {
+        Self {
+            coordinates,
+            kind: None,
+            temperature: None,
+            cloud_coverage: None,
+            humidity: None,
+            wind: None,
+            pressure: None,
+        }
+    }
 }

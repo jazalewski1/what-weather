@@ -1,6 +1,7 @@
 use crate::port::weather::*;
 use crate::types::attributes::*;
 use crate::types::report::CurrentFullReport;
+use crate::types::report::CurrentPartialReport;
 use crate::types::units::*;
 use crate::types::weather::*;
 
@@ -18,9 +19,13 @@ impl WeatherProvider for FakeWeatherProvider {
         }
     }
 
-    fn fetch_selected(&self, request: &PartialRequest) -> PartialResponse {
-        let mut report = PartialResponse::default();
-        for attribute in request.attributes.iter() {
+    fn fetch_current_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        attributes: &WeatherAttributeSet,
+    ) -> CurrentPartialReport {
+        let mut report = CurrentPartialReport::new_empty(*coordinates);
+        for attribute in attributes.iter() {
             match attribute {
                 WeatherAttribute::WeatherKind => {
                     report.kind.replace(generate_random_weather_kind());
@@ -28,7 +33,7 @@ impl WeatherProvider for FakeWeatherProvider {
                 WeatherAttribute::Temperature => {
                     report
                         .temperature
-                        .replace(generate_random_temperature(&request.coordinates));
+                        .replace(generate_random_temperature(coordinates));
                 }
                 WeatherAttribute::CloudCoverage => {
                     report

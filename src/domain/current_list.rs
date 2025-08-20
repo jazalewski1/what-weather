@@ -1,5 +1,57 @@
-use crate::types::report::PartialReport;
+use super::ReportStrategy;
+use crate::port::weather::WeatherProvider;
+use crate::types::attributes::WeatherAttributeSet;
+use crate::types::report::CurrentPartialReport;
+use crate::types::units::Coordinates;
 use crate::types::weather::*;
+
+pub struct CurrentList<P: WeatherProvider> {
+    weather_provider: P,
+    attributes: WeatherAttributeSet,
+}
+
+impl<P: WeatherProvider> CurrentList<P> {
+    pub fn new(weather_provider: P, attributes: WeatherAttributeSet) -> Self {
+        Self {
+            weather_provider,
+            attributes,
+        }
+    }
+}
+
+impl<P: WeatherProvider> ReportStrategy for CurrentList<P> {
+    type Report = CurrentPartialReport;
+
+    fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
+        self.weather_provider
+            .fetch_current_partial_report(coordinates, &self.attributes)
+    }
+
+    fn format(&self, report: &Self::Report) -> String {
+        let mut builder = StringBuilder::default();
+
+        builder.add("Coordinates", &format!("{:.5}", report.coordinates));
+        if let Some(kind) = report.kind {
+            builder.add("Weather", &describe_kind(&kind));
+        }
+        if let Some(temperature) = report.temperature {
+            builder.add("Temperature", &format!("{temperature:.1}"));
+        }
+        if let Some(coverage) = report.cloud_coverage {
+            builder.add("Cloud coverage", &format!("{coverage}"));
+        }
+        if let Some(humidity) = report.humidity {
+            builder.add("Humidity", &format!("{humidity}"));
+        }
+        if let Some(wind) = &report.wind {
+            builder.add("Wind", &describe_wind(wind));
+        }
+        if let Some(pressure) = report.pressure {
+            builder.add("Pressure", &format!("{pressure}"));
+        }
+        builder.string()
+    }
+}
 
 #[derive(Default)]
 struct StringBuilder {
@@ -18,32 +70,6 @@ impl StringBuilder {
     fn string(self) -> String {
         self.string
     }
-}
-
-pub fn describe(report: &PartialReport) -> String {
-    let response = &report.response;
-    let mut builder = StringBuilder::default();
-
-    builder.add("Coordinates", &format!("{:.5}", report.coordinates));
-    if let Some(kind) = response.kind {
-        builder.add("Weather", &describe_kind(&kind));
-    }
-    if let Some(temperature) = response.temperature {
-        builder.add("Temperature", &format!("{temperature:.1}"));
-    }
-    if let Some(coverage) = response.cloud_coverage {
-        builder.add("Cloud coverage", &format!("{coverage}"));
-    }
-    if let Some(humidity) = response.humidity {
-        builder.add("Humidity", &format!("{humidity}"));
-    }
-    if let Some(wind) = &response.wind {
-        builder.add("Wind", &describe_wind(wind));
-    }
-    if let Some(pressure) = response.pressure {
-        builder.add("Pressure", &format!("{pressure}"));
-    }
-    builder.string()
 }
 
 fn describe_kind(kind: &Kind) -> String {
@@ -91,8 +117,39 @@ fn describe_wind(wind: &Wind) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::port::weather::PartialResponse;
+    use crate::port::mocks::MockWeatherProvider;
+    use crate::types::attributes::*;
     use crate::types::units::*;
+    use mockall::predicate::eq;
+
+    #[test]
+    fn fetches_current_partial_report_with_provider() {
+        let coordinates = Coordinates::new(1.23, 45.67);
+        let weather_attributes = WeatherAttributeSet::from([
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Humidity,
+            WeatherAttribute::Pressure,
+        ]);
+        let report = CurrentPartialReport {
+            coordinates,
+            kind: None,
+            temperature: Some(Temperature::new_celsius(36.6)),
+            cloud_coverage: None,
+            humidity: Some(Percentage::from(27)),
+            wind: None,
+            pressure: Some(Hectopascal::from(1001.2)),
+        };
+
+        let mut weather_provider = MockWeatherProvider::new();
+        weather_provider
+            .expect_fetch_current_partial_report()
+            .with(eq(coordinates), eq(weather_attributes.clone()))
+            .times(1)
+            .return_const(report);
+
+        let sut = CurrentList::new(weather_provider, weather_attributes);
+        let _report = sut.fetch(&coordinates);
+    }
 
     #[test]
     fn describes_values_of_clouds_kind() {
@@ -197,7 +254,8 @@ mod tests {
     #[test]
     fn describes_all_attributes() {
         let coordinates = Coordinates::new(1.2345, 67.89);
-        let response = PartialResponse {
+        let report = CurrentPartialReport {
+            coordinates,
             kind: Some(Kind::Clouds(Clouds::Light)),
             temperature: Some(Temperature::new_celsius(22.4)),
             cloud_coverage: Some(Percentage::from(43)),
@@ -208,11 +266,8 @@ mod tests {
             }),
             pressure: Some(Hectopascal::from(1009.3)),
         };
-        let report = PartialReport {
-            coordinates,
-            response,
-        };
-        let result = describe(&report);
+        let sut = CurrentList::new(MockWeatherProvider::new(), WeatherAttributeSet::new());
+        let result = sut.format(&report);
         let expected = "Coordinates: 1.23450°, 67.89000°\n\
             Weather: light clouds\n\
             Temperature: 22.4°C\n\
@@ -226,7 +281,8 @@ mod tests {
     #[test]
     fn describes_only_selected_attributes() {
         let coordinates = Coordinates::new(1.2345, 67.89);
-        let response = PartialResponse {
+        let report = CurrentPartialReport {
+            coordinates,
             kind: None,
             temperature: Some(Temperature::new_celsius(22.4)),
             cloud_coverage: None,
@@ -237,11 +293,8 @@ mod tests {
             }),
             pressure: None,
         };
-        let report = PartialReport {
-            coordinates,
-            response,
-        };
-        let result = describe(&report);
+        let sut = CurrentList::new(MockWeatherProvider::new(), WeatherAttributeSet::new());
+        let result = sut.format(&report);
         let expected = "Coordinates: 1.23450°, 67.89000°\n\
             Temperature: 22.4°C\n\
             Humidity: 81%\n\
