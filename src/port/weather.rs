@@ -1,4 +1,5 @@
 use crate::types::attributes::*;
+use crate::types::report::*;
 use crate::types::units::Coordinates;
 use crate::types::units::*;
 use crate::types::weather::*;
@@ -14,16 +15,6 @@ pub struct PartialRequest {
     pub attributes: WeatherAttributeSet,
 }
 
-#[derive(Clone, Debug)]
-pub struct FullResponse {
-    pub kind: Kind,
-    pub temperature: Temperature,
-    pub cloud_coverage: Percentage,
-    pub humidity: Percentage,
-    pub wind: Wind,
-    pub pressure: Hectopascal,
-}
-
 #[derive(Default, Clone, Debug)]
 pub struct PartialResponse {
     pub kind: Option<Kind>,
@@ -36,7 +27,7 @@ pub struct PartialResponse {
 
 #[mockall::automock]
 pub trait WeatherProvider {
-    fn fetch_all(&self, request: &FullRequest) -> FullResponse;
+    fn fetch_current_full_report(&self, coordinates: &Coordinates) -> CurrentFullReport;
 
     fn fetch_selected(&self, request: &PartialRequest) -> PartialResponse;
 }

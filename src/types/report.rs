@@ -1,11 +1,19 @@
-use crate::port::weather::{FullResponse, PartialResponse};
+use crate::port::weather::PartialResponse;
 use crate::types::units::Coordinates;
-
-pub struct FullReport {
-    pub response: FullResponse,
-}
+use crate::types::units::*;
+use crate::types::weather::*;
 
 pub struct PartialReport {
     pub coordinates: Coordinates,
     pub response: PartialResponse,
+}
+
+#[derive(Clone, Debug)]
+pub struct CurrentFullReport {
+    pub kind: Kind,
+    pub temperature: Temperature,
+    pub cloud_coverage: Percentage,
+    pub humidity: Percentage,
+    pub wind: Wind,
+    pub pressure: Hectopascal,
 }

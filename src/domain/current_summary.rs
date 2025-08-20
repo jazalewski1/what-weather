@@ -1,27 +1,47 @@
-use crate::types::report::FullReport;
+use super::ReportStrategy;
+use crate::port::weather::WeatherProvider;
+use crate::types::report::CurrentFullReport;
+use crate::types::units::Coordinates;
 use crate::types::units::*;
 use crate::types::weather::*;
 
-pub fn describe(report: &FullReport) -> String {
-    let response = &report.response;
-    let temperature_desc = describe_temperature(&response.temperature);
-    let weather_kind_desc = describe_weather_kind(&response.kind);
-    let clouds_desc = describe_cloud_coverage(&response.cloud_coverage);
-    let humidity_desc = describe_humidity(&response.humidity);
-    let wind_desc = describe_wind(&response.wind);
-    let pressure_desc = describe_pressure(&response.pressure);
+pub struct CurrentSummary<P: WeatherProvider> {
+    weather_provider: P,
+}
 
-    #[allow(clippy::uninlined_format_args)]
-    {
-        format!(
-            "{} and {} with {}.\n{} with {}.\n{}.",
-            temperature_desc,
-            weather_kind_desc,
-            clouds_desc,
-            humidity_desc,
-            wind_desc,
-            pressure_desc,
-        )
+impl<P: WeatherProvider> CurrentSummary<P> {
+    pub fn new(weather_provider: P) -> Self {
+        Self { weather_provider }
+    }
+}
+
+impl<P: WeatherProvider> ReportStrategy for CurrentSummary<P> {
+    type Report = CurrentFullReport;
+
+    fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
+        self.weather_provider.fetch_current_full_report(coordinates)
+    }
+
+    fn format(&self, report: &Self::Report) -> String {
+        let temperature_desc = describe_temperature(&report.temperature);
+        let weather_kind_desc = describe_weather_kind(&report.kind);
+        let clouds_desc = describe_cloud_coverage(&report.cloud_coverage);
+        let humidity_desc = describe_humidity(&report.humidity);
+        let wind_desc = describe_wind(&report.wind);
+        let pressure_desc = describe_pressure(&report.pressure);
+
+        #[allow(clippy::uninlined_format_args)]
+        {
+            format!(
+                "{} and {} with {}.\n{} with {}.\n{}.",
+                temperature_desc,
+                weather_kind_desc,
+                clouds_desc,
+                humidity_desc,
+                wind_desc,
+                pressure_desc,
+            )
+        }
     }
 }
 
@@ -156,9 +176,36 @@ fn describe_pressure(pressure: &Hectopascal) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::port::weather::FullResponse;
-
     use super::*;
+    use crate::port::mocks::MockWeatherProvider;
+    use crate::types::units::*;
+    use mockall::predicate::eq;
+
+    #[test]
+    fn fetches_current_full_report_with_provider() {
+        let coordinates = Coordinates::new(1.23, 45.67);
+        let report = CurrentFullReport {
+            kind: Kind::Clouds(Clouds::Light),
+            temperature: Temperature::new_celsius(24.7),
+            cloud_coverage: Percentage::from(47),
+            humidity: Percentage::from(60),
+            wind: Wind {
+                speed: Speed::new_meters_per_second(2.35),
+                direction: Azimuth::from(225.3),
+            },
+            pressure: Hectopascal::from(1001.5),
+        };
+
+        let mut weather_provider = MockWeatherProvider::new();
+        weather_provider
+            .expect_fetch_current_full_report()
+            .with(eq(coordinates))
+            .times(1)
+            .return_const(report);
+
+        let sut = CurrentSummary::new(weather_provider);
+        let _report = sut.fetch(&coordinates);
+    }
 
     #[test]
     fn describes_values_of_clouds_kind() {
@@ -364,19 +411,20 @@ mod tests {
 
     #[test]
     fn describes_full_report() {
-        let response = FullResponse {
+        let report = CurrentFullReport {
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(22.4),
             cloud_coverage: Percentage::from(43),
             humidity: Percentage::from(81),
             wind: Wind {
-                speed: Speed::new_meters_per_second(1.07),
-                direction: Azimuth::from(155.5),
+                speed: Speed::new_meters_per_second(1.12),
+                direction: Azimuth::from(140.3),
             },
             pressure: Hectopascal::from(1009.3),
         };
-        let report = FullReport { response };
-        let result = describe(&report);
+
+        let sut = CurrentSummary::new(MockWeatherProvider::new());
+        let result = sut.format(&report);
         let expected: String = "It's warm at 22.4°C \
              and the sky is mostly clear \
              with clouds covering 43% of the sky.\n\

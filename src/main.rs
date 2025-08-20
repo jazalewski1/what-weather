@@ -1,31 +1,14 @@
-use what_weather::domain;
 use what_weather::external::{FakeGeolocationProvider, FakeWeatherProvider};
 use what_weather::input::cli;
-use what_weather::output::format::{list, summary};
-use what_weather::output::{ConsoleView, View};
-use what_weather::port::geolocation::GeolocationProvider;
-use what_weather::port::weather::WeatherProvider;
-
-fn run(
-    geolocation_provider: impl GeolocationProvider,
-    weather_provider: impl WeatherProvider,
-    view: impl View,
-) {
-    let parameters = cli::parse();
-    let reporter = domain::WeatherReporter::new(geolocation_provider, weather_provider);
-    let string: String = match parameters.report_type {
-        cli::ReportType::Summary => {
-            let report = reporter.fetch_all(&parameters.coordinates);
-            summary::describe(&report)
-        }
-        cli::ReportType::List(attributes) => {
-            let report = reporter.fetch_selected(&attributes, &parameters.coordinates);
-            list::describe(&report)
-        }
-    };
-    view.display(&string);
-}
+use what_weather::output::ConsoleView;
+use what_weather::weather_reporter;
 
 fn main() {
-    run(FakeGeolocationProvider, FakeWeatherProvider, ConsoleView);
+    let parameters = cli::parse();
+    let reporter = weather_reporter::WeatherReporter::new(
+        FakeGeolocationProvider,
+        FakeWeatherProvider,
+        ConsoleView,
+    );
+    reporter.run(parameters);
 }
