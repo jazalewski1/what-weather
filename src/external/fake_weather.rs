@@ -88,9 +88,9 @@ fn generate_random_weather_kind() -> Kind {
 }
 
 fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
-    let lat = coordinates.latitude.value;
-    let min = (20.0 - (45.0 * lat.abs() / 90.0)) as i64;
-    let max = (30.0 - (40.0 * lat.abs() / 90.0)) as i64;
+    let normal = coordinates.latitude.value.abs() / 90.0;
+    let min = (20.0 - (50.0 * normal)) as i64;
+    let max = (40.0 - (35.0 * normal.powi(2).powf(1.5))) as i64;
     Temperature::new_celsius(rnd::generate_float(min..max, 1))
 }
 
