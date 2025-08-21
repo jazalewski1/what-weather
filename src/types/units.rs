@@ -43,6 +43,20 @@ impl Display for Temperature {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum TemperatureRange {
+    Celsius { min: Celsius, max: Celsius },
+}
+
+impl TemperatureRange {
+    pub fn new_celsius(min: f32, max: f32) -> Self {
+        Self::Celsius {
+            min: Celsius::from(min),
+            max: Celsius::from(max),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Percentage {
     pub value: i8,

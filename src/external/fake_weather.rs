@@ -2,6 +2,7 @@ use crate::port::weather::*;
 use crate::types::attributes::*;
 use crate::types::report::CurrentFullReport;
 use crate::types::report::CurrentPartialReport;
+use crate::types::report::ForecastFullReport;
 use crate::types::units::*;
 use crate::types::weather::*;
 
@@ -53,6 +54,13 @@ impl WeatherProvider for FakeWeatherProvider {
         }
         report
     }
+
+    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> ForecastFullReport {
+        ForecastFullReport {
+            kind: generate_random_weather_kind(),
+            temperature_range: generate_random_temperature_range(coordinates),
+        }
+    }
 }
 
 fn generate_random_weather_kind() -> Kind {
@@ -87,11 +95,22 @@ fn generate_random_weather_kind() -> Kind {
     weather_kinds[weather_kind_index]
 }
 
-fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
+fn generate_random_celsius(coordinates: &Coordinates) -> Celsius {
     let normal = coordinates.latitude.value.abs() / 90.0;
-    let min = (20.0 - (50.0 * normal)) as i64;
-    let max = (40.0 - (35.0 * normal.powi(2).powf(1.5))) as i64;
-    Temperature::new_celsius(rnd::generate_float(min..max, 1))
+    let lower = (20.0 - (50.0 * normal)) as i64;
+    let upper = (40.0 - (35.0 * normal.powi(2).powf(1.5))) as i64;
+    Celsius::from(rnd::generate_float(lower..upper, 1))
+}
+
+fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
+    Temperature::Celsius(generate_random_celsius(coordinates))
+}
+
+fn generate_random_temperature_range(coordinates: &Coordinates) -> TemperatureRange {
+    let min = generate_random_celsius(coordinates);
+    let diff = rnd::generate_float(4..12, 1);
+    let max = Celsius::from(min.value + diff);
+    TemperatureRange::Celsius { min, max }
 }
 
 fn generate_random_cloud_coverage() -> Percentage {

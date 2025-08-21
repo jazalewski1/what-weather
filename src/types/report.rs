@@ -35,3 +35,9 @@ impl CurrentPartialReport {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct ForecastFullReport {
+    pub kind: Kind,
+    pub temperature_range: TemperatureRange,
+}
