@@ -1,3 +1,14 @@
-mod weather_reporter;
+pub mod current_list;
+pub mod current_summary;
 
-pub use weather_reporter::WeatherReporter;
+use crate::types::units::Coordinates;
+use mockall::automock;
+
+#[automock(type Report = String;)]
+pub trait ReportStrategy {
+    type Report;
+
+    fn fetch(&self, coordinates: &Coordinates) -> Self::Report;
+
+    fn format(&self, report: &Self::Report) -> String;
+}

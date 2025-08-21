@@ -1,15 +1,17 @@
 use crate::port::weather::*;
 use crate::types::attributes::*;
+use crate::types::report::CurrentFullReport;
+use crate::types::report::CurrentPartialReport;
 use crate::types::units::*;
 use crate::types::weather::*;
 
 pub struct FakeWeatherProvider;
 
 impl WeatherProvider for FakeWeatherProvider {
-    fn fetch_all(&self, _request: &FullRequest) -> FullResponse {
-        FullResponse {
+    fn fetch_current_full_report(&self, coordinates: &Coordinates) -> CurrentFullReport {
+        CurrentFullReport {
             kind: generate_random_weather_kind(),
-            temperature: generate_random_temperature(),
+            temperature: generate_random_temperature(coordinates),
             cloud_coverage: generate_random_cloud_coverage(),
             humidity: generate_random_humidity(),
             wind: generate_random_wind(),
@@ -17,15 +19,21 @@ impl WeatherProvider for FakeWeatherProvider {
         }
     }
 
-    fn fetch_selected(&self, request: &PartialRequest) -> PartialResponse {
-        let mut report = PartialResponse::default();
-        for attribute in request.attributes.iter() {
+    fn fetch_current_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        attributes: &WeatherAttributeSet,
+    ) -> CurrentPartialReport {
+        let mut report = CurrentPartialReport::new_empty(*coordinates);
+        for attribute in attributes.iter() {
             match attribute {
                 WeatherAttribute::WeatherKind => {
                     report.kind.replace(generate_random_weather_kind());
                 }
                 WeatherAttribute::Temperature => {
-                    report.temperature.replace(generate_random_temperature());
+                    report
+                        .temperature
+                        .replace(generate_random_temperature(coordinates));
                 }
                 WeatherAttribute::CloudCoverage => {
                     report
@@ -79,8 +87,11 @@ fn generate_random_weather_kind() -> Kind {
     weather_kinds[weather_kind_index]
 }
 
-fn generate_random_temperature() -> Temperature {
-    Temperature::new_celsius(rnd::generate_float(-10..40, 1))
+fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
+    let normal = coordinates.latitude.value.abs() / 90.0;
+    let min = (20.0 - (50.0 * normal)) as i64;
+    let max = (40.0 - (35.0 * normal.powi(2).powf(1.5))) as i64;
+    Temperature::new_celsius(rnd::generate_float(min..max, 1))
 }
 
 fn generate_random_cloud_coverage() -> Percentage {

@@ -72,13 +72,13 @@ struct Args {
     here: bool,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ReportType {
-    Summary,
-    List(WeatherAttributeSet),
+    CurrentSummary,
+    CurrentList(WeatherAttributeSet),
 }
 
-pub struct Parameters {
+pub struct Input {
     pub report_type: ReportType,
     pub coordinates: Option<Coordinates>,
 }
@@ -91,31 +91,30 @@ fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttribute
     }
 }
 
-impl From<Args> for Parameters {
-    fn from(value: Args) -> Self {
-        let report_type = match value.command {
-            None => ReportType::Summary,
+impl From<Args> for Input {
+    fn from(args: Args) -> Self {
+        let report_type = match args.command {
+            None => ReportType::CurrentSummary,
             Some(Command::Now { summary, list }) => {
                 if summary {
-                    ReportType::Summary
+                    ReportType::CurrentSummary
                 } else if let Some(attributes) = list {
                     let attribute_set = convert_to_attribute_set(&attributes);
-                    ReportType::List(attribute_set)
+                    ReportType::CurrentList(attribute_set)
                 } else {
-                    ReportType::Summary
+                    ReportType::CurrentSummary
                 }
             }
         };
-        Parameters {
+        Input {
             report_type,
-            coordinates: value.coords,
+            coordinates: args.coords,
         }
     }
 }
 
-pub fn parse() -> Parameters {
-    let args = Args::parse();
-    Parameters::from(args)
+pub fn parse() -> Input {
+    Args::parse().into()
 }
 
 #[cfg(test)]
@@ -129,8 +128,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let params: Parameters = args.into();
-        assert_eq!(params.report_type, ReportType::Summary);
+        let input: Input = args.into();
+        assert_eq!(input.report_type, ReportType::CurrentSummary);
     }
 
     #[test]
@@ -143,8 +142,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let params: Parameters = args.into();
-        assert_eq!(params.report_type, ReportType::Summary);
+        let input: Input = args.into();
+        assert_eq!(input.report_type, ReportType::CurrentSummary);
     }
 
     #[test]
@@ -157,14 +156,14 @@ mod tests {
             coords: None,
             here: false,
         };
-        let params: Parameters = args.into();
-        assert_eq!(params.report_type, ReportType::Summary);
+        let input: Input = args.into();
+        assert_eq!(input.report_type, ReportType::CurrentSummary);
     }
 
     #[test]
     fn parses_now_command_with_list_without_attributes_specified() {
         let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
-        let expected = ReportType::List(expected_attribute_set);
+        let expected = ReportType::CurrentList(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Now {
@@ -174,8 +173,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let params: Parameters = args.into();
-        assert_eq!(params.report_type, expected);
+        let input: Input = args.into();
+        assert_eq!(input.report_type, expected);
     }
 
     #[test]
@@ -187,7 +186,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = ReportType::List(expected_attribute_set);
+        let expected = ReportType::CurrentList(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Now {
@@ -197,8 +196,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let params: Parameters = args.into();
-        assert_eq!(params.report_type, expected);
+        let input: Input = args.into();
+        assert_eq!(input.report_type, expected);
     }
 
     #[test]
@@ -224,8 +223,8 @@ mod tests {
             coords: Some(coordinates.clone()),
             here: false,
         };
-        let params: Parameters = args.into();
-        assert_eq!(params.coordinates, Some(coordinates));
+        let input: Input = args.into();
+        assert_eq!(input.coordinates, Some(coordinates));
     }
 
     #[test]

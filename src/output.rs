@@ -1,5 +1,4 @@
-pub mod console;
-pub mod format;
+mod console;
 
 pub use console::ConsoleView;
 
