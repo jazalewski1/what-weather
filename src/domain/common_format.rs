@@ -174,41 +174,18 @@ mod tests {
 
     #[test]
     fn prepares_kind_descriptions_for_clouds() {
-        let kind = Kind::Clouds(Clouds::Clear);
-        let desc = prepare_kind_description(&kind);
-        assert_eq!(
-            desc,
-            KindDescription::Clouds {
-                sky_adjective: "clear".into()
-            }
-        );
+        let make_expected = |adj: &str| KindDescription::Clouds {
+            sky_adjective: adj.into(),
+        };
 
-        let kind = Kind::Clouds(Clouds::Light);
-        let desc = prepare_kind_description(&kind);
-        assert_eq!(
-            desc,
-            KindDescription::Clouds {
-                sky_adjective: "mostly clear".into()
-            }
-        );
-
-        let kind = Kind::Clouds(Clouds::Moderate);
-        let desc = prepare_kind_description(&kind);
-        assert_eq!(
-            desc,
-            KindDescription::Clouds {
-                sky_adjective: "cloudy".into()
-            }
-        );
-
-        let kind = Kind::Clouds(Clouds::Dense);
-        let desc = prepare_kind_description(&kind);
-        assert_eq!(
-            desc,
-            KindDescription::Clouds {
-                sky_adjective: "overcast".into()
-            }
-        );
+        let desc = prepare_kind_description(&Kind::Clouds(Clouds::Clear));
+        assert_eq!(desc, make_expected("clear"));
+        let desc = prepare_kind_description(&Kind::Clouds(Clouds::Light));
+        assert_eq!(desc, make_expected("mostly clear"));
+        let desc = prepare_kind_description(&Kind::Clouds(Clouds::Moderate));
+        assert_eq!(desc, make_expected("cloudy"));
+        let desc = prepare_kind_description(&Kind::Clouds(Clouds::Dense));
+        assert_eq!(desc, make_expected("overcast"));
     }
 
     #[test]
@@ -242,22 +219,14 @@ mod tests {
             });
             prepare_kind_description(&kind)
         };
+        let make_expected = |desc: &str| KindDescription::Precipitation {
+            description: desc.into(),
+        };
 
         let desc = prepare(PrecipitationKind::Rain);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "light rain".into()
-            }
-        );
-
+        assert_eq!(desc, make_expected("light rain"));
         let desc = prepare(PrecipitationKind::Snow);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "light snow".into()
-            }
-        );
+        assert_eq!(desc, make_expected("light snow"));
     }
 
     #[test]
@@ -270,38 +239,18 @@ mod tests {
             });
             prepare_kind_description(&kind)
         };
+        let make_expected = |desc: &str| KindDescription::Precipitation {
+            description: desc.into(),
+        };
 
         let desc = prepare(PrecipitationIntensity::Light);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "light rain".into()
-            }
-        );
-
+        assert_eq!(desc, make_expected("light rain"));
         let desc = prepare(PrecipitationIntensity::Moderate);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "moderate rain".into()
-            }
-        );
-
+        assert_eq!(desc, make_expected("moderate rain"));
         let desc = prepare(PrecipitationIntensity::Heavy);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "heavy rain".into()
-            }
-        );
-
+        assert_eq!(desc, make_expected("heavy rain"));
         let desc = prepare(PrecipitationIntensity::Shower);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "shower rain".into()
-            }
-        );
+        assert_eq!(desc, make_expected("shower rain"));
     }
 
     #[test]
@@ -314,22 +263,14 @@ mod tests {
             });
             prepare_kind_description(&kind)
         };
+        let make_expected = |desc: &str| KindDescription::Precipitation {
+            description: desc.into(),
+        };
 
         let desc = prepare(PrecipitationHeat::Normal);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "moderate rain".into()
-            }
-        );
-
+        assert_eq!(desc, make_expected("moderate rain"));
         let desc = prepare(PrecipitationHeat::Freezing);
-        assert_eq!(
-            desc,
-            KindDescription::Precipitation {
-                description: "freezing moderate rain".into()
-            }
-        );
+        assert_eq!(desc, make_expected("freezing moderate rain"));
     }
 
     #[test]
