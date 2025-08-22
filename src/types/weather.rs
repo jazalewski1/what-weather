@@ -54,3 +54,9 @@ pub struct Wind {
     pub speed: Speed,
     pub direction: Azimuth,
 }
+
+#[derive(Clone, Debug)]
+pub struct WindScope {
+    pub speed_range: SpeedRange,
+    pub dominant_direction: Azimuth,
+}

@@ -11,4 +11,6 @@ pub trait WeatherProvider {
         coordinates: &Coordinates,
         attributes: &WeatherAttributeSet,
     ) -> CurrentPartialReport;
+
+    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> ForecastFullReport;
 }

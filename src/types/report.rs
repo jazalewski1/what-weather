@@ -35,3 +35,13 @@ impl CurrentPartialReport {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct ForecastFullReport {
+    pub kind: Kind,
+    pub temperature_range: TemperatureRange,
+    pub cloud_coverage_range: PercentageRange,
+    pub humidity_range: PercentageRange,
+    pub wind: WindScope,
+    pub pressure_range: PressureRange,
+}

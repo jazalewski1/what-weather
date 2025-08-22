@@ -2,6 +2,7 @@ use crate::port::weather::*;
 use crate::types::attributes::*;
 use crate::types::report::CurrentFullReport;
 use crate::types::report::CurrentPartialReport;
+use crate::types::report::ForecastFullReport;
 use crate::types::units::*;
 use crate::types::weather::*;
 
@@ -12,8 +13,8 @@ impl WeatherProvider for FakeWeatherProvider {
         CurrentFullReport {
             kind: generate_random_weather_kind(),
             temperature: generate_random_temperature(coordinates),
-            cloud_coverage: generate_random_cloud_coverage(),
-            humidity: generate_random_humidity(),
+            cloud_coverage: generate_random_percentage(),
+            humidity: generate_random_percentage(),
             wind: generate_random_wind(),
             pressure: generate_random_pressure(),
         }
@@ -36,12 +37,10 @@ impl WeatherProvider for FakeWeatherProvider {
                         .replace(generate_random_temperature(coordinates));
                 }
                 WeatherAttribute::CloudCoverage => {
-                    report
-                        .cloud_coverage
-                        .replace(generate_random_cloud_coverage());
+                    report.cloud_coverage.replace(generate_random_percentage());
                 }
                 WeatherAttribute::Humidity => {
-                    report.humidity.replace(generate_random_humidity());
+                    report.humidity.replace(generate_random_percentage());
                 }
                 WeatherAttribute::Wind => {
                     report.wind.replace(generate_random_wind());
@@ -52,6 +51,17 @@ impl WeatherProvider for FakeWeatherProvider {
             }
         }
         report
+    }
+
+    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> ForecastFullReport {
+        ForecastFullReport {
+            kind: generate_random_weather_kind(),
+            temperature_range: generate_random_temperature_range(coordinates),
+            cloud_coverage_range: generate_random_perecentage_range(),
+            humidity_range: generate_random_perecentage_range(),
+            wind: generate_random_wind_scope(),
+            pressure_range: generate_random_pressure_range(),
+        }
     }
 }
 
@@ -87,30 +97,66 @@ fn generate_random_weather_kind() -> Kind {
     weather_kinds[weather_kind_index]
 }
 
-fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
+fn generate_random_celsius(coordinates: &Coordinates) -> Celsius {
     let normal = coordinates.latitude.value.abs() / 90.0;
-    let min = (20.0 - (50.0 * normal)) as i64;
-    let max = (40.0 - (35.0 * normal.powi(2).powf(1.5))) as i64;
-    Temperature::new_celsius(rnd::generate_float(min..max, 1))
+    let lower = (20.0 - (50.0 * normal)) as i64;
+    let upper = (40.0 - (35.0 * normal.powi(2).powf(1.4))) as i64;
+    Celsius::from(rnd::generate_float(lower..upper, 1))
 }
 
-fn generate_random_cloud_coverage() -> Percentage {
+fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
+    Temperature::Celsius(generate_random_celsius(coordinates))
+}
+
+fn generate_random_temperature_range(coordinates: &Coordinates) -> TemperatureRange {
+    let diff = rnd::generate_float(2..6, 1);
+    let base = generate_random_celsius(coordinates);
+    let min = Celsius::from(base.value - diff);
+    let max = Celsius::from(base.value + diff);
+    TemperatureRange::Celsius { min, max }
+}
+
+fn generate_random_percentage() -> Percentage {
     Percentage::from(rnd::generate_integer(0..101) as i8)
 }
 
-fn generate_random_humidity() -> Percentage {
-    Percentage::from(rnd::generate_integer(0..101) as i8)
+fn generate_random_perecentage_range() -> PercentageRange {
+    let max = rnd::generate_integer(0..101);
+    let min = rnd::generate_integer(0..max);
+    PercentageRange::new(min as i8, max as i8)
+}
+
+fn generate_random_wind_direction() -> Azimuth {
+    Azimuth::from(rnd::generate_float(0..360, 1))
 }
 
 fn generate_random_wind() -> Wind {
     Wind {
         speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
-        direction: Azimuth::from(rnd::generate_float(0..360, 1)),
+        direction: generate_random_wind_direction(),
+    }
+}
+
+fn generate_random_wind_scope() -> WindScope {
+    let speed_range = {
+        let max = rnd::generate_float(0..16, 2);
+        let min = (max - rnd::generate_float(0..4, 2)).clamp(0.0, max);
+        SpeedRange::new_meters_per_second(min, max)
+    };
+    WindScope {
+        speed_range,
+        dominant_direction: generate_random_wind_direction(),
     }
 }
 
 fn generate_random_pressure() -> Hectopascal {
     Hectopascal::from(rnd::generate_float(990..1040, 1))
+}
+
+fn generate_random_pressure_range() -> PressureRange {
+    let min = rnd::generate_float(990..1000, 1);
+    let max = rnd::generate_float(1000..1040, 1);
+    PressureRange::new(min, max)
 }
 
 /// This module uses obviously naive random generators, but is good enough for fake data,
