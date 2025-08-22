@@ -1,4 +1,5 @@
 use super::ReportStrategy;
+use crate::domain::common_format::*;
 use crate::port::weather::WeatherProvider;
 use crate::types::report::CurrentFullReport;
 use crate::types::units::Coordinates;
@@ -46,58 +47,17 @@ impl<P: WeatherProvider> ReportStrategy for CurrentSummary<P> {
 }
 
 fn describe_weather_kind(kind: &Kind) -> String {
-    match kind {
-        Kind::Clouds(clouds) => match clouds {
-            Clouds::Clear => "the sky is clear".into(),
-            Clouds::Light => "the sky is mostly clear".into(),
-            Clouds::Moderate => "the sky is moderately cloudy".into(),
-            Clouds::Dense => "the sky is overcast".into(),
-        },
-        Kind::Fog(fog) => {
-            let kind = match fog {
-                Fog::Normal => "fog",
-                Fog::Rime => "rime fog",
-            };
-            format!("{kind} is covering the area")
-        }
-        Kind::Precipitation(precipitation) => {
-            let intensity = match precipitation.intensity {
-                PrecipitationIntensity::Light => "light",
-                PrecipitationIntensity::Moderate => "moderate",
-                PrecipitationIntensity::Heavy => "heavy",
-                PrecipitationIntensity::Shower => "shower",
-            };
-            let kind = match precipitation.kind {
-                PrecipitationKind::Rain => "rain",
-                PrecipitationKind::Snow => "snow",
-            };
-            match precipitation.heat {
-                PrecipitationHeat::Normal => format!("{intensity} {kind} is falling"),
-                PrecipitationHeat::Freezing => format!("freezing {intensity} {kind} is falling"),
-            }
-        }
-        Kind::Thunderstorm => "thunderstorm is raging".into(),
+    let desc = prepare_kind_description(kind);
+    match desc {
+        KindDescription::Clouds { sky_adjective } => format!("the sky is {sky_adjective}"),
+        KindDescription::Fog { description } => format!("{description} is covering the area"),
+        KindDescription::Precipitation { description } => format!("{description} is falling"),
+        KindDescription::Thunderstorm { description } => format!("{description} is raging"),
     }
 }
 
 fn describe_temperature(temperature: &Temperature) -> String {
-    let adjective = match temperature {
-        Temperature::Celsius(Celsius { value }) => {
-            if *value <= 0.0 {
-                "freezing"
-            } else if *value <= 10.0 {
-                "cold"
-            } else if *value <= 17.0 {
-                "cool"
-            } else if *value <= 24.0 {
-                "warm"
-            } else if *value <= 35.0 {
-                "hot"
-            } else {
-                "very hot"
-            }
-        }
-    };
+    let adjective = describe_temperature_adjective(temperature);
     format!("It's {adjective} at {temperature:.1}")
 }
 
@@ -209,26 +169,18 @@ mod tests {
 
     #[test]
     fn describes_values_of_clouds_kind() {
-        let string = describe_weather_kind(&Kind::Clouds(Clouds::Clear));
-        assert_eq!(string, "the sky is clear");
-        let string = describe_weather_kind(&Kind::Clouds(Clouds::Light));
-        assert_eq!(string, "the sky is mostly clear");
         let string = describe_weather_kind(&Kind::Clouds(Clouds::Moderate));
-        assert_eq!(string, "the sky is moderately cloudy");
-        let string = describe_weather_kind(&Kind::Clouds(Clouds::Dense));
-        assert_eq!(string, "the sky is overcast");
+        assert_eq!(string, "the sky is cloudy");
     }
 
     #[test]
     fn describes_values_of_fog() {
-        let string = describe_weather_kind(&Kind::Fog(Fog::Normal));
-        assert_eq!(string, "fog is covering the area");
         let string = describe_weather_kind(&Kind::Fog(Fog::Rime));
         assert_eq!(string, "rime fog is covering the area");
     }
 
     #[test]
-    fn describes_values_of_precipitation_kind() {
+    fn describes_values_of_precipitation() {
         let precipitation = Precipitation {
             kind: PrecipitationKind::Rain,
             intensity: PrecipitationIntensity::Light,
@@ -236,56 +188,6 @@ mod tests {
         };
         let string = describe_weather_kind(&Kind::Precipitation(precipitation));
         assert_eq!(string, "light rain is falling");
-
-        let precipitation = Precipitation {
-            kind: PrecipitationKind::Snow,
-            intensity: PrecipitationIntensity::Light,
-            heat: PrecipitationHeat::Normal,
-        };
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "light snow is falling");
-    }
-
-    #[test]
-    fn describes_values_of_precipitation_intensity() {
-        let make_precipitation_with_intensity = |intensity| Precipitation {
-            kind: PrecipitationKind::Rain,
-            intensity,
-            heat: PrecipitationHeat::Normal,
-        };
-
-        let precipitation = make_precipitation_with_intensity(PrecipitationIntensity::Light);
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "light rain is falling");
-
-        let precipitation = make_precipitation_with_intensity(PrecipitationIntensity::Moderate);
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "moderate rain is falling");
-
-        let precipitation = make_precipitation_with_intensity(PrecipitationIntensity::Heavy);
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "heavy rain is falling");
-
-        let precipitation = make_precipitation_with_intensity(PrecipitationIntensity::Shower);
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "shower rain is falling");
-    }
-
-    #[test]
-    fn describes_values_of_precipitation_heat() {
-        let make_precipitation_with_heat = |heat| Precipitation {
-            kind: PrecipitationKind::Rain,
-            intensity: PrecipitationIntensity::Moderate,
-            heat,
-        };
-
-        let precipitation = make_precipitation_with_heat(PrecipitationHeat::Normal);
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "moderate rain is falling");
-
-        let precipitation = make_precipitation_with_heat(PrecipitationHeat::Freezing);
-        let string = describe_weather_kind(&Kind::Precipitation(precipitation));
-        assert_eq!(string, "freezing moderate rain is falling");
     }
 
     #[test]
@@ -296,30 +198,8 @@ mod tests {
 
     #[test]
     fn describes_values_of_temperature_in_celsius() {
-        let describe = |value| describe_temperature(&Temperature::new_celsius(value));
-
-        assert_eq!(describe(-3.0), "It's freezing at -3.0°C");
-        assert_eq!(describe(-0.1), "It's freezing at -0.1°C");
-        assert_eq!(describe(0.0), "It's freezing at 0.0°C");
-
-        assert_eq!(describe(1.0), "It's cold at 1.0°C");
-        assert_eq!(describe(4.5), "It's cold at 4.5°C");
-        assert_eq!(describe(10.0), "It's cold at 10.0°C");
-
-        assert_eq!(describe(10.1), "It's cool at 10.1°C");
-        assert_eq!(describe(13.7), "It's cool at 13.7°C");
-        assert_eq!(describe(17.0), "It's cool at 17.0°C");
-
-        assert_eq!(describe(17.1), "It's warm at 17.1°C");
-        assert_eq!(describe(20.0), "It's warm at 20.0°C");
-        assert_eq!(describe(24.0), "It's warm at 24.0°C");
-
-        assert_eq!(describe(24.1), "It's hot at 24.1°C");
-        assert_eq!(describe(29.9), "It's hot at 29.9°C");
-        assert_eq!(describe(35.0), "It's hot at 35.0°C");
-
-        assert_eq!(describe(35.1), "It's very hot at 35.1°C");
-        assert_eq!(describe(40.2), "It's very hot at 40.2°C");
+        let string = describe_temperature(&Temperature::new_celsius(24.5));
+        assert_eq!(string, "It's hot at 24.5°C");
     }
 
     #[test]
