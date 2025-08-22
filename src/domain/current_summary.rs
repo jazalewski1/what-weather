@@ -93,17 +93,7 @@ fn describe_wind(wind: &Wind) -> String {
 }
 
 fn describe_pressure(pressure: &Hectopascal) -> String {
-    let adjective = if pressure.value <= 1000.0 {
-        "Very low"
-    } else if pressure.value <= 1010.0 {
-        "Low"
-    } else if pressure.value <= 1020.0 {
-        "Normal"
-    } else if pressure.value <= 1030.0 {
-        "High"
-    } else {
-        "Very high"
-    };
+    let adjective = describe_pressure_adjective(pressure);
     format!("{adjective} pressure stands at {pressure:.1}")
 }
 
@@ -214,25 +204,8 @@ mod tests {
 
     #[test]
     fn describes_values_of_pressure() {
-        let describe = |value| describe_pressure(&Hectopascal::from(value));
-
-        assert_eq!(describe(995.0), "Very low pressure stands at 995.0 hPa");
-        assert_eq!(describe(1000.0), "Very low pressure stands at 1000.0 hPa");
-
-        assert_eq!(describe(1000.1), "Low pressure stands at 1000.1 hPa");
-        assert_eq!(describe(1005.3), "Low pressure stands at 1005.3 hPa");
-        assert_eq!(describe(1010.0), "Low pressure stands at 1010.0 hPa");
-
-        assert_eq!(describe(1010.1), "Normal pressure stands at 1010.1 hPa");
-        assert_eq!(describe(1018.7), "Normal pressure stands at 1018.7 hPa");
-        assert_eq!(describe(1020.0), "Normal pressure stands at 1020.0 hPa");
-
-        assert_eq!(describe(1020.1), "High pressure stands at 1020.1 hPa");
-        assert_eq!(describe(1026.1), "High pressure stands at 1026.1 hPa");
-        assert_eq!(describe(1030.0), "High pressure stands at 1030.0 hPa");
-
-        assert_eq!(describe(1030.1), "Very high pressure stands at 1030.1 hPa");
-        assert_eq!(describe(1035.0), "Very high pressure stands at 1035.0 hPa");
+        let result = describe_pressure(&Hectopascal::from(1005.3));
+        assert_eq!(result, "Low pressure stands at 1005.3 hPa");
     }
 
     #[test]

@@ -125,6 +125,21 @@ pub fn prepare_wind_description(speed: &Speed, direction: &Azimuth) -> WindDescr
     }
 }
 
+pub fn describe_pressure_adjective(pressure: &Hectopascal) -> String {
+    if pressure.value <= 1000.0 {
+        "Very low"
+    } else if pressure.value <= 1010.0 {
+        "Low"
+    } else if pressure.value <= 1020.0 {
+        "Normal"
+    } else if pressure.value <= 1030.0 {
+        "High"
+    } else {
+        "Very high"
+    }
+    .into()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -378,5 +393,28 @@ mod tests {
 
         assert_eq!(prepare(13.81), make_wind_desc("very strong east wind"));
         assert_eq!(prepare(15.0), make_wind_desc("very strong east wind"));
+    }
+
+    #[test]
+    fn describes_pressure_adjective() {
+        let describe = |value| describe_pressure_adjective(&Hectopascal::from(value));
+
+        assert_eq!(describe(995.0), "Very low");
+        assert_eq!(describe(1000.0), "Very low");
+
+        assert_eq!(describe(1000.1), "Low");
+        assert_eq!(describe(1005.3), "Low");
+        assert_eq!(describe(1010.0), "Low");
+
+        assert_eq!(describe(1010.1), "Normal");
+        assert_eq!(describe(1018.7), "Normal");
+        assert_eq!(describe(1020.0), "Normal");
+
+        assert_eq!(describe(1020.1), "High");
+        assert_eq!(describe(1026.1), "High");
+        assert_eq!(describe(1030.0), "High");
+
+        assert_eq!(describe(1030.1), "Very high");
+        assert_eq!(describe(1035.0), "Very high");
     }
 }

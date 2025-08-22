@@ -60,6 +60,7 @@ impl WeatherProvider for FakeWeatherProvider {
             cloud_coverage_range: generate_random_perecentage_range(),
             humidity_range: generate_random_perecentage_range(),
             wind: generate_random_wind_scope(),
+            pressure_range: generate_random_pressure_range(),
         }
     }
 }
@@ -150,6 +151,12 @@ fn generate_random_wind_scope() -> WindScope {
 
 fn generate_random_pressure() -> Hectopascal {
     Hectopascal::from(rnd::generate_float(990..1040, 1))
+}
+
+fn generate_random_pressure_range() -> PressureRange {
+    let min = rnd::generate_float(990..1000, 1);
+    let max = rnd::generate_float(1000..1040, 1);
+    PressureRange::new(min, max)
 }
 
 /// This module uses obviously naive random generators, but is good enough for fake data,

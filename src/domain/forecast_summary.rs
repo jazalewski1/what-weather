@@ -29,11 +29,17 @@ impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
         let cloud_coverage_desc = describe_cloud_coverage_range(&report.cloud_coverage_range);
         let humidity_desc = describe_humidity_range(&report.humidity_range);
         let wind_desc = describe_wind_scope(&report.wind);
+        let pressure_desc = describe_pressure_range(&report.pressure_range);
         #[allow(clippy::uninlined_format_args)]
         {
             format!(
-                "Today {}.\n{} and {}.\n{} with {}.",
-                temperature_desc, kind_desc, cloud_coverage_desc, humidity_desc, wind_desc,
+                "Today {}.\n{} and {}.\n{} with {}.\n{}.",
+                temperature_desc,
+                kind_desc,
+                cloud_coverage_desc,
+                humidity_desc,
+                wind_desc,
+                pressure_desc,
             )
         }
     }
@@ -100,6 +106,12 @@ fn describe_wind_scope(scope: &WindScope) -> String {
     }
 }
 
+fn describe_pressure_range(pressure_range: &PressureRange) -> String {
+    let PressureRange { min, max } = pressure_range;
+    let adjective = describe_pressure_adjective(&pressure_range.max);
+    format!("{adjective} pressure will reach {min:.1} at lowest up to {max:.1}",)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -119,6 +131,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(2.5, 8.17),
                 dominant_direction: Azimuth::from(115.2),
             },
+            pressure_range: PressureRange::new(1001.2, 1010.5),
         };
         weather_provider
             .expect_fetch_forecast_full_report()
@@ -219,6 +232,16 @@ mod tests {
     }
 
     #[test]
+    fn describes_pressure_range() {
+        let range = PressureRange::new(1011.9, 1020.5);
+        let result = describe_pressure_range(&range);
+        assert_eq!(
+            result,
+            "High pressure will reach 1011.9 hPa at lowest up to 1020.5 hPa"
+        );
+    }
+
+    #[test]
     fn describes_entire_report() {
         let sut = ForecastSummary::new(MockWeatherProvider::new());
         let report = ForecastFullReport {
@@ -230,6 +253,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(2.5, 8.17),
                 dominant_direction: Azimuth::from(115.2),
             },
+            pressure_range: PressureRange::new(1001.2, 1010.5),
         };
         let result = sut.format(&report);
         let expected = "Today it will be warm \
@@ -237,7 +261,8 @@ mod tests {
                         The sky will be overcast \
                         and clouds will cover from 66% to 94% of the sky.\n\
                         The air will be humid at 23% to 45% \
-                        with mostly strong southeast wind blowing at maximum 8.2 m/s.";
+                        with mostly strong southeast wind blowing at maximum 8.2 m/s.\n\
+                        Normal pressure will reach 1001.2 hPa at lowest up to 1010.5 hPa.";
         assert_eq!(result, expected);
     }
 }

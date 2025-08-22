@@ -295,6 +295,21 @@ impl Display for Hectopascal {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct PressureRange {
+    pub min: Hectopascal,
+    pub max: Hectopascal,
+}
+
+impl PressureRange {
+    pub fn new(min: f32, max: f32) -> Self {
+        Self {
+            min: Hectopascal::from(min),
+            max: Hectopascal::from(max),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinates {
     pub latitude: Degrees,

@@ -43,4 +43,5 @@ pub struct ForecastFullReport {
     pub cloud_coverage_range: PercentageRange,
     pub humidity_range: PercentageRange,
     pub wind: WindScope,
+    pub pressure_range: PressureRange,
 }
