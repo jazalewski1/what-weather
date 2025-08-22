@@ -98,7 +98,7 @@ fn generate_random_weather_kind() -> Kind {
 fn generate_random_celsius(coordinates: &Coordinates) -> Celsius {
     let normal = coordinates.latitude.value.abs() / 90.0;
     let lower = (20.0 - (50.0 * normal)) as i64;
-    let upper = (40.0 - (35.0 * normal.powi(2).powf(1.5))) as i64;
+    let upper = (40.0 - (35.0 * normal.powi(2).powf(1.4))) as i64;
     Celsius::from(rnd::generate_float(lower..upper, 1))
 }
 
@@ -107,9 +107,10 @@ fn generate_random_temperature(coordinates: &Coordinates) -> Temperature {
 }
 
 fn generate_random_temperature_range(coordinates: &Coordinates) -> TemperatureRange {
-    let min = generate_random_celsius(coordinates);
-    let diff = rnd::generate_float(4..12, 1);
-    let max = Celsius::from(min.value + diff);
+    let diff = rnd::generate_float(2..6, 1);
+    let base = generate_random_celsius(coordinates);
+    let min = Celsius::from(base.value - diff);
+    let max = Celsius::from(base.value + diff);
     TemperatureRange::Celsius { min, max }
 }
 

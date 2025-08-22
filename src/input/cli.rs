@@ -55,6 +55,13 @@ enum Command {
         #[arg(long, group = "now_format", value_delimiter=',', num_args=0..)]
         list: Option<Vec<WeatherAttribute>>,
     },
+
+    /// Report forecast
+    Forecast {
+        /// Report summary
+        #[arg(long, group = "forecast_format")]
+        summary: bool,
+    },
 }
 
 #[derive(Parser)]
@@ -76,6 +83,7 @@ struct Args {
 pub enum ReportType {
     CurrentSummary,
     CurrentList(WeatherAttributeSet),
+    ForecastSummary,
 }
 
 pub struct Input {
@@ -105,6 +113,7 @@ impl From<Args> for Input {
                     ReportType::CurrentSummary
                 }
             }
+            Some(Command::Forecast { .. }) => ReportType::ForecastSummary,
         };
         Input {
             report_type,
@@ -197,6 +206,30 @@ mod tests {
             here: false,
         };
         let input: Input = args.into();
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_summary_when_type_is_not_specified() {
+        let args = Args {
+            command: Some(Command::Forecast { summary: false }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        let expected = ReportType::ForecastSummary;
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_summary_specified() {
+        let args = Args {
+            command: Some(Command::Forecast { summary: true }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        let expected = ReportType::ForecastSummary;
         assert_eq!(input.report_type, expected);
     }
 
