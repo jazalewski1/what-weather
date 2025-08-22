@@ -138,6 +138,23 @@ impl Display for Speed {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum SpeedRange {
+    MetersPerSecond {
+        min: MetersPerSecond,
+        max: MetersPerSecond,
+    },
+}
+
+impl SpeedRange {
+    pub fn new_meters_per_second(min: f32, max: f32) -> Self {
+        Self::MetersPerSecond {
+            min: MetersPerSecond::from(min),
+            max: MetersPerSecond::from(max),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Degrees {
     pub value: f32,

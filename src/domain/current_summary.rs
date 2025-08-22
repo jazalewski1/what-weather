@@ -83,37 +83,13 @@ fn describe_humidity(percentage: &Percentage) -> String {
 }
 
 fn describe_wind(wind: &Wind) -> String {
-    enum SpeedLevel {
-        NoWind,
-        GentleBreeze,
-        NormalWind,
-        StrongWind,
-        VeryStrongWind,
-    }
-    let speed_level = match wind.speed {
-        Speed::MetersPerSecond(MetersPerSecond { value }) => {
-            if value <= 0.2 {
-                SpeedLevel::NoWind
-            } else if value <= 3.3 {
-                SpeedLevel::GentleBreeze
-            } else if value <= 8.0 {
-                SpeedLevel::NormalWind
-            } else if value <= 13.8 {
-                SpeedLevel::StrongWind
-            } else {
-                SpeedLevel::VeryStrongWind
-            }
+    let desc = prepare_wind_description(&wind.speed, &wind.direction);
+    match desc {
+        WindDescription::NoWind => "no wind".into(),
+        WindDescription::Wind { description } => {
+            format!("{description} blowing at {:.1}", wind.speed)
         }
-    };
-    let direction_definition = wind.direction.to_cardinal_direction().to_name();
-    let adjective = match speed_level {
-        SpeedLevel::NoWind => return "no wind".into(),
-        SpeedLevel::GentleBreeze => format!("gentle {direction_definition} breeze"),
-        SpeedLevel::NormalWind => format!("{direction_definition} wind"),
-        SpeedLevel::StrongWind => format!("strong {direction_definition} wind"),
-        SpeedLevel::VeryStrongWind => format!("very strong {direction_definition} wind"),
-    };
-    format!("{adjective} blowing at {:.1}", wind.speed)
+    }
 }
 
 fn describe_pressure(pressure: &Hectopascal) -> String {
@@ -221,37 +197,19 @@ mod tests {
 
     #[test]
     fn describes_values_of_wind_speed_in_meters_per_second() {
-        let describe = |value| {
-            let wind = Wind {
-                speed: Speed::new_meters_per_second(value),
-                direction: Azimuth::from(42.0),
-            };
-            describe_wind(&wind)
+        let wind = Wind {
+            speed: Speed::new_meters_per_second(0.11),
+            direction: Azimuth::from(12.1),
         };
+        let result = describe_wind(&wind);
+        assert_eq!(result, "no wind");
 
-        assert_eq!(describe(0.0), "no wind");
-        assert_eq!(describe(0.2), "no wind");
-
-        assert_eq!(describe(0.21), "gentle northeast breeze blowing at 0.2 m/s");
-        assert_eq!(describe(2.9), "gentle northeast breeze blowing at 2.9 m/s");
-        assert_eq!(describe(3.3), "gentle northeast breeze blowing at 3.3 m/s");
-
-        assert_eq!(describe(3.31), "northeast wind blowing at 3.3 m/s");
-        assert_eq!(describe(5.57), "northeast wind blowing at 5.6 m/s");
-        assert_eq!(describe(8.0), "northeast wind blowing at 8.0 m/s");
-
-        assert_eq!(describe(8.01), "strong northeast wind blowing at 8.0 m/s");
-        assert_eq!(describe(10.3), "strong northeast wind blowing at 10.3 m/s");
-        assert_eq!(describe(13.8), "strong northeast wind blowing at 13.8 m/s");
-
-        assert_eq!(
-            describe(13.81),
-            "very strong northeast wind blowing at 13.8 m/s"
-        );
-        assert_eq!(
-            describe(15.0),
-            "very strong northeast wind blowing at 15.0 m/s"
-        );
+        let wind = Wind {
+            speed: Speed::new_meters_per_second(9.07),
+            direction: Azimuth::from(12.1),
+        };
+        let result = describe_wind(&wind);
+        assert_eq!(result, "strong north wind blowing at 9.1 m/s");
     }
 
     #[test]

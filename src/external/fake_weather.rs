@@ -59,6 +59,7 @@ impl WeatherProvider for FakeWeatherProvider {
             temperature_range: generate_random_temperature_range(coordinates),
             cloud_coverage_range: generate_random_perecentage_range(),
             humidity_range: generate_random_perecentage_range(),
+            wind: generate_random_wind_scope(),
         }
     }
 }
@@ -124,10 +125,26 @@ fn generate_random_perecentage_range() -> PercentageRange {
     PercentageRange::new(min as i8, max as i8)
 }
 
+fn generate_random_wind_direction() -> Azimuth {
+    Azimuth::from(rnd::generate_float(0..360, 1))
+}
+
 fn generate_random_wind() -> Wind {
     Wind {
         speed: Speed::new_meters_per_second(rnd::generate_float(0..16, 2)),
-        direction: Azimuth::from(rnd::generate_float(0..360, 1)),
+        direction: generate_random_wind_direction(),
+    }
+}
+
+fn generate_random_wind_scope() -> WindScope {
+    let speed_range = {
+        let max = rnd::generate_float(0..16, 2);
+        let min = (max - rnd::generate_float(0..4, 2)).clamp(0.0, max);
+        SpeedRange::new_meters_per_second(min, max)
+    };
+    WindScope {
+        speed_range,
+        dominant_direction: generate_random_wind_direction(),
     }
 }
 
