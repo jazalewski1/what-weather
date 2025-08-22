@@ -75,6 +75,29 @@ pub fn describe_temperature_adjective(temperature: &Temperature) -> String {
     .into()
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HumidityLevel {
+    VeryDry,
+    Dry,
+    Humid,
+    VeryHumid,
+    Heavy,
+}
+
+pub fn prepare_humidity_level(percentage: &Percentage) -> HumidityLevel {
+    if percentage.value <= 15 {
+        HumidityLevel::VeryDry
+    } else if percentage.value <= 30 {
+        HumidityLevel::Dry
+    } else if percentage.value <= 60 {
+        HumidityLevel::Humid
+    } else if percentage.value <= 85 {
+        HumidityLevel::VeryHumid
+    } else {
+        HumidityLevel::Heavy
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -277,5 +300,25 @@ mod tests {
                 description: "thunderstorm".into()
             }
         );
+    }
+
+    #[test]
+    fn prepares_humidity_level_from_percentage() {
+        let prepare = |value| prepare_humidity_level(&Percentage::from(value));
+
+        assert_eq!(prepare(0), HumidityLevel::VeryDry);
+        assert_eq!(prepare(15), HumidityLevel::VeryDry);
+
+        assert_eq!(prepare(16), HumidityLevel::Dry);
+        assert_eq!(prepare(30), HumidityLevel::Dry);
+
+        assert_eq!(prepare(31), HumidityLevel::Humid);
+        assert_eq!(prepare(60), HumidityLevel::Humid);
+
+        assert_eq!(prepare(61), HumidityLevel::VeryHumid);
+        assert_eq!(prepare(85), HumidityLevel::VeryHumid);
+
+        assert_eq!(prepare(86), HumidityLevel::Heavy);
+        assert_eq!(prepare(100), HumidityLevel::Heavy);
     }
 }

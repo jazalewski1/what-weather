@@ -57,7 +57,8 @@ impl WeatherProvider for FakeWeatherProvider {
         ForecastFullReport {
             kind: generate_random_weather_kind(),
             temperature_range: generate_random_temperature_range(coordinates),
-            cloud_coverage_range: generate_random_cloud_coverage_range(),
+            cloud_coverage_range: generate_random_perecentage_range(),
+            humidity_range: generate_random_perecentage_range(),
         }
     }
 }
@@ -117,7 +118,7 @@ fn generate_random_percentage() -> Percentage {
     Percentage::from(rnd::generate_integer(0..101) as i8)
 }
 
-fn generate_random_cloud_coverage_range() -> PercentageRange {
+fn generate_random_perecentage_range() -> PercentageRange {
     let max = rnd::generate_integer(0..101);
     let min = rnd::generate_integer(0..max);
     PercentageRange::new(min as i8, max as i8)

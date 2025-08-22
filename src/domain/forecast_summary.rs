@@ -27,7 +27,14 @@ impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
         let temperature_desc = describe_temperature_range(&report.temperature_range);
         let kind_desc = describe_kind(&report.kind);
         let cloud_coverage_desc = describe_cloud_coverage_range(&report.cloud_coverage_range);
-        format!("Today {temperature_desc}.\n{kind_desc} and {cloud_coverage_desc}.")
+        let humidity_desc = describe_humidity_range(&report.humidity_range);
+        #[allow(clippy::uninlined_format_args)]
+        {
+            format!(
+                "Today {}.\n{} and {}.\n{}.",
+                temperature_desc, kind_desc, cloud_coverage_desc, humidity_desc,
+            )
+        }
     }
 }
 
@@ -61,6 +68,24 @@ fn describe_cloud_coverage_range(range: &PercentageRange) -> String {
     )
 }
 
+fn describe_humidity_range(range: &PercentageRange) -> String {
+    let make_without_humidity = |adjective| {
+        format!(
+            "The air will be {adjective} at {} to {}",
+            range.min, range.max
+        )
+    };
+    let make_with_humidity = |adjective| format!("{} humidity", make_without_humidity(adjective));
+    let level = prepare_humidity_level(&range.max);
+    match level {
+        HumidityLevel::VeryDry => make_with_humidity("very dry"),
+        HumidityLevel::Dry => make_with_humidity("dry"),
+        HumidityLevel::Humid => make_without_humidity("humid"),
+        HumidityLevel::VeryHumid => make_without_humidity("very humid"),
+        HumidityLevel::Heavy => make_with_humidity("heavy"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -75,6 +100,7 @@ mod tests {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
             cloud_coverage_range: PercentageRange::new(25, 76),
+            humidity_range: PercentageRange::new(33, 46),
         };
         weather_provider
             .expect_fetch_forecast_full_report()
@@ -135,17 +161,43 @@ mod tests {
     }
 
     #[test]
+    fn describes_humidity_ranges() {
+        let describe = |min, max| {
+            let range = PercentageRange::new(min, max);
+            describe_humidity_range(&range)
+        };
+
+        assert_eq!(
+            describe(0, 15),
+            "The air will be very dry at 0% to 15% humidity"
+        );
+        assert_eq!(
+            describe(15, 30),
+            "The air will be dry at 15% to 30% humidity"
+        );
+        assert_eq!(describe(30, 60), "The air will be humid at 30% to 60%");
+        assert_eq!(describe(60, 85), "The air will be very humid at 60% to 85%");
+        assert_eq!(
+            describe(85, 100),
+            "The air will be heavy at 85% to 100% humidity"
+        );
+    }
+
+    #[test]
     fn describes_entire_report() {
         let sut = ForecastSummary::new(MockWeatherProvider::new());
         let report = ForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
             cloud_coverage_range: PercentageRange::new(66, 94),
+            humidity_range: PercentageRange::new(23, 45),
         };
         let result = sut.format(&report);
         let expected = "Today it will be warm \
                         with temperatures starting at 12.3°C and reaching 23.4°C.\n\
-                        The sky will be overcast and clouds will cover from 66% to 94% of the sky.";
+                        The sky will be overcast \
+                        and clouds will cover from 66% to 94% of the sky.\n\
+                        The air will be humid at 23% to 45%.";
         assert_eq!(result, expected);
     }
 }

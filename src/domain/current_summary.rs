@@ -72,16 +72,13 @@ fn describe_cloud_coverage(coverage: &Percentage) -> String {
 fn describe_humidity(percentage: &Percentage) -> String {
     let make_without_humidity = |adjective| format!("The air is {adjective} at {percentage}");
     let make_with_humidity = |adjective| format!("{} humidity", make_without_humidity(adjective));
-    if percentage.value <= 15 {
-        make_with_humidity("very dry")
-    } else if percentage.value <= 30 {
-        make_with_humidity("dry")
-    } else if percentage.value <= 60 {
-        make_without_humidity("humid")
-    } else if percentage.value <= 85 {
-        make_without_humidity("very humid")
-    } else {
-        make_with_humidity("heavy")
+    let level = prepare_humidity_level(percentage);
+    match level {
+        HumidityLevel::VeryDry => make_with_humidity("very dry"),
+        HumidityLevel::Dry => make_with_humidity("dry"),
+        HumidityLevel::Humid => make_without_humidity("humid"),
+        HumidityLevel::VeryHumid => make_without_humidity("very humid"),
+        HumidityLevel::Heavy => make_with_humidity("heavy"),
     }
 }
 
@@ -216,18 +213,9 @@ mod tests {
         let describe = |value| describe_humidity(&Percentage::from(value));
 
         assert_eq!(describe(0), "The air is very dry at 0% humidity");
-        assert_eq!(describe(15), "The air is very dry at 15% humidity");
-
         assert_eq!(describe(16), "The air is dry at 16% humidity");
-        assert_eq!(describe(30), "The air is dry at 30% humidity");
-
-        assert_eq!(describe(31), "The air is humid at 31%");
         assert_eq!(describe(60), "The air is humid at 60%");
-
-        assert_eq!(describe(61), "The air is very humid at 61%");
         assert_eq!(describe(85), "The air is very humid at 85%");
-
-        assert_eq!(describe(86), "The air is heavy at 86% humidity");
         assert_eq!(describe(100), "The air is heavy at 100% humidity");
     }
 
