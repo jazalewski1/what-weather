@@ -25,8 +25,8 @@ impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
 
     fn format(&self, report: &Self::Report) -> String {
         let temperature_desc = describe_temperature_range(&report.temperature_range);
-        let _kind_desc = describe_kind(&report.kind);
-        format!("Today {temperature_desc}.")
+        let kind_desc = describe_kind(&report.kind);
+        format!("Today {temperature_desc}.\n{kind_desc}.")
     }
 }
 
@@ -130,8 +130,9 @@ mod tests {
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
         };
         let result = sut.format(&report);
-        let expected =
-            "Today it will be warm with temperatures starting at 12.3°C and reaching 23.4°C.";
+        let expected = "Today it will be warm \
+                        with temperatures starting at 12.3°C and reaching 23.4°C.\n\
+                        The sky will be overcast.";
         assert_eq!(result, expected);
     }
 }
