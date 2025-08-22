@@ -1,5 +1,6 @@
 use what_weather::domain::current_list::CurrentList;
 use what_weather::domain::current_summary::CurrentSummary;
+use what_weather::domain::forecast_summary::ForecastSummary;
 use what_weather::external::{FakeGeolocationProvider, FakeWeatherProvider};
 use what_weather::input::cli;
 use what_weather::output::{ConsoleView, View};
@@ -18,6 +19,10 @@ fn main() {
         }
         cli::ReportType::CurrentList(attributes) => {
             let strategy = CurrentList::new(FakeWeatherProvider, attributes);
+            weather_reporter.run(strategy, parameters)
+        }
+        cli::ReportType::ForecastSummary => {
+            let strategy = ForecastSummary::new(FakeWeatherProvider);
             weather_reporter.run(strategy, parameters)
         }
     };

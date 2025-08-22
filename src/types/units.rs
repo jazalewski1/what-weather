@@ -43,6 +43,20 @@ impl Display for Temperature {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum TemperatureRange {
+    Celsius { min: Celsius, max: Celsius },
+}
+
+impl TemperatureRange {
+    pub fn new_celsius(min: f32, max: f32) -> Self {
+        Self::Celsius {
+            min: Celsius::from(min),
+            max: Celsius::from(max),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Percentage {
     pub value: i8,
@@ -63,6 +77,21 @@ impl From<i8> for Percentage {
 impl From<Percentage> for i8 {
     fn from(percentage: Percentage) -> Self {
         percentage.value
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PercentageRange {
+    pub min: Percentage,
+    pub max: Percentage,
+}
+
+impl PercentageRange {
+    pub fn new(min: i8, max: i8) -> Self {
+        Self {
+            min: Percentage::from(min),
+            max: Percentage::from(max),
+        }
     }
 }
 
@@ -105,6 +134,23 @@ impl Display for Speed {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MetersPerSecond(inner) => inner.fmt(f),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum SpeedRange {
+    MetersPerSecond {
+        min: MetersPerSecond,
+        max: MetersPerSecond,
+    },
+}
+
+impl SpeedRange {
+    pub fn new_meters_per_second(min: f32, max: f32) -> Self {
+        Self::MetersPerSecond {
+            min: MetersPerSecond::from(min),
+            max: MetersPerSecond::from(max),
         }
     }
 }
@@ -246,6 +292,21 @@ impl Display for Hectopascal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let precision = f.precision().unwrap_or(1);
         write!(f, "{:.precision$} hPa", self.value)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PressureRange {
+    pub min: Hectopascal,
+    pub max: Hectopascal,
+}
+
+impl PressureRange {
+    pub fn new(min: f32, max: f32) -> Self {
+        Self {
+            min: Hectopascal::from(min),
+            max: Hectopascal::from(max),
+        }
     }
 }
 
