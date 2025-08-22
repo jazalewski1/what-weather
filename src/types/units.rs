@@ -80,6 +80,21 @@ impl From<Percentage> for i8 {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct PercentageRange {
+    pub min: Percentage,
+    pub max: Percentage,
+}
+
+impl PercentageRange {
+    pub fn new(min: i8, max: i8) -> Self {
+        Self {
+            min: Percentage::from(min),
+            max: Percentage::from(max),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct MetersPerSecond {
     pub value: f32,

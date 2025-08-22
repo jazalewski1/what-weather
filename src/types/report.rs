@@ -40,4 +40,5 @@ impl CurrentPartialReport {
 pub struct ForecastFullReport {
     pub kind: Kind,
     pub temperature_range: TemperatureRange,
+    pub cloud_coverage_range: PercentageRange,
 }

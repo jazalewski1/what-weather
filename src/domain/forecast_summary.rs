@@ -26,7 +26,8 @@ impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
     fn format(&self, report: &Self::Report) -> String {
         let temperature_desc = describe_temperature_range(&report.temperature_range);
         let kind_desc = describe_kind(&report.kind);
-        format!("Today {temperature_desc}.\n{kind_desc}.")
+        let cloud_coverage_desc = describe_cloud_coverage_range(&report.cloud_coverage_range);
+        format!("Today {temperature_desc}.\n{kind_desc} and {cloud_coverage_desc}.")
     }
 }
 
@@ -53,6 +54,13 @@ fn describe_temperature_range(temperature_range: &TemperatureRange) -> String {
     }
 }
 
+fn describe_cloud_coverage_range(range: &PercentageRange) -> String {
+    format!(
+        "clouds will cover from {} to {} of the sky",
+        range.min, range.max
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,6 +74,7 @@ mod tests {
         let report = ForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
+            cloud_coverage_range: PercentageRange::new(25, 76),
         };
         weather_provider
             .expect_fetch_forecast_full_report()
@@ -89,16 +98,14 @@ mod tests {
     fn describes_cloud_kind() {
         let kind = Kind::Clouds(Clouds::Dense);
         let result = describe_kind(&kind);
-        let expected = "The sky will be overcast";
-        assert_eq!(result, expected);
+        assert_eq!(result, "The sky will be overcast");
     }
 
     #[test]
     fn describes_fog_kind() {
         let kind = Kind::Fog(Fog::Normal);
         let result = describe_kind(&kind);
-        let expected = "A fog will be covering the area";
-        assert_eq!(result, expected);
+        assert_eq!(result, "A fog will be covering the area");
     }
 
     #[test]
@@ -110,16 +117,21 @@ mod tests {
         };
         let kind = Kind::Precipitation(precipitation);
         let result = describe_kind(&kind);
-        let expected = "There will be moderate rain falling";
-        assert_eq!(result, expected);
+        assert_eq!(result, "There will be moderate rain falling");
     }
 
     #[test]
     fn describes_thunderstorm_kind() {
         let kind = Kind::Thunderstorm;
         let result = describe_kind(&kind);
-        let expected = "A thunderstorm will be raging";
-        assert_eq!(result, expected);
+        assert_eq!(result, "A thunderstorm will be raging");
+    }
+
+    #[test]
+    fn describes_cloud_coverage_ranges() {
+        let range = PercentageRange::new(26, 57);
+        let result = describe_cloud_coverage_range(&range);
+        assert_eq!(result, "clouds will cover from 26% to 57% of the sky");
     }
 
     #[test]
@@ -128,11 +140,12 @@ mod tests {
         let report = ForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
+            cloud_coverage_range: PercentageRange::new(66, 94),
         };
         let result = sut.format(&report);
         let expected = "Today it will be warm \
                         with temperatures starting at 12.3°C and reaching 23.4°C.\n\
-                        The sky will be overcast.";
+                        The sky will be overcast and clouds will cover from 66% to 94% of the sky.";
         assert_eq!(result, expected);
     }
 }

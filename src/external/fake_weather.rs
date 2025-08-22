@@ -13,8 +13,8 @@ impl WeatherProvider for FakeWeatherProvider {
         CurrentFullReport {
             kind: generate_random_weather_kind(),
             temperature: generate_random_temperature(coordinates),
-            cloud_coverage: generate_random_cloud_coverage(),
-            humidity: generate_random_humidity(),
+            cloud_coverage: generate_random_percentage(),
+            humidity: generate_random_percentage(),
             wind: generate_random_wind(),
             pressure: generate_random_pressure(),
         }
@@ -37,12 +37,10 @@ impl WeatherProvider for FakeWeatherProvider {
                         .replace(generate_random_temperature(coordinates));
                 }
                 WeatherAttribute::CloudCoverage => {
-                    report
-                        .cloud_coverage
-                        .replace(generate_random_cloud_coverage());
+                    report.cloud_coverage.replace(generate_random_percentage());
                 }
                 WeatherAttribute::Humidity => {
-                    report.humidity.replace(generate_random_humidity());
+                    report.humidity.replace(generate_random_percentage());
                 }
                 WeatherAttribute::Wind => {
                     report.wind.replace(generate_random_wind());
@@ -59,6 +57,7 @@ impl WeatherProvider for FakeWeatherProvider {
         ForecastFullReport {
             kind: generate_random_weather_kind(),
             temperature_range: generate_random_temperature_range(coordinates),
+            cloud_coverage_range: generate_random_cloud_coverage_range(),
         }
     }
 }
@@ -114,12 +113,14 @@ fn generate_random_temperature_range(coordinates: &Coordinates) -> TemperatureRa
     TemperatureRange::Celsius { min, max }
 }
 
-fn generate_random_cloud_coverage() -> Percentage {
+fn generate_random_percentage() -> Percentage {
     Percentage::from(rnd::generate_integer(0..101) as i8)
 }
 
-fn generate_random_humidity() -> Percentage {
-    Percentage::from(rnd::generate_integer(0..101) as i8)
+fn generate_random_cloud_coverage_range() -> PercentageRange {
+    let max = rnd::generate_integer(0..101);
+    let min = rnd::generate_integer(0..max);
+    PercentageRange::new(min as i8, max as i8)
 }
 
 fn generate_random_wind() -> Wind {
