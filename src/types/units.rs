@@ -336,6 +336,16 @@ impl Display for Coordinates {
     }
 }
 
+pub type Date = chrono::NaiveDate;
+
+pub type DayCount = u8;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Period {
+    pub start: Date,
+    pub length: DayCount,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

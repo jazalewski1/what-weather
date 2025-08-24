@@ -1,9 +1,11 @@
 use what_weather::domain::current_list::CurrentList;
 use what_weather::domain::current_summary::CurrentSummary;
+use what_weather::domain::daily_forecast_summary::DailyForecastSummary;
 use what_weather::domain::forecast_summary::ForecastSummary;
 use what_weather::external::{FakeGeolocationProvider, FakeWeatherProvider};
 use what_weather::input::cli;
 use what_weather::output::{ConsoleView, View};
+use what_weather::types::units::Period;
 use what_weather::weather_reporter::{self, Parameters};
 
 fn main() {
@@ -23,6 +25,14 @@ fn main() {
         }
         cli::ReportType::ForecastSummary => {
             let strategy = ForecastSummary::new(FakeWeatherProvider);
+            weather_reporter.run(strategy, parameters)
+        }
+        cli::ReportType::ForecastDailySummary(length) => {
+            let period = Period {
+                start: chrono::Utc::now().date_naive(),
+                length,
+            };
+            let strategy = DailyForecastSummary::new(FakeWeatherProvider, period);
             weather_reporter.run(strategy, parameters)
         }
     };

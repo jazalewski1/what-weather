@@ -45,3 +45,19 @@ pub struct ForecastFullReport {
     pub wind: WindScope,
     pub pressure_range: PressureRange,
 }
+
+#[derive(Clone, Debug)]
+pub struct DailyFullData {
+    pub date: Date,
+    pub kind: Kind,
+    pub temperature_range: TemperatureRange,
+    pub cloud_coverage_range: PercentageRange,
+    pub humidity_range: PercentageRange,
+    pub wind: WindScope,
+    pub pressure_range: PressureRange,
+}
+
+#[derive(Clone, Debug)]
+pub struct DailyForecastFullReport {
+    pub data: Vec<DailyFullData>,
+}
