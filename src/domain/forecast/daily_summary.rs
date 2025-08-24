@@ -1,7 +1,7 @@
 use crate::domain::ReportStrategy;
-use crate::domain::common_forecast::describe_forecast;
+use crate::domain::forecast::common;
 use crate::port::weather::WeatherProvider;
-use crate::types::report::DailyForecastFullReport;
+use crate::types::report::{DailyForecastFullReport, DailyFullData};
 use crate::types::units::*;
 
 pub struct DailyForecastSummary<P: WeatherProvider> {
@@ -30,29 +30,11 @@ impl<P: WeatherProvider> ReportStrategy for DailyForecastSummary<P> {
         let mut data_iter = report.data.iter();
         let mut result = String::new();
         if let Some(data) = data_iter.next() {
-            let date_desc = describe_date(&data.date);
-            let day_summary = describe_forecast(
-                &date_desc,
-                &data.temperature_range,
-                &data.kind,
-                &data.cloud_coverage_range,
-                &data.humidity_range,
-                &data.wind,
-                &data.pressure_range,
-            );
+            let day_summary = describe_day(data);
             result.push_str(&day_summary);
         }
         for data in data_iter {
-            let date_desc = describe_date(&data.date);
-            let day_summary = describe_forecast(
-                &date_desc,
-                &data.temperature_range,
-                &data.kind,
-                &data.cloud_coverage_range,
-                &data.humidity_range,
-                &data.wind,
-                &data.pressure_range,
-            );
+            let day_summary = describe_day(data);
             result.push_str("\n\n");
             result.push_str(&day_summary);
         }
@@ -62,6 +44,19 @@ impl<P: WeatherProvider> ReportStrategy for DailyForecastSummary<P> {
 
 fn describe_date(date: &Date) -> String {
     format!("On {}", date.format("%d.%m.%Y"))
+}
+
+fn describe_day(data: &DailyFullData) -> String {
+    let date_desc = describe_date(&data.date);
+    common::describe_forecast(
+        &date_desc,
+        &data.temperature_range,
+        &data.kind,
+        &data.cloud_coverage_range,
+        &data.humidity_range,
+        &data.wind,
+        &data.pressure_range,
+    )
 }
 
 #[cfg(test)]

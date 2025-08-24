@@ -1,5 +1,5 @@
-use super::ReportStrategy;
-use crate::domain::common_forecast;
+use super::common;
+use crate::domain::ReportStrategy;
 use crate::port::weather::WeatherProvider;
 use crate::types::report::TodayForecastFullReport;
 use crate::types::units::*;
@@ -24,7 +24,7 @@ impl<P: WeatherProvider> ReportStrategy for TodayForecastSummary<P> {
 
     fn format(&self, report: &Self::Report) -> String {
         let time_desc = "Today";
-        common_forecast::describe_forecast(
+        common::describe_forecast(
             time_desc,
             &report.temperature_range,
             &report.kind,
