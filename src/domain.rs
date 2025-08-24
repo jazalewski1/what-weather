@@ -1,5 +1,6 @@
 pub mod current_list;
 pub mod current_summary;
+pub mod daily_forecast_summary;
 pub mod forecast_summary;
 
 mod common_forecast;

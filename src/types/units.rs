@@ -338,6 +338,7 @@ impl Display for Coordinates {
 
 pub type Date = chrono::NaiveDate;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Period {
     pub start: Date,
     pub length: u8,
