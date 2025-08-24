@@ -4,17 +4,17 @@ use crate::port::weather::WeatherProvider;
 use crate::types::report::TodayForecastFullReport;
 use crate::types::units::*;
 
-pub struct ForecastSummary<P: WeatherProvider> {
+pub struct TodayForecastSummary<P: WeatherProvider> {
     weather_provider: P,
 }
 
-impl<P: WeatherProvider> ForecastSummary<P> {
+impl<P: WeatherProvider> TodayForecastSummary<P> {
     pub fn new(weather_provider: P) -> Self {
         Self { weather_provider }
     }
 }
 
-impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
+impl<P: WeatherProvider> ReportStrategy for TodayForecastSummary<P> {
     type Report = TodayForecastFullReport;
 
     fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
@@ -64,13 +64,13 @@ mod tests {
             .with(eq(coordinates))
             .return_const(report);
 
-        let sut = ForecastSummary::new(weather_provider);
+        let sut = TodayForecastSummary::new(weather_provider);
         sut.fetch(&coordinates);
     }
 
     #[test]
     fn describes_entire_report() {
-        let sut = ForecastSummary::new(MockWeatherProvider::new());
+        let sut = TodayForecastSummary::new(MockWeatherProvider::new());
         let report = TodayForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
