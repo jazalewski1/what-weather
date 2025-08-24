@@ -1,4 +1,4 @@
-use super::ReportStrategy;
+use crate::domain::ReportStrategy;
 use crate::port::weather::WeatherProvider;
 use crate::types::attributes::WeatherAttributeSet;
 use crate::types::report::CurrentPartialReport;

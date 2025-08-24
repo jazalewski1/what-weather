@@ -37,7 +37,7 @@ impl CurrentPartialReport {
 }
 
 #[derive(Clone, Debug)]
-pub struct ForecastFullReport {
+pub struct TodayForecastFullReport {
     pub kind: Kind,
     pub temperature_range: TemperatureRange,
     pub cloud_coverage_range: PercentageRange,

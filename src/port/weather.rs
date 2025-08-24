@@ -12,9 +12,9 @@ pub trait WeatherProvider {
         attributes: &WeatherAttributeSet,
     ) -> CurrentPartialReport;
 
-    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> ForecastFullReport;
+    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> TodayForecastFullReport;
 
-    fn fetch_forecast_daily_report(
+    fn fetch_daily_forecast_full_report(
         &self,
         coordinates: &Coordinates,
         period: &Period,
