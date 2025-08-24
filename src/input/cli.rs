@@ -92,7 +92,7 @@ pub enum ReportType {
     CurrentSummary,
     CurrentList(WeatherAttributeSet),
     ForecastSummary,
-    ForecastDailySummary(DayCount),
+    DailyForecastSummary(DayCount),
 }
 
 pub struct Input {
@@ -130,7 +130,7 @@ impl From<Args> for Input {
                 if summary && today {
                     ReportType::ForecastSummary
                 } else if let Some(length) = days {
-                    ReportType::ForecastDailySummary(length)
+                    ReportType::DailyForecastSummary(length)
                 } else {
                     ReportType::ForecastSummary
                 }
@@ -291,7 +291,7 @@ mod tests {
             here: false,
         };
         let input: Input = args.into();
-        let expected = ReportType::ForecastDailySummary(DAY_COUNT);
+        let expected = ReportType::DailyForecastSummary(DAY_COUNT);
         assert_eq!(input.report_type, expected);
     }
 

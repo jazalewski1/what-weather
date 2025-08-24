@@ -27,7 +27,7 @@ fn main() {
             let strategy = ForecastSummary::new(FakeWeatherProvider);
             weather_reporter.run(strategy, parameters)
         }
-        cli::ReportType::ForecastDailySummary(length) => {
+        cli::ReportType::DailyForecastSummary(length) => {
             let period = Period {
                 start: chrono::Utc::now().date_naive(),
                 length,
