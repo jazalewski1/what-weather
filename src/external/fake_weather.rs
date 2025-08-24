@@ -1,8 +1,6 @@
 use crate::port::weather::*;
 use crate::types::attributes::*;
-use crate::types::report::CurrentFullReport;
-use crate::types::report::CurrentPartialReport;
-use crate::types::report::ForecastFullReport;
+use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
 
@@ -62,6 +60,27 @@ impl WeatherProvider for FakeWeatherProvider {
             wind: generate_random_wind_scope(),
             pressure_range: generate_random_pressure_range(),
         }
+    }
+
+    fn fetch_forecast_daily_report(
+        &self,
+        coordinates: &Coordinates,
+        period: &Period,
+    ) -> DailyForecastFullReport {
+        let mut data = Vec::with_capacity(period.length as usize);
+        for date in period.start.iter_days().take(period.length as usize) {
+            let single_data = DailyFullData {
+                date,
+                kind: generate_random_weather_kind(),
+                temperature_range: generate_random_temperature_range(coordinates),
+                cloud_coverage_range: generate_random_perecentage_range(),
+                humidity_range: generate_random_perecentage_range(),
+                wind: generate_random_wind_scope(),
+                pressure_range: generate_random_pressure_range(),
+            };
+            data.push(single_data);
+        }
+        DailyForecastFullReport { data }
     }
 }
 
