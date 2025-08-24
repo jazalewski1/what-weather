@@ -61,6 +61,14 @@ enum Command {
         /// Report summary
         #[arg(long, group = "forecast_format")]
         summary: bool,
+
+        /// Report for today
+        #[arg(long, group = "forecast_time")]
+        today: bool,
+
+        /// Report for multiple days from today
+        #[arg(long, group = "forecast_time", value_parser = clap::value_parser!(u8).range(1..16))]
+        days: Option<DayCount>,
     },
 }
 
@@ -84,6 +92,7 @@ pub enum ReportType {
     CurrentSummary,
     CurrentList(WeatherAttributeSet),
     ForecastSummary,
+    ForecastDailySummary(DayCount),
 }
 
 pub struct Input {
@@ -113,7 +122,19 @@ impl From<Args> for Input {
                     ReportType::CurrentSummary
                 }
             }
-            Some(Command::Forecast { .. }) => ReportType::ForecastSummary,
+            Some(Command::Forecast {
+                summary,
+                today,
+                days,
+            }) => {
+                if summary && today {
+                    ReportType::ForecastSummary
+                } else if let Some(length) = days {
+                    ReportType::ForecastDailySummary(length)
+                } else {
+                    ReportType::ForecastSummary
+                }
+            }
         };
         Input {
             report_type,
@@ -210,9 +231,13 @@ mod tests {
     }
 
     #[test]
-    fn parses_forecast_command_with_summary_when_type_is_not_specified() {
+    fn parses_forecast_command_without_type_as_current_summary() {
         let args = Args {
-            command: Some(Command::Forecast { summary: false }),
+            command: Some(Command::Forecast {
+                summary: false,
+                today: false,
+                days: None,
+            }),
             coords: None,
             here: false,
         };
@@ -224,12 +249,49 @@ mod tests {
     #[test]
     fn parses_forecast_command_with_summary_specified() {
         let args = Args {
-            command: Some(Command::Forecast { summary: true }),
+            command: Some(Command::Forecast {
+                summary: true,
+                today: false,
+                days: None,
+            }),
             coords: None,
             here: false,
         };
         let input: Input = args.into();
         let expected = ReportType::ForecastSummary;
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_today() {
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: false,
+                today: true,
+                days: None,
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        let expected = ReportType::ForecastSummary;
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_days() {
+        const DAY_COUNT: DayCount = 4;
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: false,
+                today: false,
+                days: Some(DAY_COUNT),
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        let expected = ReportType::ForecastDailySummary(DAY_COUNT);
         assert_eq!(input.report_type, expected);
     }
 
