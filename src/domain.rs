@@ -1,10 +1,13 @@
-pub mod current_list;
-pub mod current_summary;
-pub mod daily_forecast_summary;
-pub mod forecast_summary;
-
-mod common_forecast;
 mod common_format;
+mod current;
+mod forecast;
+
+pub mod strategies {
+    pub use super::current::{list::CurrentList, summary::CurrentSummary};
+    pub use super::forecast::{
+        daily_summary::DailyForecastSummary, today_summary::TodayForecastSummary,
+    };
+}
 
 use crate::types::units::Coordinates;
 use mockall::automock;

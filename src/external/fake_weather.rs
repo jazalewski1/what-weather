@@ -51,8 +51,8 @@ impl WeatherProvider for FakeWeatherProvider {
         report
     }
 
-    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> ForecastFullReport {
-        ForecastFullReport {
+    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> TodayForecastFullReport {
+        TodayForecastFullReport {
             kind: generate_random_weather_kind(),
             temperature_range: generate_random_temperature_range(coordinates),
             cloud_coverage_range: generate_random_perecentage_range(),
@@ -62,7 +62,7 @@ impl WeatherProvider for FakeWeatherProvider {
         }
     }
 
-    fn fetch_forecast_daily_report(
+    fn fetch_daily_forecast_full_report(
         &self,
         coordinates: &Coordinates,
         period: &Period,

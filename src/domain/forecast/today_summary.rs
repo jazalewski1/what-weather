@@ -1,21 +1,21 @@
-use super::ReportStrategy;
-use crate::domain::common_forecast;
+use super::common;
+use crate::domain::ReportStrategy;
 use crate::port::weather::WeatherProvider;
-use crate::types::report::ForecastFullReport;
+use crate::types::report::TodayForecastFullReport;
 use crate::types::units::*;
 
-pub struct ForecastSummary<P: WeatherProvider> {
+pub struct TodayForecastSummary<P: WeatherProvider> {
     weather_provider: P,
 }
 
-impl<P: WeatherProvider> ForecastSummary<P> {
+impl<P: WeatherProvider> TodayForecastSummary<P> {
     pub fn new(weather_provider: P) -> Self {
         Self { weather_provider }
     }
 }
 
-impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
-    type Report = ForecastFullReport;
+impl<P: WeatherProvider> ReportStrategy for TodayForecastSummary<P> {
+    type Report = TodayForecastFullReport;
 
     fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
         self.weather_provider
@@ -24,7 +24,7 @@ impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
 
     fn format(&self, report: &Self::Report) -> String {
         let time_desc = "Today";
-        common_forecast::describe_forecast(
+        common::describe_forecast(
             time_desc,
             &report.temperature_range,
             &report.kind,
@@ -47,7 +47,7 @@ mod tests {
     fn fetches_forecast_full_report() {
         let mut weather_provider = MockWeatherProvider::new();
         let coordinates = Coordinates::new(1.23, 45.67);
-        let report = ForecastFullReport {
+        let report = TodayForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
             cloud_coverage_range: PercentageRange::new(25, 76),
@@ -64,14 +64,14 @@ mod tests {
             .with(eq(coordinates))
             .return_const(report);
 
-        let sut = ForecastSummary::new(weather_provider);
+        let sut = TodayForecastSummary::new(weather_provider);
         sut.fetch(&coordinates);
     }
 
     #[test]
     fn describes_entire_report() {
-        let sut = ForecastSummary::new(MockWeatherProvider::new());
-        let report = ForecastFullReport {
+        let sut = TodayForecastSummary::new(MockWeatherProvider::new());
+        let report = TodayForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
             cloud_coverage_range: PercentageRange::new(66, 94),
