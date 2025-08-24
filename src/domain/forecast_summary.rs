@@ -1,7 +1,7 @@
 use super::ReportStrategy;
 use crate::domain::common_forecast;
 use crate::port::weather::WeatherProvider;
-use crate::types::report::ForecastFullReport;
+use crate::types::report::TodayForecastFullReport;
 use crate::types::units::*;
 
 pub struct ForecastSummary<P: WeatherProvider> {
@@ -15,7 +15,7 @@ impl<P: WeatherProvider> ForecastSummary<P> {
 }
 
 impl<P: WeatherProvider> ReportStrategy for ForecastSummary<P> {
-    type Report = ForecastFullReport;
+    type Report = TodayForecastFullReport;
 
     fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
         self.weather_provider
@@ -47,7 +47,7 @@ mod tests {
     fn fetches_forecast_full_report() {
         let mut weather_provider = MockWeatherProvider::new();
         let coordinates = Coordinates::new(1.23, 45.67);
-        let report = ForecastFullReport {
+        let report = TodayForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
             cloud_coverage_range: PercentageRange::new(25, 76),
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn describes_entire_report() {
         let sut = ForecastSummary::new(MockWeatherProvider::new());
-        let report = ForecastFullReport {
+        let report = TodayForecastFullReport {
             kind: Kind::Clouds(Clouds::Dense),
             temperature_range: TemperatureRange::new_celsius(12.3, 23.4),
             cloud_coverage_range: PercentageRange::new(66, 94),

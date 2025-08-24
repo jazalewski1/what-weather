@@ -23,7 +23,7 @@ impl<P: WeatherProvider> ReportStrategy for DailyForecastSummary<P> {
 
     fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
         self.weather_provider
-            .fetch_forecast_daily_report(coordinates, &self.period)
+            .fetch_daily_forecast_full_report(coordinates, &self.period)
     }
 
     fn format(&self, report: &Self::Report) -> String {
@@ -156,7 +156,7 @@ mod tests {
             length: 3,
         };
         weather_provider
-            .expect_fetch_forecast_daily_report()
+            .expect_fetch_daily_forecast_full_report()
             .once()
             .with(eq(coordinates), eq(period.clone()))
             .return_const(report);
