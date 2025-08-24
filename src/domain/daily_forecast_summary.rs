@@ -53,7 +53,7 @@ impl<P: WeatherProvider> ReportStrategy for DailyForecastSummary<P> {
                 &data.wind,
                 &data.pressure_range,
             );
-            result.push('\n');
+            result.push_str("\n\n");
             result.push_str(&day_summary);
         }
         result
@@ -203,7 +203,7 @@ mod tests {
             The air will be very humid at 48% to 81% \
             with mostly strong south wind blowing at maximum 10.9 m/s.\n\
             Normal pressure will reach 995.6 hPa at lowest up to 1019.6 hPa.";
-        let expected = format!("{expected_day1}\n{expected_day2}\n{expected_day3}");
+        let expected = format!("{expected_day1}\n\n{expected_day2}\n\n{expected_day3}");
         assert_eq!(result, expected);
     }
 }
