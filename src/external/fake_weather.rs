@@ -82,6 +82,53 @@ impl WeatherProvider for FakeWeatherProvider {
         }
         DailyForecastFullReport { data }
     }
+
+    fn fetch_today_forecast_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        attributes: &WeatherAttributeSet,
+    ) -> TodayForecastPartialReport {
+        let mut report = TodayForecastPartialReport {
+            coordinates: *coordinates,
+            kind: None,
+            temperature_range: None,
+            cloud_coverage_range: None,
+            humidity_range: None,
+            wind: None,
+            pressure_range: None,
+        };
+        for attribute in attributes {
+            match attribute {
+                WeatherAttribute::WeatherKind => {
+                    report.kind.replace(generate_random_weather_kind());
+                }
+                WeatherAttribute::Temperature => {
+                    report
+                        .temperature_range
+                        .replace(generate_random_temperature_range(coordinates));
+                }
+                WeatherAttribute::CloudCoverage => {
+                    report
+                        .cloud_coverage_range
+                        .replace(generate_random_perecentage_range());
+                }
+                WeatherAttribute::Humidity => {
+                    report
+                        .humidity_range
+                        .replace(generate_random_perecentage_range());
+                }
+                WeatherAttribute::Wind => {
+                    report.wind.replace(generate_random_wind_scope());
+                }
+                WeatherAttribute::Pressure => {
+                    report
+                        .pressure_range
+                        .replace(generate_random_pressure_range());
+                }
+            }
+        }
+        report
+    }
 }
 
 fn generate_random_weather_kind() -> Kind {
