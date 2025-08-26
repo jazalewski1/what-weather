@@ -1,3 +1,4 @@
+mod common;
 mod common_format;
 mod current;
 mod forecast;

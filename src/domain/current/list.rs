@@ -1,4 +1,6 @@
 use crate::domain::ReportStrategy;
+use crate::domain::common::list_builder::ListBuilder;
+use crate::domain::common::list_format::describe_kind;
 use crate::port::weather::WeatherProvider;
 use crate::types::attributes::WeatherAttributeSet;
 use crate::types::report::CurrentPartialReport;
@@ -28,7 +30,7 @@ impl<P: WeatherProvider> ReportStrategy for CurrentList<P> {
     }
 
     fn format(&self, report: &Self::Report) -> String {
-        let mut builder = StringBuilder::default();
+        let mut builder = ListBuilder::default();
 
         builder.add("Coordinates", &format!("{:.5}", report.coordinates));
         if let Some(kind) = report.kind {
@@ -50,58 +52,6 @@ impl<P: WeatherProvider> ReportStrategy for CurrentList<P> {
             builder.add("Pressure", &format!("{pressure}"));
         }
         builder.string()
-    }
-}
-
-#[derive(Default)]
-struct StringBuilder {
-    string: String,
-}
-
-impl StringBuilder {
-    fn add(&mut self, label: &str, value: &str) -> &mut StringBuilder {
-        if self.string.is_empty() {
-            self.string.push_str(&format!("{label}: {value}"));
-        } else {
-            self.string.push_str(&format!("\n{label}: {value}"));
-        }
-        self
-    }
-    fn string(self) -> String {
-        self.string
-    }
-}
-
-fn describe_kind(kind: &Kind) -> String {
-    match kind {
-        Kind::Clouds(clouds) => match clouds {
-            Clouds::Clear => "clear sky".into(),
-            Clouds::Light => "light clouds".into(),
-            Clouds::Moderate => "cloudy".into(),
-            Clouds::Dense => "overcast sky".into(),
-        },
-        Kind::Fog(fog) => match fog {
-            Fog::Normal => "fog".into(),
-            Fog::Rime => "rime fog".into(),
-        },
-        Kind::Precipitation(precipitation) => {
-            let kind_desc = match precipitation.kind {
-                PrecipitationKind::Rain => "rain",
-                PrecipitationKind::Snow => "snow",
-            };
-            let intensity_desc = match precipitation.intensity {
-                PrecipitationIntensity::Light => "light",
-                PrecipitationIntensity::Moderate => "moderate",
-                PrecipitationIntensity::Heavy => "heavy",
-                PrecipitationIntensity::Shower => "shower",
-            };
-            if precipitation.heat == PrecipitationHeat::Freezing {
-                format!("freezing {intensity_desc} {kind_desc}")
-            } else {
-                format!("{intensity_desc} {kind_desc}")
-            }
-        }
-        Kind::Thunderstorm => "thunderstorm".into(),
     }
 }
 
