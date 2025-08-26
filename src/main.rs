@@ -32,6 +32,13 @@ fn main() {
             let strategy = DailyForecastSummary::new(FakeWeatherProvider, period);
             weather_reporter.run(strategy, parameters)
         }
+        cli::ReportType::TodayForecastList(attributes) => {
+            let strategy = TodayForecastList::new(FakeWeatherProvider, attributes);
+            weather_reporter.run(strategy, parameters)
+        }
+        cli::ReportType::DailyForecastList(attributes, length) => {
+            todo!()
+        }
     };
     ConsoleView.display(&string);
 }

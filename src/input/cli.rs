@@ -58,9 +58,13 @@ enum Command {
 
     /// Report forecast
     Forecast {
-        /// Report summary
+        /// Format report as summary
         #[arg(long, group = "forecast_format")]
         summary: bool,
+
+        /// Format report as list of all or selected attributes
+        #[arg(long, group = "forecast_format", value_delimiter=',', num_args=0..)]
+        list: Option<Vec<WeatherAttribute>>,
 
         /// Report for today
         #[arg(long, group = "forecast_time")]
@@ -92,7 +96,9 @@ pub enum ReportType {
     CurrentSummary,
     CurrentList(WeatherAttributeSet),
     TodayForecastSummary,
+    TodayForecastList(WeatherAttributeSet),
     DailyForecastSummary(DayCount),
+    DailyForecastList(WeatherAttributeSet, DayCount),
 }
 
 pub struct Input {
@@ -124,10 +130,28 @@ impl From<Args> for Input {
             }
             Some(Command::Forecast {
                 summary,
+                list,
                 today,
                 days,
             }) => {
-                if summary && today {
+                if summary {
+                    if today {
+                        ReportType::TodayForecastSummary
+                    } else if let Some(length) = days {
+                        ReportType::DailyForecastSummary(length)
+                    } else {
+                        ReportType::TodayForecastSummary
+                    }
+                } else if let Some(attributes) = list {
+                    let set = convert_to_attribute_set(&attributes);
+                    if today {
+                        ReportType::TodayForecastList(set)
+                    } else if let Some(length) = days {
+                        ReportType::DailyForecastList(set, length)
+                    } else {
+                        ReportType::TodayForecastList(set)
+                    }
+                } else if today {
                     ReportType::TodayForecastSummary
                 } else if let Some(length) = days {
                     ReportType::DailyForecastSummary(length)
@@ -149,6 +173,8 @@ pub fn parse() -> Input {
 
 #[cfg(test)]
 mod tests {
+    use crate::types::attributes;
+
     use super::*;
 
     #[test]
@@ -231,10 +257,11 @@ mod tests {
     }
 
     #[test]
-    fn parses_forecast_command_without_type_as_current_summary() {
+    fn parses_forecast_command_without_params_defaults_to_today_summary() {
         let args = Args {
             command: Some(Command::Forecast {
                 summary: false,
+                list: None,
                 today: false,
                 days: None,
             }),
@@ -247,10 +274,11 @@ mod tests {
     }
 
     #[test]
-    fn parses_forecast_command_with_summary_specified() {
+    fn parses_forecast_command_with_summary_defaults_to_today_summary() {
         let args = Args {
             command: Some(Command::Forecast {
                 summary: true,
+                list: None,
                 today: false,
                 days: None,
             }),
@@ -263,10 +291,11 @@ mod tests {
     }
 
     #[test]
-    fn parses_forecast_command_with_today() {
+    fn parses_forecast_command_with_today_defaults_to_today_summary() {
         let args = Args {
             command: Some(Command::Forecast {
                 summary: false,
+                list: None,
                 today: true,
                 days: None,
             }),
@@ -279,11 +308,29 @@ mod tests {
     }
 
     #[test]
-    fn parses_forecast_command_with_days() {
+    fn parses_forecast_command_with_summary_today() {
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: true,
+                list: None,
+                today: true,
+                days: None,
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        let expected = ReportType::TodayForecastSummary;
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_days_defaults_to_daily_summary() {
         const DAY_COUNT: DayCount = 4;
         let args = Args {
             command: Some(Command::Forecast {
                 summary: false,
+                list: None,
                 today: false,
                 days: Some(DAY_COUNT),
             }),
@@ -292,6 +339,119 @@ mod tests {
         };
         let input: Input = args.into();
         let expected = ReportType::DailyForecastSummary(DAY_COUNT);
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_summary_and_days() {
+        const DAY_COUNT: DayCount = 4;
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: true,
+                list: None,
+                today: false,
+                days: Some(DAY_COUNT),
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        let expected = ReportType::DailyForecastSummary(DAY_COUNT);
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_list_without_attributes_specified() {
+        let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
+        let expected = ReportType::TodayForecastList(expected_attribute_set);
+
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: false,
+                list: Some(Vec::new()),
+                today: false,
+                days: None,
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_list_with_attributes_specified() {
+        let requested_attributes = vec![
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
+        ];
+        let expected_attribute_set = requested_attributes.iter().cloned().collect();
+        let expected = ReportType::TodayForecastList(expected_attribute_set);
+
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: false,
+                list: Some(requested_attributes),
+                today: false,
+                days: None,
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_list_and_today() {
+        let requested_attributes = vec![
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
+        ];
+        let expected_attribute_set = requested_attributes.iter().cloned().collect();
+        let expected = ReportType::TodayForecastList(expected_attribute_set);
+
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: false,
+                list: Some(requested_attributes),
+                today: true,
+                days: None,
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
+        assert_eq!(input.report_type, expected);
+    }
+
+    #[test]
+    fn parses_forecast_command_with_list_and_days() {
+        const DAY_COUNT: DayCount = 4;
+        let requested_attributes = vec![
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
+        ];
+        let expected_attribute_set = requested_attributes.iter().cloned().collect();
+        let expected = ReportType::DailyForecastList(expected_attribute_set, DAY_COUNT);
+
+        let args = Args {
+            command: Some(Command::Forecast {
+                summary: false,
+                list: Some(requested_attributes),
+                today: false,
+                days: Some(DAY_COUNT),
+            }),
+            coords: None,
+            here: false,
+        };
+        let input: Input = args.into();
         assert_eq!(input.report_type, expected);
     }
 
