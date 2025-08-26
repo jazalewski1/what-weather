@@ -72,3 +72,20 @@ pub struct TodayForecastPartialReport {
     pub wind: Option<WindScope>,
     pub pressure_range: Option<PressureRange>,
 }
+
+#[derive(Clone, Debug)]
+pub struct DailyPartialData {
+    pub date: Date,
+    pub kind: Option<Kind>,
+    pub temperature_range: Option<TemperatureRange>,
+    pub cloud_coverage_range: Option<PercentageRange>,
+    pub humidity_range: Option<PercentageRange>,
+    pub wind: Option<WindScope>,
+    pub pressure_range: Option<PressureRange>,
+}
+
+#[derive(Clone, Debug)]
+pub struct DailyForecastPartialReport {
+    pub coordinates: Coordinates,
+    pub data: Vec<DailyPartialData>,
+}
