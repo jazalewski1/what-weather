@@ -29,7 +29,7 @@ pub trait WeatherProvider {
     fn fetch_daily_forecast_partial_report(
         &self,
         coordinates: &Coordinates,
-        period: &Period,
         attributes: &WeatherAttributeSet,
+        period: &Period,
     ) -> DailyForecastPartialReport;
 }

@@ -173,8 +173,6 @@ pub fn parse() -> Input {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::attributes;
-
     use super::*;
 
     #[test]

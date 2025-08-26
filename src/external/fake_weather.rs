@@ -88,103 +88,72 @@ impl WeatherProvider for FakeWeatherProvider {
         coordinates: &Coordinates,
         attributes: &WeatherAttributeSet,
     ) -> TodayForecastPartialReport {
-        let mut report = TodayForecastPartialReport {
+        TodayForecastPartialReport {
             coordinates: *coordinates,
-            kind: None,
-            temperature_range: None,
-            cloud_coverage_range: None,
-            humidity_range: None,
-            wind: None,
-            pressure_range: None,
-        };
-        for attribute in attributes {
-            match attribute {
-                WeatherAttribute::WeatherKind => {
-                    report.kind.replace(generate_random_weather_kind());
-                }
-                WeatherAttribute::Temperature => {
-                    report
-                        .temperature_range
-                        .replace(generate_random_temperature_range(coordinates));
-                }
-                WeatherAttribute::CloudCoverage => {
-                    report
-                        .cloud_coverage_range
-                        .replace(generate_random_perecentage_range());
-                }
-                WeatherAttribute::Humidity => {
-                    report
-                        .humidity_range
-                        .replace(generate_random_perecentage_range());
-                }
-                WeatherAttribute::Wind => {
-                    report.wind.replace(generate_random_wind_scope());
-                }
-                WeatherAttribute::Pressure => {
-                    report
-                        .pressure_range
-                        .replace(generate_random_pressure_range());
-                }
-            }
+            spec: generate_forecast_partial_spec(coordinates, attributes),
         }
-        report
     }
 
     fn fetch_daily_forecast_partial_report(
         &self,
         coordinates: &Coordinates,
-        period: &Period,
         attributes: &WeatherAttributeSet,
+        period: &Period,
     ) -> DailyForecastPartialReport {
-        let mut report = DailyForecastPartialReport {
-            coordinates: *coordinates,
-            data: Vec::new(),
-        };
+        let mut data = Vec::new();
         for date in period.start.iter_days().take(period.length as usize) {
-            let mut day_data = DailyPartialData {
+            let day_data = DailyPartialData {
                 date,
-                kind: None,
-                temperature_range: None,
-                cloud_coverage_range: None,
-                humidity_range: None,
-                wind: None,
-                pressure_range: None,
+                spec: generate_forecast_partial_spec(coordinates, attributes),
             };
-            for attribute in attributes {
-                match attribute {
-                    WeatherAttribute::WeatherKind => {
-                        day_data.kind.replace(generate_random_weather_kind());
-                    }
-                    WeatherAttribute::Temperature => {
-                        day_data
-                            .temperature_range
-                            .replace(generate_random_temperature_range(coordinates));
-                    }
-                    WeatherAttribute::CloudCoverage => {
-                        day_data
-                            .cloud_coverage_range
-                            .replace(generate_random_perecentage_range());
-                    }
-                    WeatherAttribute::Humidity => {
-                        day_data
-                            .humidity_range
-                            .replace(generate_random_perecentage_range());
-                    }
-                    WeatherAttribute::Wind => {
-                        day_data.wind.replace(generate_random_wind_scope());
-                    }
-                    WeatherAttribute::Pressure => {
-                        day_data
-                            .pressure_range
-                            .replace(generate_random_pressure_range());
-                    }
-                }
-            }
-            report.data.push(day_data);
+            data.push(day_data);
         }
-
-        report
+        DailyForecastPartialReport {
+            coordinates: *coordinates,
+            data,
+        }
     }
+}
+
+fn generate_forecast_partial_spec(
+    coordinates: &Coordinates,
+    attributes: &WeatherAttributeSet,
+) -> ForecastPartialSpec {
+    let mut spec = ForecastPartialSpec {
+        kind: None,
+        temperature_range: None,
+        cloud_coverage_range: None,
+        humidity_range: None,
+        wind: None,
+        pressure_range: None,
+    };
+    for attribute in attributes {
+        match attribute {
+            WeatherAttribute::WeatherKind => {
+                spec.kind.replace(generate_random_weather_kind());
+            }
+            WeatherAttribute::Temperature => {
+                spec.temperature_range
+                    .replace(generate_random_temperature_range(coordinates));
+            }
+            WeatherAttribute::CloudCoverage => {
+                spec.cloud_coverage_range
+                    .replace(generate_random_perecentage_range());
+            }
+            WeatherAttribute::Humidity => {
+                spec.humidity_range
+                    .replace(generate_random_perecentage_range());
+            }
+            WeatherAttribute::Wind => {
+                spec.wind.replace(generate_random_wind_scope());
+            }
+            WeatherAttribute::Pressure => {
+                spec.pressure_range
+                    .replace(generate_random_pressure_range());
+            }
+        }
+    }
+    spec
 }
 
 fn generate_random_weather_kind() -> Kind {

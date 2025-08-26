@@ -2,8 +2,15 @@ use what_weather::domain::strategies::*;
 use what_weather::external::{FakeGeolocationProvider, FakeWeatherProvider};
 use what_weather::input::cli;
 use what_weather::output::{ConsoleView, View};
-use what_weather::types::units::Period;
+use what_weather::types::units::{DayCount, Period};
 use what_weather::weather_reporter::{self, Parameters};
+
+fn get_period(length: DayCount) -> Period {
+    Period {
+        start: chrono::Utc::now().date_naive(),
+        length,
+    }
+}
 
 fn main() {
     let input = cli::parse();
@@ -25,11 +32,7 @@ fn main() {
             weather_reporter.run(strategy, parameters)
         }
         cli::ReportType::DailyForecastSummary(length) => {
-            let period = Period {
-                start: chrono::Utc::now().date_naive(),
-                length,
-            };
-            let strategy = DailyForecastSummary::new(FakeWeatherProvider, period);
+            let strategy = DailyForecastSummary::new(FakeWeatherProvider, get_period(length));
             weather_reporter.run(strategy, parameters)
         }
         cli::ReportType::TodayForecastList(attributes) => {
@@ -37,7 +40,9 @@ fn main() {
             weather_reporter.run(strategy, parameters)
         }
         cli::ReportType::DailyForecastList(attributes, length) => {
-            todo!()
+            let strategy =
+                DailyForecastList::new(FakeWeatherProvider, attributes, get_period(length));
+            weather_reporter.run(strategy, parameters)
         }
     };
     ConsoleView.display(&string);

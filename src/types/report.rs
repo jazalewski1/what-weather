@@ -63,8 +63,7 @@ pub struct DailyForecastFullReport {
 }
 
 #[derive(Clone, Debug)]
-pub struct TodayForecastPartialReport {
-    pub coordinates: Coordinates,
+pub struct ForecastPartialSpec {
     pub kind: Option<Kind>,
     pub temperature_range: Option<TemperatureRange>,
     pub cloud_coverage_range: Option<PercentageRange>,
@@ -74,14 +73,15 @@ pub struct TodayForecastPartialReport {
 }
 
 #[derive(Clone, Debug)]
+pub struct TodayForecastPartialReport {
+    pub coordinates: Coordinates,
+    pub spec: ForecastPartialSpec,
+}
+
+#[derive(Clone, Debug)]
 pub struct DailyPartialData {
     pub date: Date,
-    pub kind: Option<Kind>,
-    pub temperature_range: Option<TemperatureRange>,
-    pub cloud_coverage_range: Option<PercentageRange>,
-    pub humidity_range: Option<PercentageRange>,
-    pub wind: Option<WindScope>,
-    pub pressure_range: Option<PressureRange>,
+    pub spec: ForecastPartialSpec,
 }
 
 #[derive(Clone, Debug)]
