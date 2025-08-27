@@ -4,6 +4,6 @@ pub struct ConsoleView;
 
 impl View for ConsoleView {
     fn display(&self, data: &str) {
-        println!("{data}")
+        print!("{data}")
     }
 }

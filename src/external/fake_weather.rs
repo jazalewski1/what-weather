@@ -82,6 +82,78 @@ impl WeatherProvider for FakeWeatherProvider {
         }
         DailyForecastFullReport { data }
     }
+
+    fn fetch_today_forecast_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        attributes: &WeatherAttributeSet,
+    ) -> TodayForecastPartialReport {
+        TodayForecastPartialReport {
+            coordinates: *coordinates,
+            spec: generate_forecast_partial_spec(coordinates, attributes),
+        }
+    }
+
+    fn fetch_daily_forecast_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        attributes: &WeatherAttributeSet,
+        period: &Period,
+    ) -> DailyForecastPartialReport {
+        let mut data = Vec::new();
+        for date in period.start.iter_days().take(period.length as usize) {
+            let day_data = DailyPartialData {
+                date,
+                spec: generate_forecast_partial_spec(coordinates, attributes),
+            };
+            data.push(day_data);
+        }
+        DailyForecastPartialReport {
+            coordinates: *coordinates,
+            data,
+        }
+    }
+}
+
+fn generate_forecast_partial_spec(
+    coordinates: &Coordinates,
+    attributes: &WeatherAttributeSet,
+) -> ForecastPartialSpec {
+    let mut spec = ForecastPartialSpec {
+        kind: None,
+        temperature_range: None,
+        cloud_coverage_range: None,
+        humidity_range: None,
+        wind: None,
+        pressure_range: None,
+    };
+    for attribute in attributes {
+        match attribute {
+            WeatherAttribute::WeatherKind => {
+                spec.kind.replace(generate_random_weather_kind());
+            }
+            WeatherAttribute::Temperature => {
+                spec.temperature_range
+                    .replace(generate_random_temperature_range(coordinates));
+            }
+            WeatherAttribute::CloudCoverage => {
+                spec.cloud_coverage_range
+                    .replace(generate_random_perecentage_range());
+            }
+            WeatherAttribute::Humidity => {
+                spec.humidity_range
+                    .replace(generate_random_perecentage_range());
+            }
+            WeatherAttribute::Wind => {
+                spec.wind.replace(generate_random_wind_scope());
+            }
+            WeatherAttribute::Pressure => {
+                spec.pressure_range
+                    .replace(generate_random_pressure_range());
+            }
+        }
+    }
+    spec
 }
 
 fn generate_random_weather_kind() -> Kind {

@@ -1,4 +1,6 @@
 use crate::domain::ReportStrategy;
+use crate::domain::common::list_builder::write_param;
+use crate::domain::common::list_format::describe_kind;
 use crate::port::weather::WeatherProvider;
 use crate::types::attributes::WeatherAttributeSet;
 use crate::types::report::CurrentPartialReport;
@@ -28,80 +30,32 @@ impl<P: WeatherProvider> ReportStrategy for CurrentList<P> {
     }
 
     fn format(&self, report: &Self::Report) -> String {
-        let mut builder = StringBuilder::default();
+        let mut result = String::default();
 
-        builder.add("Coordinates", &format!("{:.5}", report.coordinates));
+        write_param(
+            &mut result,
+            "Coordinates",
+            format!("{:.5}", report.coordinates),
+        );
         if let Some(kind) = report.kind {
-            builder.add("Weather", &describe_kind(&kind));
+            write_param(&mut result, "Weather", describe_kind(&kind));
         }
         if let Some(temperature) = report.temperature {
-            builder.add("Temperature", &format!("{temperature:.1}"));
+            write_param(&mut result, "Temperature", format!("{temperature:.1}"));
         }
         if let Some(coverage) = report.cloud_coverage {
-            builder.add("Cloud coverage", &format!("{coverage}"));
+            write_param(&mut result, "Cloud coverage", format!("{coverage}"));
         }
         if let Some(humidity) = report.humidity {
-            builder.add("Humidity", &format!("{humidity}"));
+            write_param(&mut result, "Humidity", format!("{humidity}"));
         }
         if let Some(wind) = &report.wind {
-            builder.add("Wind", &describe_wind(wind));
+            write_param(&mut result, "Wind", describe_wind(wind));
         }
         if let Some(pressure) = report.pressure {
-            builder.add("Pressure", &format!("{pressure}"));
+            write_param(&mut result, "Pressure", format!("{pressure}"));
         }
-        builder.string()
-    }
-}
-
-#[derive(Default)]
-struct StringBuilder {
-    string: String,
-}
-
-impl StringBuilder {
-    fn add(&mut self, label: &str, value: &str) -> &mut StringBuilder {
-        if self.string.is_empty() {
-            self.string.push_str(&format!("{label}: {value}"));
-        } else {
-            self.string.push_str(&format!("\n{label}: {value}"));
-        }
-        self
-    }
-    fn string(self) -> String {
-        self.string
-    }
-}
-
-fn describe_kind(kind: &Kind) -> String {
-    match kind {
-        Kind::Clouds(clouds) => match clouds {
-            Clouds::Clear => "clear sky".into(),
-            Clouds::Light => "light clouds".into(),
-            Clouds::Moderate => "cloudy".into(),
-            Clouds::Dense => "overcast sky".into(),
-        },
-        Kind::Fog(fog) => match fog {
-            Fog::Normal => "fog".into(),
-            Fog::Rime => "rime fog".into(),
-        },
-        Kind::Precipitation(precipitation) => {
-            let kind_desc = match precipitation.kind {
-                PrecipitationKind::Rain => "rain",
-                PrecipitationKind::Snow => "snow",
-            };
-            let intensity_desc = match precipitation.intensity {
-                PrecipitationIntensity::Light => "light",
-                PrecipitationIntensity::Moderate => "moderate",
-                PrecipitationIntensity::Heavy => "heavy",
-                PrecipitationIntensity::Shower => "shower",
-            };
-            if precipitation.heat == PrecipitationHeat::Freezing {
-                format!("freezing {intensity_desc} {kind_desc}")
-            } else {
-                format!("{intensity_desc} {kind_desc}")
-            }
-        }
-        Kind::Thunderstorm => "thunderstorm".into(),
+        result
     }
 }
 
@@ -274,7 +228,7 @@ mod tests {
             Cloud coverage: 43%\n\
             Humidity: 81%\n\
             Wind: 1.1 m/s, 155.5° (SE)\n\
-            Pressure: 1009.3 hPa";
+            Pressure: 1009.3 hPa\n";
         assert_eq!(result, expected);
     }
 
@@ -298,7 +252,7 @@ mod tests {
         let expected = "Coordinates: 1.23450°, 67.89000°\n\
             Temperature: 22.4°C\n\
             Humidity: 81%\n\
-            Wind: 1.1 m/s, 155.5° (SE)";
+            Wind: 1.1 m/s, 155.5° (SE)\n";
         assert_eq!(result, expected);
     }
 }

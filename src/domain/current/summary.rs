@@ -34,7 +34,7 @@ impl<P: WeatherProvider> ReportStrategy for CurrentSummary<P> {
         #[allow(clippy::uninlined_format_args)]
         {
             format!(
-                "{} and {} with {}.\n{} with {}.\n{}.",
+                "{} and {} with {}.\n{} with {}.\n{}.\n",
                 temperature_desc,
                 weather_kind_desc,
                 clouds_desc,
@@ -229,7 +229,7 @@ mod tests {
              with clouds covering 43% of the sky.\n\
              The air is very humid at 81% \
              with gentle southeast breeze blowing at 1.1 m/s.\n\
-             Low pressure stands at 1009.3 hPa."
+             Low pressure stands at 1009.3 hPa.\n"
             .into();
         assert_eq!(result, expected);
     }
