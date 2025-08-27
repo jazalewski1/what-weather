@@ -1,24 +1,24 @@
-use crate::domain::common::list_builder::ListBuilder;
+use crate::domain::common::list_builder::write_param;
 use crate::domain::common::list_format::describe_kind;
 use crate::types::report::ForecastPartialSpec;
 use crate::types::units::*;
 use crate::types::weather::*;
 
-pub fn add_spec(builder: &mut ListBuilder, spec: &ForecastPartialSpec) {
+pub fn write_spec(result: &mut String, spec: &ForecastPartialSpec) {
     if let Some(kind) = spec.kind {
-        builder.add("Weather", &describe_kind(&kind));
+        write_param(result, "Weather", describe_kind(&kind));
     }
     if let Some(temperature) = &spec.temperature_range {
         let value = match temperature {
             TemperatureRange::Celsius { min, max } => format!("{min} - {max}"),
         };
-        builder.add("Temperature", &value);
+        write_param(result, "Temperature", value);
     }
     if let Some(PercentageRange { min, max }) = spec.cloud_coverage_range {
-        builder.add("Cloud coverage", &format!("{min} - {max}"));
+        write_param(result, "Cloud coverage", format!("{min} - {max}"));
     }
     if let Some(PercentageRange { min, max }) = spec.humidity_range {
-        builder.add("Humidity", &format!("{min} - {max}"));
+        write_param(result, "Humidity", format!("{min} - {max}"));
     }
     if let Some(WindScope {
         speed_range,
@@ -29,13 +29,14 @@ pub fn add_spec(builder: &mut ListBuilder, spec: &ForecastPartialSpec) {
             SpeedRange::MetersPerSecond { min, max } => format!("{min} - {max}"),
         };
         let cardinal_symbol = dominant_direction.to_cardinal_direction().to_symbol();
-        builder.add(
+        write_param(
+            result,
             "Wind",
-            &format!("{speed_desc}, {dominant_direction} ({cardinal_symbol})"),
+            format!("{speed_desc}, {dominant_direction} ({cardinal_symbol})"),
         );
     }
     if let Some(PressureRange { min, max }) = spec.pressure_range {
-        builder.add("Pressure", &format!("{min} - {max}"));
+        write_param(result, "Pressure", format!("{min} - {max}"));
     }
 }
 
@@ -53,12 +54,12 @@ mod tests {
             wind: None,
             pressure_range: None,
         };
-        let mut builder = ListBuilder::default();
-        add_spec(&mut builder, &spec);
+        let mut result = String::default();
+        write_spec(&mut result, &spec);
         let expected = "Weather: cloudy\n\
                         Temperature: 24.5°C - 27.1°C\n\
-                        Humidity: 33% - 46%";
-        assert_eq!(builder.string(), expected);
+                        Humidity: 33% - 46%\n";
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -74,14 +75,14 @@ mod tests {
             }),
             pressure_range: Some(PressureRange::new(999.9, 1111.1)),
         };
-        let mut builder = ListBuilder::default();
-        add_spec(&mut builder, &spec);
+        let mut result = String::default();
+        write_spec(&mut result, &spec);
         let expected = "Weather: cloudy\n\
                         Temperature: 24.5°C - 27.1°C\n\
                         Cloud coverage: 56% - 79%\n\
                         Humidity: 33% - 46%\n\
                         Wind: 1.2 m/s - 2.8 m/s, 178.5° (S)\n\
-                        Pressure: 999.9 hPa - 1111.1 hPa";
-        assert_eq!(builder.string(), expected);
+                        Pressure: 999.9 hPa - 1111.1 hPa\n";
+        assert_eq!(result, expected);
     }
 }

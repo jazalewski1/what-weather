@@ -20,7 +20,7 @@ pub fn describe_forecast(
     #[allow(clippy::uninlined_format_args)]
     {
         format!(
-            "{} {}.\n{} and {}.\n{} with {}.\n{}.",
+            "{} {}.\n{} and {}.\n{} with {}.\n{}.\n",
             time_desc,
             temperature_desc,
             kind_desc,
@@ -221,7 +221,7 @@ mod tests {
                         and clouds will cover from 66% to 94% of the sky.\n\
                         The air will be humid at 23% to 45% \
                         with mostly strong southeast wind blowing at maximum 8.2 m/s.\n\
-                        Normal pressure will reach 1001.2 hPa at lowest up to 1010.5 hPa.";
+                        Normal pressure will reach 1001.2 hPa at lowest up to 1010.5 hPa.\n";
         assert_eq!(result, expected);
     }
 }

@@ -1,6 +1,6 @@
 use crate::domain::ReportStrategy;
-use crate::domain::common::list_builder::ListBuilder;
-use crate::domain::forecast::common_list::add_spec;
+use crate::domain::common::list_builder::write_param;
+use crate::domain::forecast::common_list::write_spec;
 use crate::port::weather::WeatherProvider;
 use crate::types::attributes::*;
 use crate::types::report::*;
@@ -30,10 +30,10 @@ impl<P: WeatherProvider> ReportStrategy for TodayForecastList<P> {
 
     fn format(&self, report: &Self::Report) -> String {
         let Self::Report { coordinates, spec } = &report;
-        let mut builder = ListBuilder::default();
-        builder.add("Coordinates", &format!("{coordinates:.5}"));
-        add_spec(&mut builder, spec);
-        builder.string()
+        let mut result = String::default();
+        write_param(&mut result, "Coordinates", format!("{coordinates:.5}"));
+        write_spec(&mut result, spec);
+        result
     }
 }
 
@@ -94,7 +94,7 @@ mod tests {
         let expected = "Coordinates: 1.23000°, 45.67000°\n\
                         Weather: cloudy\n\
                         Temperature: 24.5°C - 27.1°C\n\
-                        Humidity: 33% - 46%";
+                        Humidity: 33% - 46%\n";
         assert_eq!(result, expected);
     }
 }

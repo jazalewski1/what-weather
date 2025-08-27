@@ -35,7 +35,7 @@ impl<P: WeatherProvider> ReportStrategy for DailyForecastSummary<P> {
         }
         for data in data_iter {
             let day_summary = describe_day(data);
-            result.push_str("\n\n");
+            result.push('\n');
             result.push_str(&day_summary);
         }
         result
@@ -183,22 +183,22 @@ mod tests {
             and clouds will cover from 27% to 29% of the sky.\n\
             The air will be dry at 14% to 19% humidity \
             with mostly gentle southeast breeze blowing at maximum 3.3 m/s.\n\
-            Normal pressure will reach 995.8 hPa at lowest up to 1019.8 hPa.";
+            Normal pressure will reach 995.8 hPa at lowest up to 1019.8 hPa.\n";
         let expected_day2 = "On 25.08.2025 it will be cold \
             with temperatures starting at 3.4°C and reaching 9.0°C.\n\
             The sky will be clear \
             and clouds will cover from 19% to 96% of the sky.\n\
             The air will be heavy at 29% to 86% humidity \
             with mostly gentle north breeze blowing at maximum 2.3 m/s.\n\
-            Normal pressure will reach 990.3 hPa at lowest up to 1014.3 hPa.";
+            Normal pressure will reach 990.3 hPa at lowest up to 1014.3 hPa.\n";
         let expected_day3 = "On 26.08.2025 it will be cool \
             with temperatures starting at 9.5°C and reaching 15.5°C.\n\
             There will be light snow falling \
             and clouds will cover from 0% to 1% of the sky.\n\
             The air will be very humid at 48% to 81% \
             with mostly strong south wind blowing at maximum 10.9 m/s.\n\
-            Normal pressure will reach 995.6 hPa at lowest up to 1019.6 hPa.";
-        let expected = format!("{expected_day1}\n\n{expected_day2}\n\n{expected_day3}");
+            Normal pressure will reach 995.6 hPa at lowest up to 1019.6 hPa.\n";
+        let expected = format!("{expected_day1}\n{expected_day2}\n{expected_day3}");
         assert_eq!(result, expected);
     }
 }

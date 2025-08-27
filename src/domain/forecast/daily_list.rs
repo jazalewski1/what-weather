@@ -1,8 +1,8 @@
 use std::fmt::Write;
 
 use crate::domain::ReportStrategy;
-use crate::domain::common::list_builder::ListBuilder;
-use crate::domain::forecast::common_list::add_spec;
+use crate::domain::common::list_builder::write_param;
+use crate::domain::forecast::common_list::write_spec;
 use crate::port::weather::WeatherProvider;
 use crate::types::attributes::*;
 use crate::types::report::*;
@@ -36,33 +36,32 @@ impl<P: WeatherProvider> ReportStrategy for DailyForecastList<P> {
     }
 
     fn format(&self, report: &Self::Report) -> String {
-        let Self::Report { coordinates, data } = &report;
-        let mut result = String::new();
-        {
-            let mut builder = ListBuilder::default();
-            builder.add("Coordinates", &format!("{coordinates:.5}"));
-            write!(&mut result, "{}\n\n", builder.string()).expect("Failed to write to string");
-        }
-        let mut day_iter = data.iter();
-        if let Some(data) = day_iter.next() {
-            let day_desc = describe_day(data);
-            write!(&mut result, "{day_desc}").expect("Failed to write to string");
-        }
-        for daily_data in day_iter {
-            let day_desc = describe_day(daily_data);
-            write!(&mut result, "\n\n{day_desc}").expect("Failed to write to string");
-        }
-        result
+        describe_report(report).expect("Failed to write to string")
     }
 }
 
-fn describe_day(data: &DailyPartialData) -> String {
-    let DailyPartialData { date, spec } = &data;
-    let mut builder = ListBuilder::default();
-    let date_str = date.format("%d.%m.%Y").to_string();
-    builder.add("Date", &date_str);
-    add_spec(&mut builder, spec);
-    builder.string()
+fn describe_report(report: &DailyForecastPartialReport) -> Result<String, std::fmt::Error> {
+    let DailyForecastPartialReport { coordinates, data } = &report;
+    let mut result = String::new();
+
+    write_param(&mut result, "Coordinates", format!("{coordinates:.5}"));
+    writeln!(&mut result)?;
+
+    let mut day_iter = data.iter();
+    if let Some(data) = day_iter.next() {
+        describe_day(&mut result, data);
+    }
+    for daily_data in day_iter {
+        writeln!(&mut result)?;
+        describe_day(&mut result, daily_data);
+    }
+    Ok(result)
+}
+
+fn describe_day(result: &mut String, data: &DailyPartialData) {
+    let date_str = data.date.format("%d.%m.%Y").to_string();
+    write_param(result, "Date", date_str);
+    write_spec(result, &data.spec);
 }
 
 #[cfg(test)]
@@ -178,7 +177,7 @@ mod tests {
                         Date: 28.08.2025\n\
                         Weather: overcast sky\n\
                         Temperature: 28.5°C - 31.1°C\n\
-                        Humidity: 35% - 48%";
+                        Humidity: 35% - 48%\n";
         assert_eq!(result, expected);
     }
 }
