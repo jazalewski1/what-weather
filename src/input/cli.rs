@@ -118,10 +118,8 @@ impl From<Args> for Input {
     fn from(args: Args) -> Self {
         let report_type = match args.command {
             None => ReportType::CurrentSummary,
-            Some(Command::Now { summary, list }) => {
-                if summary {
-                    ReportType::CurrentSummary
-                } else if let Some(attributes) = list {
+            Some(Command::Now { summary: _, list }) => {
+                if let Some(attributes) = list {
                     let attribute_set = convert_to_attribute_set(&attributes);
                     ReportType::CurrentList(attribute_set)
                 } else {
@@ -129,30 +127,18 @@ impl From<Args> for Input {
                 }
             }
             Some(Command::Forecast {
-                summary,
+                summary: _,
                 list,
-                today,
+                today: _,
                 days,
             }) => {
-                if summary {
-                    if today {
-                        ReportType::TodayForecastSummary
-                    } else if let Some(length) = days {
-                        ReportType::DailyForecastSummary(length)
-                    } else {
-                        ReportType::TodayForecastSummary
-                    }
-                } else if let Some(attributes) = list {
+                if let Some(attributes) = list {
                     let set = convert_to_attribute_set(&attributes);
-                    if today {
-                        ReportType::TodayForecastList(set)
-                    } else if let Some(length) = days {
+                    if let Some(length) = days {
                         ReportType::DailyForecastList(set, length)
                     } else {
                         ReportType::TodayForecastList(set)
                     }
-                } else if today {
-                    ReportType::TodayForecastSummary
                 } else if let Some(length) = days {
                     ReportType::DailyForecastSummary(length)
                 } else {
