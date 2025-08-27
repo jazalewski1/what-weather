@@ -3,7 +3,7 @@ use crate::types::units::*;
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
 use std::str::FromStr;
-use strum::IntoEnumIterator;
+use strum::{IntoEnumIterator, VariantArray};
 
 impl ValueEnum for WeatherAttribute {
     fn to_possible_value(&self) -> Option<PossibleValue> {
@@ -18,14 +18,7 @@ impl ValueEnum for WeatherAttribute {
     }
 
     fn value_variants<'a>() -> &'a [Self] {
-        &[
-            Self::WeatherKind,
-            Self::Temperature,
-            Self::CloudCoverage,
-            Self::Humidity,
-            Self::Wind,
-            Self::Pressure,
-        ]
+        Self::VARIANTS
     }
 }
 
@@ -464,13 +457,5 @@ mod tests {
         };
         let input: Input = args.into();
         assert_eq!(input.coordinates, Some(coordinates));
-    }
-
-    #[test]
-    fn provides_all_weather_attribute_values() {
-        let result: WeatherAttributeSet =
-            WeatherAttribute::value_variants().iter().cloned().collect();
-        let expected: WeatherAttributeSet = WeatherAttribute::iter().collect();
-        assert_eq!(result, expected);
     }
 }

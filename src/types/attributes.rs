@@ -1,7 +1,7 @@
 use std::collections::HashSet;
-use strum::EnumIter;
+use strum::{EnumIter, VariantArray};
 
-#[derive(Clone, Copy, Debug, EnumIter, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, VariantArray)]
 pub enum WeatherAttribute {
     WeatherKind,
     Temperature,
