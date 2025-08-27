@@ -40,11 +40,11 @@ impl FromStr for Coordinates {
 enum Command {
     /// Report current weather
     Now {
-        /// Report all attributes as summary
+        /// Format report as summary
         #[arg(long, group = "now_format")]
         summary: bool,
 
-        /// Report all or selected attributes as a list
+        /// Format report as list of all or selected attributes
         #[arg(long, group = "now_format", value_delimiter=',', num_args=0..)]
         list: Option<Vec<WeatherAttribute>>,
     },
