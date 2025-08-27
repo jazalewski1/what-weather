@@ -3,7 +3,7 @@ use crate::types::units::*;
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
 use std::str::FromStr;
-use strum::IntoEnumIterator;
+use strum::{IntoEnumIterator, VariantArray};
 
 impl ValueEnum for WeatherAttribute {
     fn to_possible_value(&self) -> Option<PossibleValue> {
@@ -18,14 +18,7 @@ impl ValueEnum for WeatherAttribute {
     }
 
     fn value_variants<'a>() -> &'a [Self] {
-        &[
-            Self::WeatherKind,
-            Self::Temperature,
-            Self::CloudCoverage,
-            Self::Humidity,
-            Self::Wind,
-            Self::Pressure,
-        ]
+        Self::VARIANTS
     }
 }
 
@@ -47,11 +40,11 @@ impl FromStr for Coordinates {
 enum Command {
     /// Report current weather
     Now {
-        /// Report all attributes as summary
+        /// Format report as summary
         #[arg(long, group = "now_format")]
         summary: bool,
 
-        /// Report all or selected attributes as a list
+        /// Format report as list of all or selected attributes
         #[arg(long, group = "now_format", value_delimiter=',', num_args=0..)]
         list: Option<Vec<WeatherAttribute>>,
     },
@@ -118,10 +111,8 @@ impl From<Args> for Input {
     fn from(args: Args) -> Self {
         let report_type = match args.command {
             None => ReportType::CurrentSummary,
-            Some(Command::Now { summary, list }) => {
-                if summary {
-                    ReportType::CurrentSummary
-                } else if let Some(attributes) = list {
+            Some(Command::Now { summary: _, list }) => {
+                if let Some(attributes) = list {
                     let attribute_set = convert_to_attribute_set(&attributes);
                     ReportType::CurrentList(attribute_set)
                 } else {
@@ -129,30 +120,18 @@ impl From<Args> for Input {
                 }
             }
             Some(Command::Forecast {
-                summary,
+                summary: _,
                 list,
-                today,
+                today: _,
                 days,
             }) => {
-                if summary {
-                    if today {
-                        ReportType::TodayForecastSummary
-                    } else if let Some(length) = days {
-                        ReportType::DailyForecastSummary(length)
-                    } else {
-                        ReportType::TodayForecastSummary
-                    }
-                } else if let Some(attributes) = list {
+                if let Some(attributes) = list {
                     let set = convert_to_attribute_set(&attributes);
-                    if today {
-                        ReportType::TodayForecastList(set)
-                    } else if let Some(length) = days {
+                    if let Some(length) = days {
                         ReportType::DailyForecastList(set, length)
                     } else {
                         ReportType::TodayForecastList(set)
                     }
-                } else if today {
-                    ReportType::TodayForecastSummary
                 } else if let Some(length) = days {
                     ReportType::DailyForecastSummary(length)
                 } else {
@@ -478,13 +457,5 @@ mod tests {
         };
         let input: Input = args.into();
         assert_eq!(input.coordinates, Some(coordinates));
-    }
-
-    #[test]
-    fn provides_all_weather_attribute_values() {
-        let result: WeatherAttributeSet =
-            WeatherAttribute::value_variants().iter().cloned().collect();
-        let expected: WeatherAttributeSet = WeatherAttribute::iter().collect();
-        assert_eq!(result, expected);
     }
 }
