@@ -91,7 +91,7 @@ mod tests {
             cloud_coverage: None,
             humidity: Some(Percentage::from(27)),
             wind: None,
-            pressure: Some(Hectopascal::from(1001.2)),
+            pressure: Some(Pressure::new_hpa(1001.2)),
         };
 
         let mut weather_provider = MockWeatherProvider::new();
@@ -218,7 +218,7 @@ mod tests {
                 speed: Speed::new_meters_per_second(1.07),
                 direction: Azimuth::from(155.5),
             }),
-            pressure: Some(Hectopascal::from(1009.3)),
+            pressure: Some(Pressure::new_hpa(1009.3)),
         };
         let sut = CurrentList::new(MockWeatherProvider::new(), WeatherAttributeSet::new());
         let result = sut.format(&report);

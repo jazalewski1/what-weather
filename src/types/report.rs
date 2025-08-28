@@ -8,7 +8,7 @@ pub struct CurrentFullReport {
     pub cloud_coverage: Percentage,
     pub humidity: Percentage,
     pub wind: Wind,
-    pub pressure: Hectopascal,
+    pub pressure: Pressure,
 }
 
 #[derive(Clone, Debug)]
@@ -19,7 +19,7 @@ pub struct CurrentPartialReport {
     pub cloud_coverage: Option<Percentage>,
     pub humidity: Option<Percentage>,
     pub wind: Option<Wind>,
-    pub pressure: Option<Hectopascal>,
+    pub pressure: Option<Pressure>,
 }
 
 impl CurrentPartialReport {

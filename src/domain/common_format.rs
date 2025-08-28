@@ -125,19 +125,25 @@ pub fn prepare_wind_description(speed: &Speed, direction: &Azimuth) -> WindDescr
     }
 }
 
-pub fn describe_pressure_adjective(pressure: &Hectopascal) -> String {
-    if pressure.value <= 1000.0 {
+pub fn describe_hectopascal_adjective(hpa: &Hectopascal) -> String {
+    if hpa.value <= 1000.0 {
         "Very low"
-    } else if pressure.value <= 1010.0 {
+    } else if hpa.value <= 1010.0 {
         "Low"
-    } else if pressure.value <= 1020.0 {
+    } else if hpa.value <= 1020.0 {
         "Normal"
-    } else if pressure.value <= 1030.0 {
+    } else if hpa.value <= 1030.0 {
         "High"
     } else {
         "Very high"
     }
     .into()
+}
+
+pub fn describe_pressure_adjective(pressure: &Pressure) -> String {
+    match pressure {
+        Pressure::Hpa(hpa) => describe_hectopascal_adjective(hpa),
+    }
 }
 
 #[cfg(test)]
@@ -337,8 +343,8 @@ mod tests {
     }
 
     #[test]
-    fn describes_pressure_adjective() {
-        let describe = |value| describe_pressure_adjective(&Hectopascal::from(value));
+    fn describes_hectopascal_adjective() {
+        let describe = |value| describe_pressure_adjective(&Pressure::new_hpa(value));
 
         assert_eq!(describe(995.0), "Very low");
         assert_eq!(describe(1000.0), "Very low");

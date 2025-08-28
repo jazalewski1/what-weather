@@ -94,9 +94,12 @@ fn describe_wind_scope(scope: &WindScope) -> String {
 }
 
 fn describe_pressure_range(pressure_range: &PressureRange) -> String {
-    let PressureRange { min, max } = pressure_range;
-    let adjective = describe_pressure_adjective(max);
-    format!("{adjective} pressure will reach {min:.1} at lowest up to {max:.1}",)
+    match pressure_range {
+        PressureRange::Hpa { min, max } => {
+            let adjective = describe_hectopascal_adjective(max);
+            format!("{adjective} pressure will reach {min:.1} at lowest up to {max:.1}",)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -193,7 +196,7 @@ mod tests {
 
     #[test]
     fn describes_pressure_range() {
-        let range = PressureRange::new(1011.9, 1020.5);
+        let range = PressureRange::new_hpa(1011.9, 1020.5);
         let result = describe_pressure_range(&range);
         assert_eq!(
             result,
@@ -213,7 +216,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(2.5, 8.17),
                 dominant_direction: Azimuth::from(115.2),
             },
-            &PressureRange::new(1001.2, 1010.5),
+            &PressureRange::new_hpa(1001.2, 1010.5),
         );
         let expected = "Some day it will be warm \
                         with temperatures starting at 12.3°C and reaching 23.4°C.\n\

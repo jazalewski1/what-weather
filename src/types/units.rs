@@ -295,15 +295,33 @@ impl Display for Hectopascal {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum Pressure {
+    Hpa(Hectopascal),
+}
+
+impl Pressure {
+    pub fn new_hpa(value: f32) -> Self {
+        Self::Hpa(Hectopascal::from(value))
+    }
+}
+
+impl Display for Pressure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Hpa(inner) => inner.fmt(f),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
-pub struct PressureRange {
-    pub min: Hectopascal,
-    pub max: Hectopascal,
+pub enum PressureRange {
+    Hpa { min: Hectopascal, max: Hectopascal },
 }
 
 impl PressureRange {
-    pub fn new(min: f32, max: f32) -> Self {
-        Self {
+    pub fn new_hpa(min: f32, max: f32) -> Self {
+        Self::Hpa {
             min: Hectopascal::from(min),
             max: Hectopascal::from(max),
         }
