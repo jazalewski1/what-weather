@@ -50,6 +50,7 @@ pub enum TemperatureRange {
 
 impl TemperatureRange {
     pub fn new_celsius(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min temperature is greater than max");
         Self::Celsius {
             min: Celsius::from(min),
             max: Celsius::from(max),
@@ -88,6 +89,7 @@ pub struct PercentageRange {
 
 impl PercentageRange {
     pub fn new(min: i8, max: i8) -> Self {
+        assert!(min <= max, "Min percentage is greater than max");
         Self {
             min: Percentage::from(min),
             max: Percentage::from(max),
@@ -148,6 +150,7 @@ pub enum SpeedRange {
 
 impl SpeedRange {
     pub fn new_meters_per_second(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min speed is greater than max");
         Self::MetersPerSecond {
             min: MetersPerSecond::from(min),
             max: MetersPerSecond::from(max),
@@ -295,15 +298,34 @@ impl Display for Hectopascal {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum Pressure {
+    Hpa(Hectopascal),
+}
+
+impl Pressure {
+    pub fn new_hpa(value: f32) -> Self {
+        Self::Hpa(Hectopascal::from(value))
+    }
+}
+
+impl Display for Pressure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Hpa(inner) => inner.fmt(f),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
-pub struct PressureRange {
-    pub min: Hectopascal,
-    pub max: Hectopascal,
+pub enum PressureRange {
+    Hpa { min: Hectopascal, max: Hectopascal },
 }
 
 impl PressureRange {
-    pub fn new(min: f32, max: f32) -> Self {
-        Self {
+    pub fn new_hpa(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min pressure is greater than max");
+        Self::Hpa {
             min: Hectopascal::from(min),
             max: Hectopascal::from(max),
         }
@@ -349,6 +371,23 @@ pub struct Period {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::panic::{UnwindSafe, catch_unwind};
+
+    fn assert_panics<F, R>(func: F)
+    where
+        F: FnOnce() -> R + UnwindSafe,
+    {
+        let result = catch_unwind(func);
+        assert!(result.is_err());
+    }
+
+    fn assert_no_panic<F, R>(func: F)
+    where
+        F: FnOnce() -> R + UnwindSafe,
+    {
+        let result = catch_unwind(func);
+        assert!(result.is_ok());
+    }
 
     #[test]
     fn displays_temperature_in_celsius() {
@@ -363,9 +402,23 @@ mod tests {
     }
 
     #[test]
+    fn validates_temperature_range() {
+        assert_panics(|| TemperatureRange::new_celsius(32.0, 31.0));
+        assert_no_panic(|| TemperatureRange::new_celsius(32.0, 32.0));
+        assert_no_panic(|| TemperatureRange::new_celsius(32.0, 33.0));
+    }
+
+    #[test]
     fn displays_percentage() {
         let percentage = Percentage::from(27);
         assert_eq!(format!("{percentage}"), "27%");
+    }
+
+    #[test]
+    fn validates_percentage_range() {
+        assert_panics(|| PercentageRange::new(32, 31));
+        assert_no_panic(|| PercentageRange::new(32, 32));
+        assert_no_panic(|| PercentageRange::new(32, 33));
     }
 
     #[test]
@@ -374,6 +427,13 @@ mod tests {
         assert_eq!(format!("{speed}"), "0.0 m/s");
         let speed = Speed::new_meters_per_second(12.345);
         assert_eq!(format!("{speed:.2}"), "12.35 m/s");
+    }
+
+    #[test]
+    fn validates_speed_range() {
+        assert_panics(|| SpeedRange::new_meters_per_second(32.0, 31.0));
+        assert_no_panic(|| SpeedRange::new_meters_per_second(32.0, 32.0));
+        assert_no_panic(|| SpeedRange::new_meters_per_second(32.0, 33.0));
     }
 
     #[test]
@@ -468,6 +528,13 @@ mod tests {
         assert_eq!(format!("{pressure}"), "1000.0 hPa");
         let pressure = Hectopascal::from(1002.1234);
         assert_eq!(format!("{pressure:.2}"), "1002.12 hPa");
+    }
+
+    #[test]
+    fn validates_pressure_range() {
+        assert_panics(|| PressureRange::new_hpa(32.0, 31.0));
+        assert_no_panic(|| PressureRange::new_hpa(32.0, 32.0));
+        assert_no_panic(|| PressureRange::new_hpa(32.0, 33.0));
     }
 
     #[test]

@@ -56,7 +56,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(2.5, 8.17),
                 dominant_direction: Azimuth::from(115.2),
             },
-            pressure_range: PressureRange::new(1001.2, 1010.5),
+            pressure_range: PressureRange::new_hpa(1001.2, 1010.5),
         };
         weather_provider
             .expect_fetch_forecast_full_report()
@@ -80,7 +80,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(2.5, 8.17),
                 dominant_direction: Azimuth::from(115.2),
             },
-            pressure_range: PressureRange::new(1001.2, 1010.5),
+            pressure_range: PressureRange::new_hpa(1001.2, 1010.5),
         };
         let result = sut.format(&report);
         let expected = "Today it will be warm \

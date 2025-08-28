@@ -84,10 +84,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(0.0, 3.28),
                 dominant_direction: Azimuth::from(128.8),
             },
-            pressure_range: PressureRange {
-                min: Hectopascal::from(995.8),
-                max: Hectopascal::from(1019.8),
-            },
+            pressure_range: PressureRange::new_hpa(995.8, 1019.8),
         };
         let daily_data_2 = DailyFullData {
             date: Date::from_ymd_opt(2025, 08, 25).unwrap(),
@@ -105,10 +102,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(0.0, 2.33),
                 dominant_direction: Azimuth::from(2.3),
             },
-            pressure_range: PressureRange {
-                min: Hectopascal::from(990.3),
-                max: Hectopascal::from(1014.3),
-            },
+            pressure_range: PressureRange::new_hpa(990.3, 1014.3),
         };
         let daily_data_3 = DailyFullData {
             date: Date::from_ymd_opt(2025, 08, 26).unwrap(),
@@ -130,10 +124,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(7.39, 10.95),
                 dominant_direction: Azimuth::from(167.6),
             },
-            pressure_range: PressureRange {
-                min: Hectopascal::from(995.6),
-                max: Hectopascal::from(1019.6),
-            },
+            pressure_range: PressureRange::new_hpa(995.6, 1019.6),
         };
 
         DailyForecastFullReport {

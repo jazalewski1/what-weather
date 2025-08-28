@@ -35,8 +35,11 @@ pub fn write_spec(result: &mut String, spec: &ForecastPartialSpec) {
             format!("{speed_desc}, {dominant_direction} ({cardinal_symbol})"),
         );
     }
-    if let Some(PressureRange { min, max }) = spec.pressure_range {
-        write_param(result, "Pressure", format!("{min} - {max}"));
+    if let Some(pressure) = &spec.pressure_range {
+        let value = match pressure {
+            PressureRange::Hpa { min, max } => format!("{min} - {max}"),
+        };
+        write_param(result, "Pressure", value);
     }
 }
 
@@ -73,7 +76,7 @@ mod tests {
                 speed_range: SpeedRange::new_meters_per_second(1.2, 2.84),
                 dominant_direction: Azimuth::from(178.5),
             }),
-            pressure_range: Some(PressureRange::new(999.9, 1111.1)),
+            pressure_range: Some(PressureRange::new_hpa(999.9, 1111.1)),
         };
         let mut result = String::default();
         write_spec(&mut result, &spec);

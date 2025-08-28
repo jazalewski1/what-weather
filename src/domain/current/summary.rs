@@ -92,7 +92,7 @@ fn describe_wind(wind: &Wind) -> String {
     }
 }
 
-fn describe_pressure(pressure: &Hectopascal) -> String {
+fn describe_pressure(pressure: &Pressure) -> String {
     let adjective = describe_pressure_adjective(pressure);
     format!("{adjective} pressure stands at {pressure:.1}")
 }
@@ -116,7 +116,7 @@ mod tests {
                 speed: Speed::new_meters_per_second(2.35),
                 direction: Azimuth::from(225.3),
             },
-            pressure: Hectopascal::from(1001.5),
+            pressure: Pressure::new_hpa(1001.5),
         };
 
         let mut weather_provider = MockWeatherProvider::new();
@@ -204,7 +204,7 @@ mod tests {
 
     #[test]
     fn describes_values_of_pressure() {
-        let result = describe_pressure(&Hectopascal::from(1005.3));
+        let result = describe_pressure(&Pressure::new_hpa(1005.3));
         assert_eq!(result, "Low pressure stands at 1005.3 hPa");
     }
 
@@ -219,7 +219,7 @@ mod tests {
                 speed: Speed::new_meters_per_second(1.12),
                 direction: Azimuth::from(140.3),
             },
-            pressure: Hectopascal::from(1009.3),
+            pressure: Pressure::new_hpa(1009.3),
         };
 
         let sut = CurrentSummary::new(MockWeatherProvider::new());
