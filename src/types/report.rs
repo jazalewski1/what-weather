@@ -89,3 +89,13 @@ pub struct DailyForecastPartialReport {
     pub coordinates: Coordinates,
     pub data: Vec<DailyPartialData>,
 }
+
+#[derive(Clone, Debug)]
+pub enum Report {
+    CurrentFull(CurrentFullReport),
+    CurrentPartial(CurrentPartialReport),
+    TodayForecastFull(TodayForecastFullReport),
+    TodayForecastPartial(TodayForecastPartialReport),
+    DailyForecastFull(DailyForecastFullReport),
+    DailyForecastPartial(DailyForecastPartialReport),
+}

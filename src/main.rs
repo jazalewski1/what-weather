@@ -5,13 +5,6 @@ use what_weather::output::{ConsoleView, View};
 use what_weather::types::units::{DayCount, Period};
 use what_weather::weather_reporter::{self, Parameters};
 
-fn get_period(length: DayCount) -> Period {
-    Period {
-        start: chrono::Utc::now().date_naive(),
-        length,
-    }
-}
-
 fn main() {
     let input = cli::parse();
     let weather_reporter = weather_reporter::WeatherReporter::new(FakeGeolocationProvider);

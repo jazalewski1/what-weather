@@ -1,3 +1,4 @@
+use crate::port::weather::*;
 use crate::types::attributes::*;
 use crate::types::units::*;
 use clap::builder::PossibleValue;
@@ -84,21 +85,6 @@ struct Args {
     here: bool,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum ReportType {
-    CurrentSummary,
-    CurrentList(WeatherAttributeSet),
-    TodayForecastSummary,
-    TodayForecastList(WeatherAttributeSet),
-    DailyForecastSummary(DayCount),
-    DailyForecastList(WeatherAttributeSet, DayCount),
-}
-
-pub struct Input {
-    pub report_type: ReportType,
-    pub coordinates: Option<Coordinates>,
-}
-
 fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
     if attributes.is_empty() {
         WeatherAttribute::iter().collect()
@@ -107,42 +93,40 @@ fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttribute
     }
 }
 
-impl From<Args> for Input {
-    fn from(args: Args) -> Self {
-        let report_type = match args.command {
-            None => ReportType::CurrentSummary,
-            Some(Command::Now { summary: _, list }) => {
-                if let Some(attributes) = list {
-                    let attribute_set = convert_to_attribute_set(&attributes);
-                    ReportType::CurrentList(attribute_set)
-                } else {
-                    ReportType::CurrentSummary
-                }
+fn to_request(args: Args) -> ReportRequest {
+    let kind = match args.command {
+        None => RequestKind::CurrentFull,
+        Some(Command::Now { summary: _, list }) => {
+            if let Some(attributes) = list {
+                let attribute_set = convert_to_attribute_set(&attributes);
+                RequestKind::CurrentPartial(attribute_set)
+            } else {
+                RequestKind::CurrentFull
             }
-            Some(Command::Forecast {
-                summary: _,
-                list,
-                today: _,
-                days,
-            }) => {
-                if let Some(attributes) = list {
-                    let set = convert_to_attribute_set(&attributes);
-                    if let Some(length) = days {
-                        ReportType::DailyForecastList(set, length)
-                    } else {
-                        ReportType::TodayForecastList(set)
-                    }
-                } else if let Some(length) = days {
-                    ReportType::DailyForecastSummary(length)
-                } else {
-                    ReportType::TodayForecastSummary
-                }
-            }
-        };
-        Input {
-            report_type,
-            coordinates: args.coords,
         }
+        Some(Command::Forecast {
+            summary: _,
+            list,
+            today: _,
+            days,
+        }) => {
+            if let Some(attributes) = list {
+                let set = convert_to_attribute_set(&attributes);
+                if let Some(length) = days {
+                    RequestKind::DailyForecastPartial(set, length)
+                } else {
+                    RequestKind::TodayForecastPartial(set)
+                }
+            } else if let Some(length) = days {
+                RequestKind::DailyForecastFull(length)
+            } else {
+                RequestKind::TodayForecastFull
+            }
+        }
+    };
+    ReportRequest {
+        kind,
+        coordinates: args.coords,
     }
 }
 
