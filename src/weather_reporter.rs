@@ -1,5 +1,5 @@
 use crate::port::geolocation::GeolocationProvider;
-use crate::port::weather::{RequestKind, WeatherProvider};
+use crate::port::weather::{ReportRequest, RequestKind, WeatherProvider};
 use crate::types::units::Coordinates;
 use crate::types::report::*;
 
@@ -21,15 +21,17 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         }
     }
 
-    pub fn run(&self, _parameters: Parameters) -> Report {
-        // let coordinates = if let Some(coords) = parameters.coordinates {
-        //     coords
-        // } else {
-        //     self.geolocation_provider.get_current_coordinates()
-        // };
-        // let report = report_strategy.fetch(&coordinates);
-        // report_strategy.format(&report)
-        todo!()
+    pub fn run(&self, parameters: Parameters) -> Report {
+        let coordinates = if let Some(coords) = parameters.coordinates {
+            coords
+        } else {
+            self.geolocation_provider.get_current_coordinates()
+        };
+        let request = ReportRequest {
+            coordinates,
+            kind: parameters.request_kind,
+        };
+        self.weather_provider.fetch(&request)
     }
 }
 

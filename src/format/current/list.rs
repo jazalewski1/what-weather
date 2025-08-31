@@ -1,62 +1,35 @@
-use crate::domain::ReportStrategy;
-use crate::domain::common::list_builder::write_param;
-use crate::domain::common::list_format::describe_kind;
-use crate::port::weather::WeatherProvider;
-use crate::types::attributes::WeatherAttributeSet;
+use crate::format::common::list_builder::write_param;
+use crate::format::common::list_format::describe_kind;
 use crate::types::report::CurrentPartialReport;
-use crate::types::units::Coordinates;
 use crate::types::weather::*;
 
-pub struct CurrentList<P: WeatherProvider> {
-    weather_provider: P,
-    attributes: WeatherAttributeSet,
-}
+pub fn describe(report: &CurrentPartialReport) -> String {
+    let mut result = String::default();
 
-impl<P: WeatherProvider> CurrentList<P> {
-    pub fn new(weather_provider: P, attributes: WeatherAttributeSet) -> Self {
-        Self {
-            weather_provider,
-            attributes,
-        }
+    write_param(
+        &mut result,
+        "Coordinates",
+        format!("{:.5}", report.coordinates),
+    );
+    if let Some(kind) = report.kind {
+        write_param(&mut result, "Weather", describe_kind(&kind));
     }
-}
-
-impl<P: WeatherProvider> ReportStrategy for CurrentList<P> {
-    type Report = CurrentPartialReport;
-
-    fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
-        self.weather_provider
-            .fetch_current_partial_report(coordinates, &self.attributes)
+    if let Some(temperature) = report.temperature {
+        write_param(&mut result, "Temperature", format!("{temperature:.1}"));
     }
-
-    fn format(&self, report: &Self::Report) -> String {
-        let mut result = String::default();
-
-        write_param(
-            &mut result,
-            "Coordinates",
-            format!("{:.5}", report.coordinates),
-        );
-        if let Some(kind) = report.kind {
-            write_param(&mut result, "Weather", describe_kind(&kind));
-        }
-        if let Some(temperature) = report.temperature {
-            write_param(&mut result, "Temperature", format!("{temperature:.1}"));
-        }
-        if let Some(coverage) = report.cloud_coverage {
-            write_param(&mut result, "Cloud coverage", format!("{coverage}"));
-        }
-        if let Some(humidity) = report.humidity {
-            write_param(&mut result, "Humidity", format!("{humidity}"));
-        }
-        if let Some(wind) = &report.wind {
-            write_param(&mut result, "Wind", describe_wind(wind));
-        }
-        if let Some(pressure) = report.pressure {
-            write_param(&mut result, "Pressure", format!("{pressure}"));
-        }
-        result
+    if let Some(coverage) = report.cloud_coverage {
+        write_param(&mut result, "Cloud coverage", format!("{coverage}"));
     }
+    if let Some(humidity) = report.humidity {
+        write_param(&mut result, "Humidity", format!("{humidity}"));
+    }
+    if let Some(wind) = &report.wind {
+        write_param(&mut result, "Wind", describe_wind(wind));
+    }
+    if let Some(pressure) = report.pressure {
+        write_param(&mut result, "Pressure", format!("{pressure}"));
+    }
+    result
 }
 
 fn describe_wind(wind: &Wind) -> String {
@@ -71,39 +44,7 @@ fn describe_wind(wind: &Wind) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::port::mocks::MockWeatherProvider;
-    use crate::types::attributes::*;
     use crate::types::units::*;
-    use mockall::predicate::eq;
-
-    #[test]
-    fn fetches_current_partial_report_with_provider() {
-        let coordinates = Coordinates::new(1.23, 45.67);
-        let weather_attributes = WeatherAttributeSet::from([
-            WeatherAttribute::Temperature,
-            WeatherAttribute::Humidity,
-            WeatherAttribute::Pressure,
-        ]);
-        let report = CurrentPartialReport {
-            coordinates,
-            kind: None,
-            temperature: Some(Temperature::new_celsius(36.6)),
-            cloud_coverage: None,
-            humidity: Some(Percentage::from(27)),
-            wind: None,
-            pressure: Some(Pressure::new_hpa(1001.2)),
-        };
-
-        let mut weather_provider = MockWeatherProvider::new();
-        weather_provider
-            .expect_fetch_current_partial_report()
-            .with(eq(coordinates), eq(weather_attributes.clone()))
-            .times(1)
-            .return_const(report);
-
-        let sut = CurrentList::new(weather_provider, weather_attributes);
-        let _report = sut.fetch(&coordinates);
-    }
 
     #[test]
     fn describes_values_of_clouds_kind() {
@@ -220,8 +161,7 @@ mod tests {
             }),
             pressure: Some(Pressure::new_hpa(1009.3)),
         };
-        let sut = CurrentList::new(MockWeatherProvider::new(), WeatherAttributeSet::new());
-        let result = sut.format(&report);
+        let result = describe(&report);
         let expected = "Coordinates: 1.23450°, 67.89000°\n\
             Weather: light clouds\n\
             Temperature: 22.4°C\n\
@@ -247,8 +187,7 @@ mod tests {
             }),
             pressure: None,
         };
-        let sut = CurrentList::new(MockWeatherProvider::new(), WeatherAttributeSet::new());
-        let result = sut.format(&report);
+        let result = describe(&report);
         let expected = "Coordinates: 1.23450°, 67.89000°\n\
             Temperature: 22.4°C\n\
             Humidity: 81%\n\

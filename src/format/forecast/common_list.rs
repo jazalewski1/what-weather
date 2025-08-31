@@ -1,5 +1,5 @@
-use crate::domain::common::list_builder::write_param;
-use crate::domain::common::list_format::describe_kind;
+use crate::format::common::list_builder::write_param;
+use crate::format::common::list_format::describe_kind;
 use crate::types::report::ForecastPartialSpec;
 use crate::types::units::*;
 use crate::types::weather::*;

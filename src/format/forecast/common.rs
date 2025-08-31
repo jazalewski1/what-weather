@@ -1,4 +1,4 @@
-use crate::domain::common_format::*;
+use crate::format::common_format::*;
 use crate::types::units::*;
 use crate::types::weather::*;
 
