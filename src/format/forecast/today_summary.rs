@@ -17,8 +17,8 @@ pub fn describe(report: &TodayForecastFullReport) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::weather::*;
     use crate::types::units::*;
+    use crate::types::weather::*;
 
     #[test]
     fn describes_entire_report() {

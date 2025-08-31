@@ -1,8 +1,8 @@
 use what_weather::external::{FakeGeolocationProvider, FakeWeatherProvider};
+use what_weather::format;
 use what_weather::input::cli;
 use what_weather::output::{ConsoleView, View};
 use what_weather::weather_reporter::WeatherReporter;
-use what_weather::format;
 
 fn main() {
     let parameters = cli::parse();

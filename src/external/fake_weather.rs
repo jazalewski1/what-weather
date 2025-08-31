@@ -31,7 +31,8 @@ impl WeatherProvider for FakeWeatherProvider {
                 Report::DailyForecastFull(inner)
             }
             RequestKind::DailyForecastPartial(attributes, day_count) => {
-                let inner = generate_daily_forecast_partial_report(coordinates, attributes, *day_count);
+                let inner =
+                    generate_daily_forecast_partial_report(coordinates, attributes, *day_count);
                 Report::DailyForecastPartial(inner)
             }
         }
@@ -63,7 +64,7 @@ fn generate_current_partial_report(
                 report
                     .temperature
                     .replace(generate_random_temperature(coordinates));
-                }
+            }
             WeatherAttribute::CloudCoverage => {
                 report.cloud_coverage.replace(generate_random_percentage());
             }
@@ -142,7 +143,6 @@ fn generate_daily_forecast_partial_report(
         data,
     }
 }
-
 
 fn generate_forecast_partial_spec(
     coordinates: &Coordinates,
