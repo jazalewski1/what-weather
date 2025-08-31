@@ -1,7 +1,7 @@
 use crate::types::units::*;
 use crate::types::weather::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CurrentFullReport {
     pub kind: Kind,
     pub temperature: Temperature,
@@ -11,7 +11,7 @@ pub struct CurrentFullReport {
     pub pressure: Pressure,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CurrentPartialReport {
     pub coordinates: Coordinates,
     pub kind: Option<Kind>,
@@ -36,7 +36,7 @@ impl CurrentPartialReport {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TodayForecastFullReport {
     pub kind: Kind,
     pub temperature_range: TemperatureRange,
@@ -46,7 +46,7 @@ pub struct TodayForecastFullReport {
     pub pressure_range: PressureRange,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DailyFullData {
     pub date: Date,
     pub kind: Kind,
@@ -57,12 +57,12 @@ pub struct DailyFullData {
     pub pressure_range: PressureRange,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DailyForecastFullReport {
     pub data: Vec<DailyFullData>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ForecastPartialSpec {
     pub kind: Option<Kind>,
     pub temperature_range: Option<TemperatureRange>,
@@ -72,20 +72,30 @@ pub struct ForecastPartialSpec {
     pub pressure_range: Option<PressureRange>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TodayForecastPartialReport {
     pub coordinates: Coordinates,
     pub spec: ForecastPartialSpec,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DailyPartialData {
     pub date: Date,
     pub spec: ForecastPartialSpec,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DailyForecastPartialReport {
     pub coordinates: Coordinates,
     pub data: Vec<DailyPartialData>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Report {
+    CurrentFull(CurrentFullReport),
+    CurrentPartial(CurrentPartialReport),
+    TodayForecastFull(TodayForecastFullReport),
+    TodayForecastPartial(TodayForecastPartialReport),
+    DailyForecastFull(DailyForecastFullReport),
+    DailyForecastPartial(DailyForecastPartialReport),
 }

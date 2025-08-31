@@ -1,45 +1,20 @@
-use crate::domain::ReportStrategy;
-use crate::domain::forecast::common;
-use crate::port::weather::WeatherProvider;
+use crate::format::forecast::common;
 use crate::types::report::{DailyForecastFullReport, DailyFullData};
 use crate::types::units::*;
 
-pub struct DailyForecastSummary<P: WeatherProvider> {
-    pub weather_provider: P,
-    pub period: Period,
-}
-
-impl<P: WeatherProvider> DailyForecastSummary<P> {
-    pub fn new(weather_provider: P, period: Period) -> Self {
-        Self {
-            weather_provider,
-            period,
-        }
+pub fn describe(report: &DailyForecastFullReport) -> String {
+    let mut data_iter = report.data.iter();
+    let mut result = String::new();
+    if let Some(data) = data_iter.next() {
+        let day_summary = describe_day(data);
+        result.push_str(&day_summary);
     }
-}
-
-impl<P: WeatherProvider> ReportStrategy for DailyForecastSummary<P> {
-    type Report = DailyForecastFullReport;
-
-    fn fetch(&self, coordinates: &Coordinates) -> Self::Report {
-        self.weather_provider
-            .fetch_daily_forecast_full_report(coordinates, &self.period)
+    for data in data_iter {
+        let day_summary = describe_day(data);
+        result.push('\n');
+        result.push_str(&day_summary);
     }
-
-    fn format(&self, report: &Self::Report) -> String {
-        let mut data_iter = report.data.iter();
-        let mut result = String::new();
-        if let Some(data) = data_iter.next() {
-            let day_summary = describe_day(data);
-            result.push_str(&day_summary);
-        }
-        for data in data_iter {
-            let day_summary = describe_day(data);
-            result.push('\n');
-            result.push_str(&day_summary);
-        }
-        result
-    }
+    result
 }
 
 fn describe_date(date: &Date) -> String {
@@ -62,10 +37,8 @@ fn describe_day(data: &DailyFullData) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::port::mocks::MockWeatherProvider;
     use crate::types::report::DailyFullData;
     use crate::types::weather::*;
-    use mockall::predicate::eq;
 
     fn generate_report_for_3_days() -> DailyForecastFullReport {
         let daily_data_1 = DailyFullData {
@@ -133,25 +106,6 @@ mod tests {
     }
 
     #[test]
-    fn fetches_daily_forecast_full_report() {
-        let mut weather_provider = MockWeatherProvider::new();
-        let coordinates = Coordinates::new(1.23, 45.67);
-        let report = generate_report_for_3_days();
-        let period = Period {
-            start: Date::from_ymd_opt(2025, 08, 24).unwrap(),
-            length: 3,
-        };
-        weather_provider
-            .expect_fetch_daily_forecast_full_report()
-            .once()
-            .with(eq(coordinates), eq(period.clone()))
-            .return_const(report);
-
-        let sut = DailyForecastSummary::new(weather_provider, period);
-        sut.fetch(&coordinates);
-    }
-
-    #[test]
     fn describes_dates() {
         let date = Date::from_ymd_opt(2025, 07, 18).unwrap();
         let expected = "On 18.07.2025";
@@ -160,14 +114,8 @@ mod tests {
 
     #[test]
     fn describes_entire_report() {
-        let period = Period {
-            start: Date::from_ymd_opt(2025, 08, 24).unwrap(),
-            length: 3,
-        };
-        let sut = DailyForecastSummary::new(MockWeatherProvider::new(), period);
-
         let report = generate_report_for_3_days();
-        let result = sut.format(&report);
+        let result = describe(&report);
         let expected_day1 = "On 24.08.2025 it will be hot \
             with temperatures starting at 20.6°C and reaching 26.8°C.\n\
             The sky will be mostly clear \

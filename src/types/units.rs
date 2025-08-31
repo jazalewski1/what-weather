@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Celsius {
     pub value: f32,
 }
@@ -24,7 +24,7 @@ impl From<Celsius> for f32 {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Temperature {
     Celsius(Celsius),
 }
@@ -43,7 +43,7 @@ impl Display for Temperature {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TemperatureRange {
     Celsius { min: Celsius, max: Celsius },
 }
@@ -58,7 +58,7 @@ impl TemperatureRange {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Percentage {
     pub value: i8,
 }
@@ -81,7 +81,7 @@ impl From<Percentage> for i8 {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PercentageRange {
     pub min: Percentage,
     pub max: Percentage,
@@ -97,7 +97,7 @@ impl PercentageRange {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MetersPerSecond {
     pub value: f32,
 }
@@ -121,7 +121,7 @@ impl From<MetersPerSecond> for f32 {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Speed {
     MetersPerSecond(MetersPerSecond),
 }
@@ -140,7 +140,7 @@ impl Display for Speed {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SpeedRange {
     MetersPerSecond {
         min: MetersPerSecond,
@@ -182,7 +182,7 @@ impl Display for Degrees {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Azimuth {
     pub angle: Degrees,
 }
@@ -274,7 +274,7 @@ impl CardinalDirection {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Hectopascal {
     pub value: f32,
 }
@@ -298,7 +298,7 @@ impl Display for Hectopascal {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Pressure {
     Hpa(Hectopascal),
 }
@@ -317,7 +317,7 @@ impl Display for Pressure {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PressureRange {
     Hpa { min: Hectopascal, max: Hectopascal },
 }
@@ -361,12 +361,6 @@ impl Display for Coordinates {
 pub type Date = chrono::NaiveDate;
 
 pub type DayCount = u8;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Period {
-    pub start: Date,
-    pub length: DayCount,
-}
 
 #[cfg(test)]
 mod tests {

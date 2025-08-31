@@ -7,111 +7,140 @@ use crate::types::weather::*;
 pub struct FakeWeatherProvider;
 
 impl WeatherProvider for FakeWeatherProvider {
-    fn fetch_current_full_report(&self, coordinates: &Coordinates) -> CurrentFullReport {
-        CurrentFullReport {
-            kind: generate_random_weather_kind(),
-            temperature: generate_random_temperature(coordinates),
-            cloud_coverage: generate_random_percentage(),
-            humidity: generate_random_percentage(),
-            wind: generate_random_wind(),
-            pressure: generate_random_pressure(),
-        }
-    }
-
-    fn fetch_current_partial_report(
-        &self,
-        coordinates: &Coordinates,
-        attributes: &WeatherAttributeSet,
-    ) -> CurrentPartialReport {
-        let mut report = CurrentPartialReport::new_empty(*coordinates);
-        for attribute in attributes.iter() {
-            match attribute {
-                WeatherAttribute::WeatherKind => {
-                    report.kind.replace(generate_random_weather_kind());
-                }
-                WeatherAttribute::Temperature => {
-                    report
-                        .temperature
-                        .replace(generate_random_temperature(coordinates));
-                }
-                WeatherAttribute::CloudCoverage => {
-                    report.cloud_coverage.replace(generate_random_percentage());
-                }
-                WeatherAttribute::Humidity => {
-                    report.humidity.replace(generate_random_percentage());
-                }
-                WeatherAttribute::Wind => {
-                    report.wind.replace(generate_random_wind());
-                }
-                WeatherAttribute::Pressure => {
-                    report.pressure.replace(generate_random_pressure());
-                }
+    fn fetch(&self, request: &ReportRequest) -> Report {
+        let ReportRequest { coordinates, kind } = &request;
+        match kind {
+            RequestKind::CurrentFull => {
+                let inner = generate_current_full_report(coordinates);
+                Report::CurrentFull(inner)
+            }
+            RequestKind::CurrentPartial(attributes) => {
+                let inner = generate_current_partial_report(coordinates, attributes);
+                Report::CurrentPartial(inner)
+            }
+            RequestKind::TodayForecastFull => {
+                let inner = generate_forecast_full_report(coordinates);
+                Report::TodayForecastFull(inner)
+            }
+            RequestKind::TodayForecastPartial(attributes) => {
+                let inner = generate_today_forecast_partial_report(coordinates, attributes);
+                Report::TodayForecastPartial(inner)
+            }
+            RequestKind::DailyForecastFull(day_count) => {
+                let inner = generate_daily_forecast_full_report(coordinates, *day_count);
+                Report::DailyForecastFull(inner)
+            }
+            RequestKind::DailyForecastPartial(attributes, day_count) => {
+                let inner =
+                    generate_daily_forecast_partial_report(coordinates, attributes, *day_count);
+                Report::DailyForecastPartial(inner)
             }
         }
-        report
     }
+}
 
-    fn fetch_forecast_full_report(&self, coordinates: &Coordinates) -> TodayForecastFullReport {
-        TodayForecastFullReport {
+fn generate_current_full_report(coordinates: &Coordinates) -> CurrentFullReport {
+    CurrentFullReport {
+        kind: generate_random_weather_kind(),
+        temperature: generate_random_temperature(coordinates),
+        cloud_coverage: generate_random_percentage(),
+        humidity: generate_random_percentage(),
+        wind: generate_random_wind(),
+        pressure: generate_random_pressure(),
+    }
+}
+
+fn generate_current_partial_report(
+    coordinates: &Coordinates,
+    attributes: &WeatherAttributeSet,
+) -> CurrentPartialReport {
+    let mut report = CurrentPartialReport::new_empty(*coordinates);
+    for attribute in attributes.iter() {
+        match attribute {
+            WeatherAttribute::WeatherKind => {
+                report.kind.replace(generate_random_weather_kind());
+            }
+            WeatherAttribute::Temperature => {
+                report
+                    .temperature
+                    .replace(generate_random_temperature(coordinates));
+            }
+            WeatherAttribute::CloudCoverage => {
+                report.cloud_coverage.replace(generate_random_percentage());
+            }
+            WeatherAttribute::Humidity => {
+                report.humidity.replace(generate_random_percentage());
+            }
+            WeatherAttribute::Wind => {
+                report.wind.replace(generate_random_wind());
+            }
+            WeatherAttribute::Pressure => {
+                report.pressure.replace(generate_random_pressure());
+            }
+        }
+    }
+    report
+}
+
+fn generate_forecast_full_report(coordinates: &Coordinates) -> TodayForecastFullReport {
+    TodayForecastFullReport {
+        kind: generate_random_weather_kind(),
+        temperature_range: generate_random_temperature_range(coordinates),
+        cloud_coverage_range: generate_random_perecentage_range(),
+        humidity_range: generate_random_perecentage_range(),
+        wind: generate_random_wind_scope(),
+        pressure_range: generate_random_pressure_range(),
+    }
+}
+
+fn generate_daily_forecast_full_report(
+    coordinates: &Coordinates,
+    day_count: DayCount,
+) -> DailyForecastFullReport {
+    let mut data = Vec::with_capacity(day_count as usize);
+    let date_start = get_date_now();
+    for date in date_start.iter_days().take(day_count as usize) {
+        let single_data = DailyFullData {
+            date,
             kind: generate_random_weather_kind(),
             temperature_range: generate_random_temperature_range(coordinates),
             cloud_coverage_range: generate_random_perecentage_range(),
             humidity_range: generate_random_perecentage_range(),
             wind: generate_random_wind_scope(),
             pressure_range: generate_random_pressure_range(),
-        }
+        };
+        data.push(single_data);
     }
+    DailyForecastFullReport { data }
+}
 
-    fn fetch_daily_forecast_full_report(
-        &self,
-        coordinates: &Coordinates,
-        period: &Period,
-    ) -> DailyForecastFullReport {
-        let mut data = Vec::with_capacity(period.length as usize);
-        for date in period.start.iter_days().take(period.length as usize) {
-            let single_data = DailyFullData {
-                date,
-                kind: generate_random_weather_kind(),
-                temperature_range: generate_random_temperature_range(coordinates),
-                cloud_coverage_range: generate_random_perecentage_range(),
-                humidity_range: generate_random_perecentage_range(),
-                wind: generate_random_wind_scope(),
-                pressure_range: generate_random_pressure_range(),
-            };
-            data.push(single_data);
-        }
-        DailyForecastFullReport { data }
+fn generate_today_forecast_partial_report(
+    coordinates: &Coordinates,
+    attributes: &WeatherAttributeSet,
+) -> TodayForecastPartialReport {
+    TodayForecastPartialReport {
+        coordinates: *coordinates,
+        spec: generate_forecast_partial_spec(coordinates, attributes),
     }
+}
 
-    fn fetch_today_forecast_partial_report(
-        &self,
-        coordinates: &Coordinates,
-        attributes: &WeatherAttributeSet,
-    ) -> TodayForecastPartialReport {
-        TodayForecastPartialReport {
-            coordinates: *coordinates,
+fn generate_daily_forecast_partial_report(
+    coordinates: &Coordinates,
+    attributes: &WeatherAttributeSet,
+    day_count: DayCount,
+) -> DailyForecastPartialReport {
+    let mut data = Vec::new();
+    let date_start = get_date_now();
+    for date in date_start.iter_days().take(day_count as usize) {
+        let day_data = DailyPartialData {
+            date,
             spec: generate_forecast_partial_spec(coordinates, attributes),
-        }
+        };
+        data.push(day_data);
     }
-
-    fn fetch_daily_forecast_partial_report(
-        &self,
-        coordinates: &Coordinates,
-        attributes: &WeatherAttributeSet,
-        period: &Period,
-    ) -> DailyForecastPartialReport {
-        let mut data = Vec::new();
-        for date in period.start.iter_days().take(period.length as usize) {
-            let day_data = DailyPartialData {
-                date,
-                spec: generate_forecast_partial_spec(coordinates, attributes),
-            };
-            data.push(day_data);
-        }
-        DailyForecastPartialReport {
-            coordinates: *coordinates,
-            data,
-        }
+    DailyForecastPartialReport {
+        coordinates: *coordinates,
+        data,
     }
 }
 
@@ -154,6 +183,10 @@ fn generate_forecast_partial_spec(
         }
     }
     spec
+}
+
+fn get_date_now() -> Date {
+    chrono::Utc::now().date_naive()
 }
 
 fn generate_random_weather_kind() -> Kind {

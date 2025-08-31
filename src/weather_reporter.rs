@@ -1,39 +1,61 @@
-use crate::domain::ReportStrategy;
 use crate::port::geolocation::GeolocationProvider;
+use crate::port::weather::{ReportRequest, RequestKind, WeatherProvider};
+use crate::types::report::*;
 use crate::types::units::Coordinates;
 
 pub struct Parameters {
     pub coordinates: Option<Coordinates>,
+    pub request_kind: RequestKind,
 }
 
-pub struct WeatherReporter<GP: GeolocationProvider> {
+pub struct WeatherReporter<GP: GeolocationProvider, WP: WeatherProvider> {
     geolocation_provider: GP,
+    weather_provider: WP,
 }
 
-impl<GP: GeolocationProvider> WeatherReporter<GP> {
-    pub fn new(geolocation_provider: GP) -> Self {
+impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
+    pub fn new(geolocation_provider: GP, weather_provider: WP) -> Self {
         Self {
             geolocation_provider,
+            weather_provider,
         }
     }
 
-    pub fn run(&self, report_strategy: impl ReportStrategy, parameters: Parameters) -> String {
+    pub fn run(&self, parameters: Parameters) -> Report {
         let coordinates = if let Some(coords) = parameters.coordinates {
             coords
         } else {
             self.geolocation_provider.get_current_coordinates()
         };
-        let report = report_strategy.fetch(&coordinates);
-        report_strategy.format(&report)
+        let request = ReportRequest {
+            coordinates,
+            kind: parameters.request_kind,
+        };
+        self.weather_provider.fetch(&request)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::MockReportStrategy;
-    use crate::port::mocks::MockGeolocationProvider;
-    use mockall::predicate::eq;
+    use crate::port::mocks::{MockGeolocationProvider, MockWeatherProvider};
+    use crate::port::weather::ReportRequest;
+    use crate::types::units::*;
+    use crate::types::weather::*;
+
+    fn make_dummy_report() -> Report {
+        Report::CurrentFull(CurrentFullReport {
+            kind: Kind::Thunderstorm,
+            temperature: Temperature::new_celsius(23.4),
+            cloud_coverage: Percentage::from(50),
+            humidity: Percentage::from(60),
+            wind: Wind {
+                speed: Speed::new_meters_per_second(1.23),
+                direction: Azimuth::from(90.0),
+            },
+            pressure: Pressure::new_hpa(1001.23),
+        })
+    }
 
     #[test]
     fn fetches_coordinates_if_not_provided() {
@@ -43,17 +65,21 @@ mod tests {
             .expect_get_current_coordinates()
             .once()
             .return_const(coordinates);
-        let sut = WeatherReporter::new(geolocation_provider);
 
-        let mut strategy = MockReportStrategy::new();
-        let report = String::from("report");
-        strategy
+        let mut weather_provider = MockWeatherProvider::new();
+        let matching_coordinates =
+            move |request: &ReportRequest| request.coordinates == coordinates;
+        weather_provider
             .expect_fetch()
-            .with(eq(coordinates))
-            .return_const(report.clone());
-        strategy.expect_format().return_const(report.clone());
-        let parameters = Parameters { coordinates: None };
-        sut.run(strategy, parameters);
+            .withf(matching_coordinates)
+            .return_const(make_dummy_report());
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
+        let parameters = Parameters {
+            coordinates: None,
+            request_kind: RequestKind::CurrentFull,
+        };
+        sut.run(parameters);
     }
 
     #[test]
@@ -62,61 +88,42 @@ mod tests {
         geolocation_provider
             .expect_get_current_coordinates()
             .never();
-        let sut = WeatherReporter::new(geolocation_provider);
 
-        let mut strategy = MockReportStrategy::new();
+        let mut weather_provider = MockWeatherProvider::new();
         let coordinates = Coordinates::new(1.23, 45.67);
-        strategy
+        let matching_coordinates =
+            move |request: &ReportRequest| request.coordinates == coordinates;
+        weather_provider
             .expect_fetch()
-            .once()
-            .with(eq(coordinates))
-            .return_const("report".to_string());
-        strategy
-            .expect_format()
-            .once()
-            .return_const("REPORT".to_string());
+            .withf(matching_coordinates)
+            .return_const(make_dummy_report());
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
         let parameters = Parameters {
             coordinates: Some(coordinates),
+            request_kind: RequestKind::CurrentFull,
         };
-        sut.run(strategy, parameters);
+        sut.run(parameters);
     }
 
     #[test]
-    fn formats_fetched_report() {
-        let geolocation_provider = MockGeolocationProvider::new();
-        let sut = WeatherReporter::new(geolocation_provider);
+    fn returns_fetched_report() {
+        let mut geolocation_provider = MockGeolocationProvider::new();
+        geolocation_provider
+            .expect_get_current_coordinates()
+            .never();
 
-        let mut strategy = MockReportStrategy::new();
+        let mut weather_provider = MockWeatherProvider::new();
+        let report = make_dummy_report();
+        weather_provider.expect_fetch().return_const(report.clone());
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
         let coordinates = Coordinates::new(1.23, 45.67);
-        strategy.expect_fetch().return_const("report");
-        strategy
-            .expect_format()
-            .once()
-            .with(eq("report".to_string()))
-            .return_const("REPORT".to_string());
         let parameters = Parameters {
             coordinates: Some(coordinates),
+            request_kind: RequestKind::CurrentFull,
         };
-        sut.run(strategy, parameters);
-    }
-
-    #[test]
-    fn returns_formatted_value() {
-        let geolocation_provider = MockGeolocationProvider::new();
-        let sut = WeatherReporter::new(geolocation_provider);
-
-        let mut strategy = MockReportStrategy::new();
-        let coordinates = Coordinates::new(1.23, 45.67);
-        strategy.expect_fetch().return_const("report");
-        strategy
-            .expect_format()
-            .once()
-            .with(eq("report".to_string()))
-            .return_const("REPORT".to_string());
-        let parameters = Parameters {
-            coordinates: Some(coordinates),
-        };
-        let result = sut.run(strategy, parameters);
-        assert_eq!(result, "REPORT");
+        let actual_report = sut.run(parameters);
+        assert_eq!(report, actual_report);
     }
 }

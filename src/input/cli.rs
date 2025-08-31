@@ -1,5 +1,7 @@
+use crate::port::weather::*;
 use crate::types::attributes::*;
 use crate::types::units::*;
+use crate::weather_reporter::Parameters;
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
 use std::str::FromStr;
@@ -84,21 +86,6 @@ struct Args {
     here: bool,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum ReportType {
-    CurrentSummary,
-    CurrentList(WeatherAttributeSet),
-    TodayForecastSummary,
-    TodayForecastList(WeatherAttributeSet),
-    DailyForecastSummary(DayCount),
-    DailyForecastList(WeatherAttributeSet, DayCount),
-}
-
-pub struct Input {
-    pub report_type: ReportType,
-    pub coordinates: Option<Coordinates>,
-}
-
 fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
     if attributes.is_empty() {
         WeatherAttribute::iter().collect()
@@ -107,47 +94,46 @@ fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttribute
     }
 }
 
-impl From<Args> for Input {
-    fn from(args: Args) -> Self {
-        let report_type = match args.command {
-            None => ReportType::CurrentSummary,
-            Some(Command::Now { summary: _, list }) => {
-                if let Some(attributes) = list {
-                    let attribute_set = convert_to_attribute_set(&attributes);
-                    ReportType::CurrentList(attribute_set)
-                } else {
-                    ReportType::CurrentSummary
-                }
+fn convert_args_to_parameters(args: Args) -> Parameters {
+    let request_kind = match args.command {
+        None => RequestKind::CurrentFull,
+        Some(Command::Now { summary: _, list }) => {
+            if let Some(attributes) = list {
+                let attribute_set = convert_to_attribute_set(&attributes);
+                RequestKind::CurrentPartial(attribute_set)
+            } else {
+                RequestKind::CurrentFull
             }
-            Some(Command::Forecast {
-                summary: _,
-                list,
-                today: _,
-                days,
-            }) => {
-                if let Some(attributes) = list {
-                    let set = convert_to_attribute_set(&attributes);
-                    if let Some(length) = days {
-                        ReportType::DailyForecastList(set, length)
-                    } else {
-                        ReportType::TodayForecastList(set)
-                    }
-                } else if let Some(length) = days {
-                    ReportType::DailyForecastSummary(length)
-                } else {
-                    ReportType::TodayForecastSummary
-                }
-            }
-        };
-        Input {
-            report_type,
-            coordinates: args.coords,
         }
+        Some(Command::Forecast {
+            summary: _,
+            list,
+            today: _,
+            days,
+        }) => {
+            if let Some(attributes) = list {
+                let set = convert_to_attribute_set(&attributes);
+                if let Some(length) = days {
+                    RequestKind::DailyForecastPartial(set, length)
+                } else {
+                    RequestKind::TodayForecastPartial(set)
+                }
+            } else if let Some(length) = days {
+                RequestKind::DailyForecastFull(length)
+            } else {
+                RequestKind::TodayForecastFull
+            }
+        }
+    };
+    Parameters {
+        request_kind,
+        coordinates: args.coords,
     }
 }
 
-pub fn parse() -> Input {
-    Args::parse().into()
+pub fn parse() -> Parameters {
+    let args = Args::parse();
+    convert_args_to_parameters(args)
 }
 
 #[cfg(test)]
@@ -161,8 +147,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, ReportType::CurrentSummary);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, RequestKind::CurrentFull);
     }
 
     #[test]
@@ -175,8 +161,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, ReportType::CurrentSummary);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, RequestKind::CurrentFull);
     }
 
     #[test]
@@ -189,14 +175,14 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, ReportType::CurrentSummary);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, RequestKind::CurrentFull);
     }
 
     #[test]
     fn parses_now_command_with_list_without_attributes_specified() {
         let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
-        let expected = ReportType::CurrentList(expected_attribute_set);
+        let expected = RequestKind::CurrentPartial(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Now {
@@ -206,8 +192,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -219,7 +205,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = ReportType::CurrentList(expected_attribute_set);
+        let expected = RequestKind::CurrentPartial(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Now {
@@ -229,8 +215,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -245,9 +231,9 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        let expected = ReportType::TodayForecastSummary;
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        let expected = RequestKind::TodayForecastFull;
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -262,9 +248,9 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        let expected = ReportType::TodayForecastSummary;
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        let expected = RequestKind::TodayForecastFull;
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -279,9 +265,9 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        let expected = ReportType::TodayForecastSummary;
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        let expected = RequestKind::TodayForecastFull;
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -296,9 +282,9 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        let expected = ReportType::TodayForecastSummary;
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        let expected = RequestKind::TodayForecastFull;
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -314,9 +300,9 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        let expected = ReportType::DailyForecastSummary(DAY_COUNT);
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        let expected = RequestKind::DailyForecastFull(DAY_COUNT);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -332,15 +318,15 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        let expected = ReportType::DailyForecastSummary(DAY_COUNT);
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        let expected = RequestKind::DailyForecastFull(DAY_COUNT);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
     fn parses_forecast_command_with_list_without_attributes_specified() {
         let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
-        let expected = ReportType::TodayForecastList(expected_attribute_set);
+        let expected = RequestKind::TodayForecastPartial(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -352,8 +338,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -365,7 +351,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = ReportType::TodayForecastList(expected_attribute_set);
+        let expected = RequestKind::TodayForecastPartial(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -377,8 +363,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -390,7 +376,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = ReportType::TodayForecastList(expected_attribute_set);
+        let expected = RequestKind::TodayForecastPartial(expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -402,8 +388,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -416,7 +402,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = ReportType::DailyForecastList(expected_attribute_set, DAY_COUNT);
+        let expected = RequestKind::DailyForecastPartial(expected_attribute_set, DAY_COUNT);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -428,8 +414,8 @@ mod tests {
             coords: None,
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.report_type, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
     }
 
     #[test]
@@ -455,7 +441,7 @@ mod tests {
             coords: Some(coordinates.clone()),
             here: false,
         };
-        let input: Input = args.into();
-        assert_eq!(input.coordinates, Some(coordinates));
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.coordinates, Some(coordinates));
     }
 }
