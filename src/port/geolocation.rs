@@ -1,6 +1,7 @@
+use crate::types::error::FetchError;
 use crate::types::units::Coordinates;
 
 #[mockall::automock]
 pub trait GeolocationProvider {
-    fn get_current_coordinates(&self) -> Coordinates;
+    fn fetch(&self) -> Result<Coordinates, FetchError>;
 }
