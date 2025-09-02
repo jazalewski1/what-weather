@@ -7,7 +7,13 @@ use what_weather::weather_reporter::WeatherReporter;
 fn main() {
     let parameters = cli::parse();
     let weather_reporter = WeatherReporter::new(FakeGeolocationProvider, FakeWeatherProvider);
-    let report = weather_reporter.run(parameters);
-    let formatted_report = format::describe(&report);
-    ConsoleView.display(&formatted_report);
+    match weather_reporter.run(parameters) {
+        Ok(report) => {
+            let formatted_report = format::describe(&report);
+            ConsoleView.display(&formatted_report);
+        }
+        Err(error) => {
+            eprintln!("Error: {error}");
+        }
+    }
 }
