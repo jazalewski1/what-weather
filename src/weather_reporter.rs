@@ -97,6 +97,7 @@ mod tests {
             move |request: &ReportRequest| request.coordinates == coordinates;
         weather_provider
             .expect_fetch()
+            .once()
             .withf(matching_coordinates)
             .return_const(make_dummy_report());
 
@@ -127,6 +128,7 @@ mod tests {
             move |request: &ReportRequest| request.coordinates == coordinates;
         weather_provider
             .expect_fetch()
+            .once()
             .withf(matching_coordinates)
             .return_const(make_dummy_report());
 
@@ -142,19 +144,13 @@ mod tests {
     #[test]
     fn retries_to_fetch_coordinates_and_fails() {
         let mut geolocation_provider = MockGeolocationProvider::new();
-        let coordinates = Coordinates::new(1.23, 45.67);
         geolocation_provider
             .expect_fetch()
             .times(3)
             .return_const(Err(FetchError::ConnectionFailure));
 
         let mut weather_provider = MockWeatherProvider::new();
-        let matching_coordinates =
-            move |request: &ReportRequest| request.coordinates == coordinates;
-        weather_provider
-            .expect_fetch()
-            .withf(matching_coordinates)
-            .return_const(make_dummy_report());
+        weather_provider.expect_fetch().never();
 
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
         let parameters = Parameters {
@@ -176,6 +172,7 @@ mod tests {
             move |request: &ReportRequest| request.coordinates == coordinates;
         weather_provider
             .expect_fetch()
+            .once()
             .withf(matching_coordinates)
             .return_const(make_dummy_report());
 
