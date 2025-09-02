@@ -1,4 +1,4 @@
-use crate::format::common_format::*;
+use crate::format::common::summary::*;
 use crate::types::report::CurrentFullReport;
 use crate::types::units::*;
 use crate::types::weather::*;
