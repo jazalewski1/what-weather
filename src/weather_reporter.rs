@@ -8,6 +8,20 @@ pub struct Parameters {
     pub request_kind: RequestKind,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Error {
+    FetchingCoordinates,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let message = match self {
+            Self::FetchingCoordinates => "Failed to fetch current coordinates",
+        };
+        write!(f, "{message}")
+    }
+}
+
 pub struct WeatherReporter<GP: GeolocationProvider, WP: WeatherProvider> {
     geolocation_provider: GP,
     weather_provider: WP,
@@ -21,17 +35,28 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         }
     }
 
-    pub fn run(&self, parameters: Parameters) -> Report {
-        let coordinates = if let Some(coords) = parameters.coordinates {
-            coords
-        } else {
-            self.geolocation_provider.get_current_coordinates()
-        };
+    pub fn run(&self, parameters: Parameters) -> Result<Report, Error> {
+        let coordinates = self.get_coordinates(parameters.coordinates)?;
         let request = ReportRequest {
             coordinates,
             kind: parameters.request_kind,
         };
-        self.weather_provider.fetch(&request)
+        let report = self.weather_provider.fetch(&request);
+        Ok(report)
+    }
+
+    fn get_coordinates(&self, coordinates: Option<Coordinates>) -> Result<Coordinates, Error> {
+        if let Some(coords) = coordinates {
+            return Ok(coords);
+        }
+        const MAX_NUMBER_OF_ATTEMPTS: usize = 3;
+        for _ in 0..MAX_NUMBER_OF_ATTEMPTS {
+            match self.geolocation_provider.fetch() {
+                Ok(coords) => return Ok(coords),
+                Err(error) => println!("Error: {error}"),
+            }
+        }
+        Err(Error::FetchingCoordinates)
     }
 }
 
@@ -40,6 +65,7 @@ mod tests {
     use super::*;
     use crate::port::mocks::{MockGeolocationProvider, MockWeatherProvider};
     use crate::port::weather::ReportRequest;
+    use crate::types::error::FetchError;
     use crate::types::units::*;
     use crate::types::weather::*;
 
@@ -62,9 +88,9 @@ mod tests {
         let mut geolocation_provider = MockGeolocationProvider::new();
         let coordinates = Coordinates::new(1.23, 45.67);
         geolocation_provider
-            .expect_get_current_coordinates()
+            .expect_fetch()
             .once()
-            .return_const(coordinates);
+            .return_const(Ok(coordinates));
 
         let mut weather_provider = MockWeatherProvider::new();
         let matching_coordinates =
@@ -79,15 +105,70 @@ mod tests {
             coordinates: None,
             request_kind: RequestKind::CurrentFull,
         };
-        sut.run(parameters);
+        let result = sut.run(parameters);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fetches_coordinates_after_failure() {
+        let mut geolocation_provider = MockGeolocationProvider::new();
+        let coordinates = Coordinates::new(1.23, 45.67);
+        geolocation_provider
+            .expect_fetch()
+            .times(2)
+            .return_const(Err(FetchError::ConnectionFailure));
+        geolocation_provider
+            .expect_fetch()
+            .once()
+            .return_const(Ok(coordinates));
+
+        let mut weather_provider = MockWeatherProvider::new();
+        let matching_coordinates =
+            move |request: &ReportRequest| request.coordinates == coordinates;
+        weather_provider
+            .expect_fetch()
+            .withf(matching_coordinates)
+            .return_const(make_dummy_report());
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
+        let parameters = Parameters {
+            coordinates: None,
+            request_kind: RequestKind::CurrentFull,
+        };
+        let result = sut.run(parameters);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn retries_to_fetch_coordinates_and_fails() {
+        let mut geolocation_provider = MockGeolocationProvider::new();
+        let coordinates = Coordinates::new(1.23, 45.67);
+        geolocation_provider
+            .expect_fetch()
+            .times(3)
+            .return_const(Err(FetchError::ConnectionFailure));
+
+        let mut weather_provider = MockWeatherProvider::new();
+        let matching_coordinates =
+            move |request: &ReportRequest| request.coordinates == coordinates;
+        weather_provider
+            .expect_fetch()
+            .withf(matching_coordinates)
+            .return_const(make_dummy_report());
+
+        let sut = WeatherReporter::new(geolocation_provider, weather_provider);
+        let parameters = Parameters {
+            coordinates: None,
+            request_kind: RequestKind::CurrentFull,
+        };
+        let result = sut.run(parameters);
+        assert!(result.is_err());
     }
 
     #[test]
     fn uses_provided_coordinates() {
         let mut geolocation_provider = MockGeolocationProvider::new();
-        geolocation_provider
-            .expect_get_current_coordinates()
-            .never();
+        geolocation_provider.expect_fetch().never();
 
         let mut weather_provider = MockWeatherProvider::new();
         let coordinates = Coordinates::new(1.23, 45.67);
@@ -103,15 +184,14 @@ mod tests {
             coordinates: Some(coordinates),
             request_kind: RequestKind::CurrentFull,
         };
-        sut.run(parameters);
+        let result = sut.run(parameters);
+        assert!(result.is_ok());
     }
 
     #[test]
     fn returns_fetched_report() {
         let mut geolocation_provider = MockGeolocationProvider::new();
-        geolocation_provider
-            .expect_get_current_coordinates()
-            .never();
+        geolocation_provider.expect_fetch().never();
 
         let mut weather_provider = MockWeatherProvider::new();
         let report = make_dummy_report();
@@ -124,6 +204,6 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
         };
         let actual_report = sut.run(parameters);
-        assert_eq!(report, actual_report);
+        assert_eq!(actual_report, Ok(report));
     }
 }
