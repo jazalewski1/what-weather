@@ -1,5 +1,6 @@
 use crate::port::weather::*;
 use crate::types::attributes::*;
+use crate::types::error::FetchError;
 use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
@@ -7,9 +8,13 @@ use crate::types::weather::*;
 pub struct FakeWeatherProvider;
 
 impl WeatherProvider for FakeWeatherProvider {
-    fn fetch(&self, request: &ReportRequest) -> Report {
+    fn fetch(&self, request: &ReportRequest) -> Result<Report, FetchError> {
+        // Temporary solution to simulate failures in demo.
+        if std::env::var_os("WHAT_WEATHER_WP_ERROR").is_some() {
+            return Err(FetchError::ConnectionFailure);
+        }
         let ReportRequest { coordinates, kind } = &request;
-        match kind {
+        let report = match kind {
             RequestKind::CurrentFull => {
                 let inner = generate_current_full_report(coordinates);
                 Report::CurrentFull(inner)
@@ -35,7 +40,8 @@ impl WeatherProvider for FakeWeatherProvider {
                     generate_daily_forecast_partial_report(coordinates, attributes, *day_count);
                 Report::DailyForecastPartial(inner)
             }
-        }
+        };
+        Ok(report)
     }
 }
 
