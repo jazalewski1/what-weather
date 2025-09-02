@@ -7,11 +7,19 @@ pub fn describe(report: &ForecastFullReport) -> String {
     let mut data_iter = report.data.iter();
     let mut result = String::new();
     if let Some(data) = data_iter.next() {
-        let day_summary = describe_day(data);
+        let date_desc = String::from("Today");
+        let day_summary = describe_day(date_desc, data);
+        result.push_str(&day_summary);
+    }
+    if let Some(data) = data_iter.next() {
+        let date_desc = String::from("Tomorrow");
+        let day_summary = describe_day(date_desc, data);
+        result.push('\n');
         result.push_str(&day_summary);
     }
     for data in data_iter {
-        let day_summary = describe_day(data);
+        let date_desc = describe_date(&data.date);
+        let day_summary = describe_day(date_desc, data);
         result.push('\n');
         result.push_str(&day_summary);
     }
@@ -22,8 +30,7 @@ fn describe_date(date: &Date) -> String {
     format!("On {}", date.format("%d.%m.%Y"))
 }
 
-fn describe_day(data: &DailyFullData) -> String {
-    let date_desc = describe_date(&data.date);
+fn describe_day(date_desc: String, data: &DailyFullData) -> String {
     let temperature_desc = describe_temperature_range(&data.temperature_range);
     let kind_desc = describe_kind(&data.kind);
     let cloud_coverage_desc = describe_cloud_coverage_range(&data.cloud_coverage_range);
@@ -294,14 +301,14 @@ mod tests {
     fn describes_entire_report() {
         let report = generate_report_for_3_days();
         let result = describe(&report);
-        let expected_day1 = "On 24.08.2025 it will be hot \
+        let expected_day1 = "Today it will be hot \
             with temperatures starting at 20.6°C and reaching 26.8°C.\n\
             The sky will be mostly clear \
             and clouds will cover from 27% to 29% of the sky.\n\
             The air will be dry at 14% to 19% humidity \
             with mostly gentle southeast breeze blowing at maximum 3.3 m/s.\n\
             Normal pressure will reach 995.8 hPa at lowest up to 1019.8 hPa.\n";
-        let expected_day2 = "On 25.08.2025 it will be cold \
+        let expected_day2 = "Tomorrow it will be cold \
             with temperatures starting at 3.4°C and reaching 9.0°C.\n\
             The sky will be clear \
             and clouds will cover from 19% to 96% of the sky.\n\
