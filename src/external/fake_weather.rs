@@ -23,22 +23,13 @@ impl WeatherProvider for FakeWeatherProvider {
                 let inner = generate_current_partial_report(coordinates, attributes);
                 Report::CurrentPartial(inner)
             }
-            RequestKind::TodayForecastFull => {
-                let inner = generate_forecast_full_report(coordinates);
-                Report::TodayForecastFull(inner)
+            RequestKind::ForecastFull(day_count) => {
+                let inner = generate_forecast_full_report(coordinates, *day_count);
+                Report::ForecastFull(inner)
             }
-            RequestKind::TodayForecastPartial(attributes) => {
-                let inner = generate_today_forecast_partial_report(coordinates, attributes);
-                Report::TodayForecastPartial(inner)
-            }
-            RequestKind::DailyForecastFull(day_count) => {
-                let inner = generate_daily_forecast_full_report(coordinates, *day_count);
-                Report::DailyForecastFull(inner)
-            }
-            RequestKind::DailyForecastPartial(attributes, day_count) => {
-                let inner =
-                    generate_daily_forecast_partial_report(coordinates, attributes, *day_count);
-                Report::DailyForecastPartial(inner)
+            RequestKind::ForecastPartial(day_count, attributes) => {
+                let inner = generate_forecast_partial_report(coordinates, attributes, *day_count);
+                Report::ForecastPartial(inner)
             }
         };
         Ok(report)
@@ -88,21 +79,10 @@ fn generate_current_partial_report(
     report
 }
 
-fn generate_forecast_full_report(coordinates: &Coordinates) -> TodayForecastFullReport {
-    TodayForecastFullReport {
-        kind: generate_random_weather_kind(),
-        temperature_range: generate_random_temperature_range(coordinates),
-        cloud_coverage_range: generate_random_perecentage_range(),
-        humidity_range: generate_random_perecentage_range(),
-        wind: generate_random_wind_scope(),
-        pressure_range: generate_random_pressure_range(),
-    }
-}
-
-fn generate_daily_forecast_full_report(
+fn generate_forecast_full_report(
     coordinates: &Coordinates,
     day_count: DayCount,
-) -> DailyForecastFullReport {
+) -> ForecastFullReport {
     let mut data = Vec::with_capacity(day_count as usize);
     let date_start = get_date_now();
     for date in date_start.iter_days().take(day_count as usize) {
@@ -117,78 +97,62 @@ fn generate_daily_forecast_full_report(
         };
         data.push(single_data);
     }
-    DailyForecastFullReport { data }
+    ForecastFullReport { data }
 }
 
-fn generate_today_forecast_partial_report(
-    coordinates: &Coordinates,
-    attributes: &WeatherAttributeSet,
-) -> TodayForecastPartialReport {
-    TodayForecastPartialReport {
-        coordinates: *coordinates,
-        spec: generate_forecast_partial_spec(coordinates, attributes),
-    }
-}
-
-fn generate_daily_forecast_partial_report(
+fn generate_forecast_partial_report(
     coordinates: &Coordinates,
     attributes: &WeatherAttributeSet,
     day_count: DayCount,
-) -> DailyForecastPartialReport {
+) -> ForecastPartialReport {
     let mut data = Vec::new();
     let date_start = get_date_now();
     for date in date_start.iter_days().take(day_count as usize) {
-        let day_data = DailyPartialData {
+        let mut day_data = DailyPartialData {
             date,
-            spec: generate_forecast_partial_spec(coordinates, attributes),
+            kind: None,
+            temperature_range: None,
+            cloud_coverage_range: None,
+            humidity_range: None,
+            wind: None,
+            pressure_range: None,
         };
+        for attribute in attributes {
+            match attribute {
+                WeatherAttribute::WeatherKind => {
+                    day_data.kind.replace(generate_random_weather_kind());
+                }
+                WeatherAttribute::Temperature => {
+                    day_data
+                        .temperature_range
+                        .replace(generate_random_temperature_range(coordinates));
+                }
+                WeatherAttribute::CloudCoverage => {
+                    day_data
+                        .cloud_coverage_range
+                        .replace(generate_random_perecentage_range());
+                }
+                WeatherAttribute::Humidity => {
+                    day_data
+                        .humidity_range
+                        .replace(generate_random_perecentage_range());
+                }
+                WeatherAttribute::Wind => {
+                    day_data.wind.replace(generate_random_wind_scope());
+                }
+                WeatherAttribute::Pressure => {
+                    day_data
+                        .pressure_range
+                        .replace(generate_random_pressure_range());
+                }
+            }
+        }
         data.push(day_data);
     }
-    DailyForecastPartialReport {
+    ForecastPartialReport {
         coordinates: *coordinates,
         data,
     }
-}
-
-fn generate_forecast_partial_spec(
-    coordinates: &Coordinates,
-    attributes: &WeatherAttributeSet,
-) -> ForecastPartialSpec {
-    let mut spec = ForecastPartialSpec {
-        kind: None,
-        temperature_range: None,
-        cloud_coverage_range: None,
-        humidity_range: None,
-        wind: None,
-        pressure_range: None,
-    };
-    for attribute in attributes {
-        match attribute {
-            WeatherAttribute::WeatherKind => {
-                spec.kind.replace(generate_random_weather_kind());
-            }
-            WeatherAttribute::Temperature => {
-                spec.temperature_range
-                    .replace(generate_random_temperature_range(coordinates));
-            }
-            WeatherAttribute::CloudCoverage => {
-                spec.cloud_coverage_range
-                    .replace(generate_random_perecentage_range());
-            }
-            WeatherAttribute::Humidity => {
-                spec.humidity_range
-                    .replace(generate_random_perecentage_range());
-            }
-            WeatherAttribute::Wind => {
-                spec.wind.replace(generate_random_wind_scope());
-            }
-            WeatherAttribute::Pressure => {
-                spec.pressure_range
-                    .replace(generate_random_pressure_range());
-            }
-        }
-    }
-    spec
 }
 
 fn get_date_now() -> Date {
