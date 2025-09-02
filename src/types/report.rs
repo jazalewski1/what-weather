@@ -37,16 +37,6 @@ impl CurrentPartialReport {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct TodayForecastFullReport {
-    pub kind: Kind,
-    pub temperature_range: TemperatureRange,
-    pub cloud_coverage_range: PercentageRange,
-    pub humidity_range: PercentageRange,
-    pub wind: WindScope,
-    pub pressure_range: PressureRange,
-}
-
-#[derive(Clone, Debug, PartialEq)]
 pub struct DailyFullData {
     pub date: Date,
     pub kind: Kind,
@@ -58,12 +48,13 @@ pub struct DailyFullData {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct DailyForecastFullReport {
+pub struct ForecastFullReport {
     pub data: Vec<DailyFullData>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ForecastPartialSpec {
+pub struct DailyPartialData {
+    pub date: Date,
     pub kind: Option<Kind>,
     pub temperature_range: Option<TemperatureRange>,
     pub cloud_coverage_range: Option<PercentageRange>,
@@ -73,19 +64,7 @@ pub struct ForecastPartialSpec {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct TodayForecastPartialReport {
-    pub coordinates: Coordinates,
-    pub spec: ForecastPartialSpec,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct DailyPartialData {
-    pub date: Date,
-    pub spec: ForecastPartialSpec,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct DailyForecastPartialReport {
+pub struct ForecastPartialReport {
     pub coordinates: Coordinates,
     pub data: Vec<DailyPartialData>,
 }
@@ -94,8 +73,6 @@ pub struct DailyForecastPartialReport {
 pub enum Report {
     CurrentFull(CurrentFullReport),
     CurrentPartial(CurrentPartialReport),
-    TodayForecastFull(TodayForecastFullReport),
-    TodayForecastPartial(TodayForecastPartialReport),
-    DailyForecastFull(DailyForecastFullReport),
-    DailyForecastPartial(DailyForecastPartialReport),
+    ForecastFull(ForecastFullReport),
+    ForecastPartial(ForecastPartialReport),
 }

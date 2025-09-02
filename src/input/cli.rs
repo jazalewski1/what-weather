@@ -111,17 +111,12 @@ fn convert_args_to_parameters(args: Args) -> Parameters {
             today: _,
             days,
         }) => {
+            let day_count = days.unwrap_or(1);
             if let Some(attributes) = list {
-                let set = convert_to_attribute_set(&attributes);
-                if let Some(length) = days {
-                    RequestKind::DailyForecastPartial(set, length)
-                } else {
-                    RequestKind::TodayForecastPartial(set)
-                }
-            } else if let Some(length) = days {
-                RequestKind::DailyForecastFull(length)
+                let attribute_set = convert_to_attribute_set(&attributes);
+                RequestKind::ForecastPartial(day_count, attribute_set)
             } else {
-                RequestKind::TodayForecastFull
+                RequestKind::ForecastFull(day_count)
             }
         }
     };
@@ -232,7 +227,7 @@ mod tests {
             here: false,
         };
         let params = convert_args_to_parameters(args);
-        let expected = RequestKind::TodayForecastFull;
+        let expected = RequestKind::ForecastFull(DayCount::from(1));
         assert_eq!(params.request_kind, expected);
     }
 
@@ -249,7 +244,7 @@ mod tests {
             here: false,
         };
         let params = convert_args_to_parameters(args);
-        let expected = RequestKind::TodayForecastFull;
+        let expected = RequestKind::ForecastFull(DayCount::from(1));
         assert_eq!(params.request_kind, expected);
     }
 
@@ -266,7 +261,7 @@ mod tests {
             here: false,
         };
         let params = convert_args_to_parameters(args);
-        let expected = RequestKind::TodayForecastFull;
+        let expected = RequestKind::ForecastFull(DayCount::from(1));
         assert_eq!(params.request_kind, expected);
     }
 
@@ -283,7 +278,7 @@ mod tests {
             here: false,
         };
         let params = convert_args_to_parameters(args);
-        let expected = RequestKind::TodayForecastFull;
+        let expected = RequestKind::ForecastFull(DayCount::from(1));
         assert_eq!(params.request_kind, expected);
     }
 
@@ -301,7 +296,7 @@ mod tests {
             here: false,
         };
         let params = convert_args_to_parameters(args);
-        let expected = RequestKind::DailyForecastFull(DAY_COUNT);
+        let expected = RequestKind::ForecastFull(DAY_COUNT);
         assert_eq!(params.request_kind, expected);
     }
 
@@ -319,14 +314,14 @@ mod tests {
             here: false,
         };
         let params = convert_args_to_parameters(args);
-        let expected = RequestKind::DailyForecastFull(DAY_COUNT);
+        let expected = RequestKind::ForecastFull(DAY_COUNT);
         assert_eq!(params.request_kind, expected);
     }
 
     #[test]
     fn parses_forecast_command_with_list_without_attributes_specified() {
         let expected_attribute_set: WeatherAttributeSet = WeatherAttribute::iter().collect();
-        let expected = RequestKind::TodayForecastPartial(expected_attribute_set);
+        let expected = RequestKind::ForecastPartial(DayCount::from(1), expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -351,7 +346,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = RequestKind::TodayForecastPartial(expected_attribute_set);
+        let expected = RequestKind::ForecastPartial(DayCount::from(1), expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -376,7 +371,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = RequestKind::TodayForecastPartial(expected_attribute_set);
+        let expected = RequestKind::ForecastPartial(DayCount::from(1), expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {
@@ -402,7 +397,7 @@ mod tests {
             WeatherAttribute::Humidity,
         ];
         let expected_attribute_set = requested_attributes.iter().cloned().collect();
-        let expected = RequestKind::DailyForecastPartial(expected_attribute_set, DAY_COUNT);
+        let expected = RequestKind::ForecastPartial(DAY_COUNT, expected_attribute_set);
 
         let args = Args {
             command: Some(Command::Forecast {

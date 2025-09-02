@@ -7,10 +7,8 @@ use crate::types::units::*;
 pub enum RequestKind {
     CurrentFull,
     CurrentPartial(WeatherAttributeSet),
-    TodayForecastFull,
-    TodayForecastPartial(WeatherAttributeSet),
-    DailyForecastFull(DayCount),
-    DailyForecastPartial(WeatherAttributeSet, DayCount),
+    ForecastFull(DayCount),
+    ForecastPartial(DayCount, WeatherAttributeSet),
 }
 
 #[derive(Debug, PartialEq)]
