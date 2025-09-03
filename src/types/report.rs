@@ -75,4 +75,5 @@ pub enum Report {
     CurrentPartial(CurrentPartialReport),
     ForecastFull(DailyFullReport),
     ForecastPartial(DailyPartialReport),
+    PastFull(DailyFullReport),
 }

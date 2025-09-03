@@ -1,6 +1,7 @@
 mod common;
 mod current;
 mod forecast;
+mod past;
 
 use crate::types::report::Report;
 
@@ -10,5 +11,6 @@ pub fn describe(report: &Report) -> String {
         Report::CurrentPartial(inner) => current::list::describe(inner),
         Report::ForecastFull(inner) => forecast::summary::describe(inner),
         Report::ForecastPartial(inner) => forecast::list::describe(inner),
+        Report::PastFull(inner) => past::summary::describe(inner),
     }
 }
