@@ -1,9 +1,9 @@
 use crate::format::common::summary::*;
-use crate::types::report::{DailyFullData, ForecastFullReport};
+use crate::types::report::{DailyFullData, DailyFullReport};
 use crate::types::units::*;
 use crate::types::weather::*;
 
-pub fn describe(report: &ForecastFullReport) -> String {
+pub fn describe(report: &DailyFullReport) -> String {
     let mut data_iter = report.data.iter();
     let mut result = String::new();
     if let Some(data) = data_iter.next() {
@@ -127,7 +127,7 @@ mod tests {
     use super::*;
     use crate::types::report::DailyFullData;
 
-    fn generate_report_for_3_days() -> ForecastFullReport {
+    fn generate_report_for_3_days() -> DailyFullReport {
         let daily_data_1 = DailyFullData {
             date: Date::from_ymd_opt(2025, 08, 24).unwrap(),
             kind: Kind::Clouds(Clouds::Light),
@@ -187,7 +187,7 @@ mod tests {
             pressure_range: PressureRange::new_hpa(995.6, 1019.6),
         };
 
-        ForecastFullReport {
+        DailyFullReport {
             data: vec![daily_data_1, daily_data_2, daily_data_3],
         }
     }

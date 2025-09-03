@@ -24,11 +24,11 @@ impl WeatherProvider for FakeWeatherProvider {
                 Report::CurrentPartial(inner)
             }
             RequestKind::ForecastFull(day_count) => {
-                let inner = generate_forecast_full_report(coordinates, *day_count);
+                let inner = generate_daily_full_report(coordinates, *day_count);
                 Report::ForecastFull(inner)
             }
             RequestKind::ForecastPartial(day_count, attributes) => {
-                let inner = generate_forecast_partial_report(coordinates, attributes, *day_count);
+                let inner = generate_daily_partial_report(coordinates, attributes, *day_count);
                 Report::ForecastPartial(inner)
             }
         };
@@ -79,10 +79,7 @@ fn generate_current_partial_report(
     report
 }
 
-fn generate_forecast_full_report(
-    coordinates: &Coordinates,
-    day_count: DayCount,
-) -> ForecastFullReport {
+fn generate_daily_full_report(coordinates: &Coordinates, day_count: DayCount) -> DailyFullReport {
     let mut data = Vec::with_capacity(day_count as usize);
     let date_start = get_date_now();
     for date in date_start.iter_days().take(day_count as usize) {
@@ -97,14 +94,14 @@ fn generate_forecast_full_report(
         };
         data.push(single_data);
     }
-    ForecastFullReport { data }
+    DailyFullReport { data }
 }
 
-fn generate_forecast_partial_report(
+fn generate_daily_partial_report(
     coordinates: &Coordinates,
     attributes: &WeatherAttributeSet,
     day_count: DayCount,
-) -> ForecastPartialReport {
+) -> DailyPartialReport {
     let mut data = Vec::new();
     let date_start = get_date_now();
     for date in date_start.iter_days().take(day_count as usize) {
@@ -149,7 +146,7 @@ fn generate_forecast_partial_report(
         }
         data.push(day_data);
     }
-    ForecastPartialReport {
+    DailyPartialReport {
         coordinates: *coordinates,
         data,
     }

@@ -5,12 +5,12 @@ use crate::types::units::*;
 use crate::types::weather::*;
 use std::fmt::Write;
 
-pub fn describe(report: &ForecastPartialReport) -> String {
+pub fn describe(report: &DailyPartialReport) -> String {
     describe_report(report).expect("Failed to write to string")
 }
 
-fn describe_report(report: &ForecastPartialReport) -> Result<String, std::fmt::Error> {
-    let ForecastPartialReport { coordinates, data } = &report;
+fn describe_report(report: &DailyPartialReport) -> Result<String, std::fmt::Error> {
+    let DailyPartialReport { coordinates, data } = &report;
     let mut result = String::new();
 
     write_param(&mut result, "Coordinates", format!("{coordinates:.5}"));
@@ -84,7 +84,7 @@ mod tests {
             .unwrap()
     }
 
-    fn generate_report_for_3_days() -> ForecastPartialReport {
+    fn generate_report_for_3_days() -> DailyPartialReport {
         let data = vec![
             DailyPartialData {
                 date: generate_start_date(0),
@@ -117,7 +117,7 @@ mod tests {
                 pressure_range: None,
             },
         ];
-        ForecastPartialReport {
+        DailyPartialReport {
             coordinates: generate_coordinates(),
             data,
         }
