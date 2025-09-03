@@ -15,6 +15,15 @@ impl WeatherProvider for FakeWeatherProvider {
         }
         let ReportRequest { coordinates, kind } = &request;
         let report = match kind {
+            RequestKind::PastFull(day_count) => {
+                let dates = get_date_now()
+                    .iter_days()
+                    .rev()
+                    .take(*day_count as usize)
+                    .collect();
+                let inner = generate_daily_full_report(coordinates, dates);
+                Report::PastFull(inner)
+            }
             RequestKind::CurrentFull => {
                 let inner = generate_current_full_report(coordinates);
                 Report::CurrentFull(inner)
@@ -24,7 +33,11 @@ impl WeatherProvider for FakeWeatherProvider {
                 Report::CurrentPartial(inner)
             }
             RequestKind::ForecastFull(day_count) => {
-                let inner = generate_daily_full_report(coordinates, *day_count);
+                let dates = get_date_now()
+                    .iter_days()
+                    .take(*day_count as usize)
+                    .collect();
+                let inner = generate_daily_full_report(coordinates, dates);
                 Report::ForecastFull(inner)
             }
             RequestKind::ForecastPartial(day_count, attributes) => {
@@ -79,10 +92,9 @@ fn generate_current_partial_report(
     report
 }
 
-fn generate_daily_full_report(coordinates: &Coordinates, day_count: DayCount) -> DailyFullReport {
-    let mut data = Vec::with_capacity(day_count as usize);
-    let date_start = get_date_now();
-    for date in date_start.iter_days().take(day_count as usize) {
+fn generate_daily_full_report(coordinates: &Coordinates, dates: Vec<Date>) -> DailyFullReport {
+    let mut data = Vec::with_capacity(dates.len());
+    for date in dates {
         let single_data = DailyFullData {
             date,
             kind: generate_random_weather_kind(),
@@ -212,7 +224,7 @@ fn generate_random_percentage() -> Percentage {
 }
 
 fn generate_random_perecentage_range() -> PercentageRange {
-    let max = rnd::generate_integer(0..101);
+    let max = rnd::generate_integer(1..101);
     let min = rnd::generate_integer(0..max);
     PercentageRange::new(min as i8, max as i8)
 }

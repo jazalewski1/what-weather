@@ -69,6 +69,17 @@ enum Command {
         #[arg(long, group = "forecast_time", value_parser = clap::value_parser!(u8).range(1..16))]
         days: Option<DayCount>,
     },
+
+    /// Report past weather
+    Past {
+        /// Format report as summary
+        #[arg(long, group = "past_format")]
+        summary: bool,
+
+        /// Number of days to report
+        #[arg(long)]
+        days: DayCount,
+    },
 }
 
 #[derive(Parser)]
@@ -119,6 +130,7 @@ fn convert_args_to_parameters(args: Args) -> Parameters {
                 RequestKind::ForecastFull(day_count)
             }
         }
+        Some(Command::Past { summary: _, days }) => RequestKind::PastFull(days),
     };
     Parameters {
         request_kind,
@@ -405,6 +417,38 @@ mod tests {
                 list: Some(requested_attributes),
                 today: false,
                 days: Some(DAY_COUNT),
+            }),
+            coords: None,
+            here: false,
+        };
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
+    }
+
+    #[test]
+    fn parses_past_command_defaults_to_summary() {
+        const DAY_COUNT: DayCount = 4;
+        let expected = RequestKind::PastFull(DAY_COUNT);
+        let args = Args {
+            command: Some(Command::Past {
+                summary: false,
+                days: DAY_COUNT,
+            }),
+            coords: None,
+            here: false,
+        };
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
+    }
+
+    #[test]
+    fn parses_past_command_with_summary() {
+        const DAY_COUNT: DayCount = 4;
+        let expected = RequestKind::PastFull(DAY_COUNT);
+        let args = Args {
+            command: Some(Command::Past {
+                summary: true,
+                days: DAY_COUNT,
             }),
             coords: None,
             here: false,

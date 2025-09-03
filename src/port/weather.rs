@@ -5,6 +5,7 @@ use crate::types::units::*;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RequestKind {
+    PastFull(DayCount),
     CurrentFull,
     CurrentPartial(WeatherAttributeSet),
     ForecastFull(DayCount),
