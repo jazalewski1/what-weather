@@ -163,6 +163,12 @@ pub struct Degrees {
     pub value: f32,
 }
 
+impl Degrees {
+    pub fn raw(&self) -> f32 {
+        self.value
+    }
+}
+
 impl From<f32> for Degrees {
     fn from(value: f32) -> Self {
         Self { value }
