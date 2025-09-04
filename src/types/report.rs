@@ -71,9 +71,10 @@ pub struct DailyPartialReport {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Report {
+    PastFull(DailyFullReport),
+    PastPartial(DailyPartialReport),
     CurrentFull(CurrentFullReport),
     CurrentPartial(CurrentPartialReport),
     ForecastFull(DailyFullReport),
     ForecastPartial(DailyPartialReport),
-    PastFull(DailyFullReport),
 }

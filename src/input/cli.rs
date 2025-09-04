@@ -65,7 +65,7 @@ enum Command {
         #[arg(long, group = "forecast_time")]
         today: bool,
 
-        /// Report for multiple days from today
+        /// Number of days to report
         #[arg(long, group = "forecast_time", value_parser = clap::value_parser!(u8).range(1..16))]
         days: Option<DayCount>,
     },
@@ -75,6 +75,10 @@ enum Command {
         /// Format report as summary
         #[arg(long, group = "past_format")]
         summary: bool,
+
+        /// Format report as list of all or selected attributes
+        #[arg(long, group = "past_format", value_delimiter=',', num_args=0..)]
+        list: Option<Vec<WeatherAttribute>>,
 
         /// Number of days to report
         #[arg(long)]
@@ -130,7 +134,18 @@ fn convert_args_to_parameters(args: Args) -> Parameters {
                 RequestKind::ForecastFull(day_count)
             }
         }
-        Some(Command::Past { summary: _, days }) => RequestKind::PastFull(days),
+        Some(Command::Past {
+            summary: _,
+            list,
+            days,
+        }) => {
+            if let Some(attributes) = list {
+                let attribute_set = convert_to_attribute_set(&attributes);
+                RequestKind::PastPartial(days, attribute_set)
+            } else {
+                RequestKind::PastFull(days)
+            }
+        }
     };
     Parameters {
         request_kind,
@@ -432,6 +447,7 @@ mod tests {
         let args = Args {
             command: Some(Command::Past {
                 summary: false,
+                list: None,
                 days: DAY_COUNT,
             }),
             coords: None,
@@ -448,6 +464,32 @@ mod tests {
         let args = Args {
             command: Some(Command::Past {
                 summary: true,
+                list: None,
+                days: DAY_COUNT,
+            }),
+            coords: None,
+            here: false,
+        };
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.request_kind, expected);
+    }
+
+    #[test]
+    fn parses_past_command_with_list() {
+        let requested_attributes = vec![
+            WeatherAttribute::WeatherKind,
+            WeatherAttribute::Temperature,
+            WeatherAttribute::Pressure,
+            WeatherAttribute::Humidity,
+        ];
+        let expected_attribute_set = requested_attributes.iter().cloned().collect();
+        let expected = RequestKind::PastPartial(DAY_COUNT, expected_attribute_set);
+
+        const DAY_COUNT: DayCount = 4;
+        let args = Args {
+            command: Some(Command::Past {
+                summary: false,
+                list: Some(requested_attributes),
                 days: DAY_COUNT,
             }),
             coords: None,

@@ -16,13 +16,14 @@ impl WeatherProvider for FakeWeatherProvider {
         let ReportRequest { coordinates, kind } = &request;
         let report = match kind {
             RequestKind::PastFull(day_count) => {
-                let dates = get_date_now()
-                    .iter_days()
-                    .rev()
-                    .take(*day_count as usize)
-                    .collect();
+                let dates = get_dates_backward(*day_count);
                 let inner = generate_daily_full_report(coordinates, dates);
                 Report::PastFull(inner)
+            }
+            RequestKind::PastPartial(day_count, attributes) => {
+                let dates = get_dates_backward(*day_count);
+                let inner = generate_daily_partial_report(coordinates, attributes, dates);
+                Report::PastPartial(inner)
             }
             RequestKind::CurrentFull => {
                 let inner = generate_current_full_report(coordinates);
@@ -33,15 +34,13 @@ impl WeatherProvider for FakeWeatherProvider {
                 Report::CurrentPartial(inner)
             }
             RequestKind::ForecastFull(day_count) => {
-                let dates = get_date_now()
-                    .iter_days()
-                    .take(*day_count as usize)
-                    .collect();
+                let dates = get_dates_forward(*day_count);
                 let inner = generate_daily_full_report(coordinates, dates);
                 Report::ForecastFull(inner)
             }
             RequestKind::ForecastPartial(day_count, attributes) => {
-                let inner = generate_daily_partial_report(coordinates, attributes, *day_count);
+                let dates = get_dates_forward(*day_count);
+                let inner = generate_daily_partial_report(coordinates, attributes, dates);
                 Report::ForecastPartial(inner)
             }
         };
@@ -112,11 +111,10 @@ fn generate_daily_full_report(coordinates: &Coordinates, dates: Vec<Date>) -> Da
 fn generate_daily_partial_report(
     coordinates: &Coordinates,
     attributes: &WeatherAttributeSet,
-    day_count: DayCount,
+    dates: Vec<Date>,
 ) -> DailyPartialReport {
     let mut data = Vec::new();
-    let date_start = get_date_now();
-    for date in date_start.iter_days().take(day_count as usize) {
+    for date in dates {
         let mut day_data = DailyPartialData {
             date,
             kind: None,
@@ -164,8 +162,23 @@ fn generate_daily_partial_report(
     }
 }
 
-fn get_date_now() -> Date {
-    chrono::Utc::now().date_naive()
+fn get_dates_forward(count: DayCount) -> Vec<Date> {
+    chrono::Utc::now()
+        .date_naive()
+        .iter_days()
+        .take(count as usize)
+        .collect()
+}
+
+fn get_dates_backward(count: DayCount) -> Vec<Date> {
+    chrono::Utc::now()
+        .date_naive()
+        .pred_opt()
+        .expect("Invalid time")
+        .iter_days()
+        .rev()
+        .take(count as usize)
+        .collect()
 }
 
 fn generate_random_weather_kind() -> Kind {
