@@ -15,6 +15,16 @@ impl WeatherProvider for FakeWeatherProvider {
         }
         let ReportRequest { coordinates, kind } = &request;
         let report = match kind {
+            RequestKind::PastFull(day_count) => {
+                let dates = get_dates_backward(*day_count);
+                let inner = generate_daily_full_report(coordinates, dates);
+                Report::PastFull(inner)
+            }
+            RequestKind::PastPartial(day_count, attributes) => {
+                let dates = get_dates_backward(*day_count);
+                let inner = generate_daily_partial_report(coordinates, attributes, dates);
+                Report::PastPartial(inner)
+            }
             RequestKind::CurrentFull => {
                 let inner = generate_current_full_report(coordinates);
                 Report::CurrentFull(inner)
@@ -24,11 +34,13 @@ impl WeatherProvider for FakeWeatherProvider {
                 Report::CurrentPartial(inner)
             }
             RequestKind::ForecastFull(day_count) => {
-                let inner = generate_forecast_full_report(coordinates, *day_count);
+                let dates = get_dates_forward(*day_count);
+                let inner = generate_daily_full_report(coordinates, dates);
                 Report::ForecastFull(inner)
             }
             RequestKind::ForecastPartial(day_count, attributes) => {
-                let inner = generate_forecast_partial_report(coordinates, attributes, *day_count);
+                let dates = get_dates_forward(*day_count);
+                let inner = generate_daily_partial_report(coordinates, attributes, dates);
                 Report::ForecastPartial(inner)
             }
         };
@@ -79,13 +91,9 @@ fn generate_current_partial_report(
     report
 }
 
-fn generate_forecast_full_report(
-    coordinates: &Coordinates,
-    day_count: DayCount,
-) -> ForecastFullReport {
-    let mut data = Vec::with_capacity(day_count as usize);
-    let date_start = get_date_now();
-    for date in date_start.iter_days().take(day_count as usize) {
+fn generate_daily_full_report(coordinates: &Coordinates, dates: Vec<Date>) -> DailyFullReport {
+    let mut data = Vec::with_capacity(dates.len());
+    for date in dates {
         let single_data = DailyFullData {
             date,
             kind: generate_random_weather_kind(),
@@ -97,17 +105,16 @@ fn generate_forecast_full_report(
         };
         data.push(single_data);
     }
-    ForecastFullReport { data }
+    DailyFullReport { data }
 }
 
-fn generate_forecast_partial_report(
+fn generate_daily_partial_report(
     coordinates: &Coordinates,
     attributes: &WeatherAttributeSet,
-    day_count: DayCount,
-) -> ForecastPartialReport {
+    dates: Vec<Date>,
+) -> DailyPartialReport {
     let mut data = Vec::new();
-    let date_start = get_date_now();
-    for date in date_start.iter_days().take(day_count as usize) {
+    for date in dates {
         let mut day_data = DailyPartialData {
             date,
             kind: None,
@@ -149,14 +156,29 @@ fn generate_forecast_partial_report(
         }
         data.push(day_data);
     }
-    ForecastPartialReport {
+    DailyPartialReport {
         coordinates: *coordinates,
         data,
     }
 }
 
-fn get_date_now() -> Date {
-    chrono::Utc::now().date_naive()
+fn get_dates_forward(count: DayCount) -> Vec<Date> {
+    chrono::Utc::now()
+        .date_naive()
+        .iter_days()
+        .take(count as usize)
+        .collect()
+}
+
+fn get_dates_backward(count: DayCount) -> Vec<Date> {
+    chrono::Utc::now()
+        .date_naive()
+        .pred_opt()
+        .expect("Invalid time")
+        .iter_days()
+        .rev()
+        .take(count as usize)
+        .collect()
 }
 
 fn generate_random_weather_kind() -> Kind {
@@ -215,7 +237,7 @@ fn generate_random_percentage() -> Percentage {
 }
 
 fn generate_random_perecentage_range() -> PercentageRange {
-    let max = rnd::generate_integer(0..101);
+    let max = rnd::generate_integer(1..101);
     let min = rnd::generate_integer(0..max);
     PercentageRange::new(min as i8, max as i8)
 }

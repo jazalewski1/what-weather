@@ -48,7 +48,7 @@ pub struct DailyFullData {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ForecastFullReport {
+pub struct DailyFullReport {
     pub data: Vec<DailyFullData>,
 }
 
@@ -64,15 +64,17 @@ pub struct DailyPartialData {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ForecastPartialReport {
+pub struct DailyPartialReport {
     pub coordinates: Coordinates,
     pub data: Vec<DailyPartialData>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Report {
+    PastFull(DailyFullReport),
+    PastPartial(DailyPartialReport),
     CurrentFull(CurrentFullReport),
     CurrentPartial(CurrentPartialReport),
-    ForecastFull(ForecastFullReport),
-    ForecastPartial(ForecastPartialReport),
+    ForecastFull(DailyFullReport),
+    ForecastPartial(DailyPartialReport),
 }
