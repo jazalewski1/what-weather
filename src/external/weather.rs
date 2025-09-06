@@ -196,22 +196,27 @@ impl DailyData {
             None
         }
     }
-    fn wind_speed_range(&self, day_index: usize) -> Option<SpeedRange> {
-        if let (Some(min_values), Some(max_values)) =
-            (&self.wind_speed_10m_min, &self.wind_speed_10m_max)
-        {
-            Some(SpeedRange::new_meters_per_second(
+    fn wind_scope(&self, day_index: usize) -> Option<WindScope> {
+        let speed = match (&self.wind_speed_10m_min, &self.wind_speed_10m_max) {
+            (Some(min_values), Some(max_values)) => Some(SpeedRange::new_meters_per_second(
                 min_values[day_index],
                 max_values[day_index],
-            ))
-        } else {
-            None
-        }
-    }
-    fn wind_direction(&self, day_index: usize) -> Option<Azimuth> {
-        self.wind_direction_10m_dominant
+            )),
+            _ => None,
+        };
+        let direction = self
+            .wind_direction_10m_dominant
             .as_ref()
-            .map(|values| Azimuth::from(values[day_index]))
+            .map(|values| Azimuth::from(values[day_index]));
+        match (speed, direction) {
+            (Some(speed_range), Some(dominant_direction)) => Some(WindScope {
+                speed_range,
+                dominant_direction,
+            }),
+            (None, Some(_)) => panic!("Missing speed for wind on day {day_index}"),
+            (Some(_), None) => panic!("Missing direction for wind on day {day_index}"),
+            _ => None,
+        }
     }
     fn pressure_range(&self, day_index: usize) -> Option<PressureRange> {
         if let (Some(min_values), Some(max_values)) =
@@ -257,20 +262,10 @@ impl DailyResponse {
                 .daily
                 .humidity_range(day_index)
                 .unwrap_or_else(|| panic!("Missing humidity on day {day_index}"));
-            let wind = {
-                let speed_range = self
-                    .daily
-                    .wind_speed_range(day_index)
-                    .unwrap_or_else(|| panic!("Missing wind speed on day {day_index}"));
-                let dominant_direction = self
-                    .daily
-                    .wind_direction(day_index)
-                    .unwrap_or_else(|| panic!("Missing wind direction on day {day_index}"));
-                WindScope {
-                    speed_range,
-                    dominant_direction,
-                }
-            };
+            let wind = self
+                .daily
+                .wind_scope(day_index)
+                .unwrap_or_else(|| panic!("Missing wind on day {day_index}"));
             let pressure_range = self
                 .daily
                 .pressure_range(day_index)
@@ -301,26 +296,13 @@ impl DailyResponse {
                 .daily
                 .date(day_index)
                 .unwrap_or_else(|| panic!("Missing date at day {day_index}"));
-            let wind = {
-                let speed = self.daily.wind_speed_range(day_index);
-                let direction = self.daily.wind_direction(day_index);
-                match (speed, direction) {
-                    (Some(speed_range), Some(dominant_direction)) => Some(WindScope {
-                        speed_range,
-                        dominant_direction,
-                    }),
-                    (None, Some(_)) => panic!("Missing wind speed on day {day_index}"),
-                    (Some(_), None) => panic!("Missing wind direction on day {day_index}"),
-                    _ => None,
-                }
-            };
             let daily_data = DailyPartialData {
                 date,
                 kind: self.daily.weather_kind(day_index),
                 temperature_range: self.daily.temperature_range(day_index),
                 cloud_coverage_range: self.daily.cloud_coverage_range(day_index),
                 humidity_range: self.daily.humidity_range(day_index),
-                wind,
+                wind: self.daily.wind_scope(day_index),
                 pressure_range: self.daily.pressure_range(day_index),
             };
             data.push(daily_data);
