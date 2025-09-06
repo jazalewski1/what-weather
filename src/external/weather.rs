@@ -15,12 +15,12 @@ impl WeatherProvider for ConcreteWeatherProvider {
         match &request.kind {
             RequestKind::PastFull(day_count) => {
                 let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
-                let resp = fetch_past_daily_report(&request.coordinates, *day_count, &attributes)?;
+                let resp = fetch_past_daily_response(&request.coordinates, *day_count, &attributes)?;
                 let inner = resp.to_daily_full_report(*day_count);
                 Ok(Report::PastFull(inner))
             }
             RequestKind::PastPartial(day_count, attributes) => {
-                let resp = fetch_past_daily_report(&request.coordinates, *day_count, attributes)?;
+                let resp = fetch_past_daily_response(&request.coordinates, *day_count, attributes)?;
                 let inner = resp.to_daily_partial_report(&request.coordinates, *day_count);
                 Ok(Report::PastPartial(inner))
             }
@@ -32,7 +32,7 @@ impl WeatherProvider for ConcreteWeatherProvider {
     }
 }
 
-fn fetch_past_daily_report(
+fn fetch_past_daily_response(
     coordinates: &Coordinates,
     day_count: u8,
     attributes: &WeatherAttributeSet,
