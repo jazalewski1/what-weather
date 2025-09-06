@@ -152,83 +152,99 @@ struct DailyData {
 impl DailyData {
     fn date(&self, day_index: usize) -> Option<Date> {
         self.time
-            .as_ref()
-            .map(|values| convert_date(&values[day_index]))
+            .as_ref()?
+            .get(day_index)
+            .map(|string| convert_date(string))
+            .or_else(|| panic!("Missing date for day {day_index}"))
     }
     fn weather_kind(&self, day_index: usize) -> Option<Kind> {
         self.weather_code
-            .as_ref()
-            .map(|codes| convert_code_to_weather_kind(codes[day_index]))
+            .as_ref()?
+            .get(day_index)
+            .map(|code| convert_code_to_weather_kind(*code))
+            .or_else(|| panic!("Missing weather code for day {day_index}"))
     }
     fn temperature_range(&self, day_index: usize) -> Option<TemperatureRange> {
-        if let (Some(min_values), Some(max_values)) =
-            (&self.temperature_2m_min, &self.temperature_2m_max)
-        {
-            Some(TemperatureRange::new_celsius(
-                min_values[day_index],
-                max_values[day_index],
-            ))
-        } else {
-            None
-        }
+        let min = self
+            .temperature_2m_min
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing min temperature for day {day_index}"));
+        let max = self
+            .temperature_2m_max
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing max temperature for day {day_index}"));
+        min.zip(max)
+            .map(|(min, max)| TemperatureRange::new_celsius(*min, *max))
     }
     fn cloud_coverage_range(&self, day_index: usize) -> Option<PercentageRange> {
-        if let (Some(min_values), Some(max_values)) = (&self.cloud_cover_min, &self.cloud_cover_max)
-        {
-            Some(PercentageRange::new(
-                min_values[day_index] as i8,
-                max_values[day_index] as i8,
-            ))
-        } else {
-            None
-        }
+        let min = self
+            .cloud_cover_min
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing min cloud coverage for day {day_index}"));
+        let max = self
+            .cloud_cover_max
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing max cloud coverage for day {day_index}"));
+        min.zip(max)
+            .map(|(min, max)| PercentageRange::new(*min as i8, *max as i8))
     }
     fn humidity_range(&self, day_index: usize) -> Option<PercentageRange> {
-        if let (Some(min_values), Some(max_values)) = (
-            &self.relative_humidity_2m_min,
-            &self.relative_humidity_2m_max,
-        ) {
-            Some(PercentageRange::new(
-                min_values[day_index] as i8,
-                max_values[day_index] as i8,
-            ))
-        } else {
-            None
-        }
+        let min = self
+            .relative_humidity_2m_min
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing min humidity for day {day_index}"));
+        let max = self
+            .relative_humidity_2m_max
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing max humidity for day {day_index}"));
+        min.zip(max)
+            .map(|(min, max)| PercentageRange::new(*min as i8, *max as i8))
     }
     fn wind_scope(&self, day_index: usize) -> Option<WindScope> {
-        let speed = match (&self.wind_speed_10m_min, &self.wind_speed_10m_max) {
-            (Some(min_values), Some(max_values)) => Some(SpeedRange::new_meters_per_second(
-                min_values[day_index],
-                max_values[day_index],
-            )),
-            _ => None,
-        };
-        let direction = self
+        let min_speed = self
+            .wind_speed_10m_min
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing min wind speed for day {day_index}"));
+        let max_speed = self
+            .wind_speed_10m_max
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing max wind speed for day {day_index}"));
+        let azimuth = self
             .wind_direction_10m_dominant
             .as_ref()
             .map(|values| Azimuth::from(values[day_index]));
-        match (speed, direction) {
-            (Some(speed_range), Some(dominant_direction)) => Some(WindScope {
-                speed_range,
+        match (min_speed, max_speed, azimuth) {
+            (Some(min), Some(max), Some(dominant_direction)) => Some(WindScope {
+                speed_range: SpeedRange::new_meters_per_second(*min, *max),
                 dominant_direction,
             }),
-            (None, Some(_)) => panic!("Missing speed for wind on day {day_index}"),
-            (Some(_), None) => panic!("Missing direction for wind on day {day_index}"),
+            (None, Some(_), Some(_)) => panic!("Missing values for min wind speed"),
+            (Some(_), None, Some(_)) => panic!("Missing values for max wind speed"),
+            (Some(_), Some(_), None) => panic!("Missing values for wind direction"),
             _ => None,
         }
     }
     fn pressure_range(&self, day_index: usize) -> Option<PressureRange> {
-        if let (Some(min_values), Some(max_values)) =
-            (&self.pressure_msl_min, &self.pressure_msl_max)
-        {
-            Some(PressureRange::new_hpa(
-                min_values[day_index],
-                max_values[day_index],
-            ))
-        } else {
-            None
-        }
+        let min = self
+            .pressure_msl_min
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing min pressure for day {day_index}"));
+        let max = self
+            .pressure_msl_max
+            .as_ref()?
+            .get(day_index)
+            .or_else(|| panic!("Missing max pressure for day {day_index}"));
+        min.zip(max)
+            .map(|(min, max)| PressureRange::new_hpa(*min, *max))
     }
 }
 
@@ -241,35 +257,29 @@ impl DailyResponse {
     fn to_daily_full_report(&self, day_count: DayCount) -> DailyFullReport {
         let mut data = Vec::new();
         let day_count: usize = day_count.into();
+        let daily = &self.daily;
         for day_index in 0..day_count {
-            let date = self
-                .daily
+            let date = daily
                 .date(day_index)
-                .unwrap_or_else(|| panic!("Missing date at day {day_index}"));
-            let kind = self
-                .daily
+                .unwrap_or_else(|| panic!("Missing date for day {day_index}"));
+            let kind = daily
                 .weather_kind(day_index)
-                .unwrap_or_else(|| panic!("Missing weather kind on day {day_index}"));
-            let temperature_range = self
-                .daily
+                .unwrap_or_else(|| panic!("Missing weather kind for day {day_index}"));
+            let temperature_range = daily
                 .temperature_range(day_index)
-                .unwrap_or_else(|| panic!("Missing temperature on day {day_index}"));
-            let cloud_coverage_range = self
-                .daily
+                .unwrap_or_else(|| panic!("Missing temperature for day {day_index}"));
+            let cloud_coverage_range = daily
                 .cloud_coverage_range(day_index)
-                .unwrap_or_else(|| panic!("Missing cloud coverage on day {day_index}"));
-            let humidity_range = self
-                .daily
+                .unwrap_or_else(|| panic!("Missing cloud coverage for day {day_index}"));
+            let humidity_range = daily
                 .humidity_range(day_index)
-                .unwrap_or_else(|| panic!("Missing humidity on day {day_index}"));
-            let wind = self
-                .daily
+                .unwrap_or_else(|| panic!("Missing humidity for day {day_index}"));
+            let wind = daily
                 .wind_scope(day_index)
-                .unwrap_or_else(|| panic!("Missing wind on day {day_index}"));
-            let pressure_range = self
-                .daily
+                .unwrap_or_else(|| panic!("Missing wind for day {day_index}"));
+            let pressure_range = daily
                 .pressure_range(day_index)
-                .unwrap_or_else(|| panic!("Missing pressure on day {day_index}"));
+                .unwrap_or_else(|| panic!("Missing pressure for day {day_index}"));
             let daily_data = DailyFullData {
                 date,
                 kind,
