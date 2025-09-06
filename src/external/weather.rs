@@ -6,7 +6,6 @@ use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
 use serde::Deserialize;
-use std::collections::HashSet;
 use strum::IntoEnumIterator;
 
 pub struct ConcreteWeatherProvider;
@@ -15,10 +14,15 @@ impl WeatherProvider for ConcreteWeatherProvider {
     fn fetch(&self, request: &ReportRequest) -> Result<Report, FetchError> {
         match &request.kind {
             RequestKind::PastFull(day_count) => {
-                fetch_past_full_report(&request.coordinates, *day_count)
+                let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
+                let resp = fetch_past_daily_report(&request.coordinates, *day_count, &attributes)?;
+                let inner = resp.to_daily_full_report(*day_count);
+                Ok(Report::PastFull(inner))
             }
             RequestKind::PastPartial(day_count, attributes) => {
-                fetch_past_partial_report(&request.coordinates, *day_count, attributes)
+                let resp = fetch_past_daily_report(&request.coordinates, *day_count, attributes)?;
+                let inner = resp.to_daily_partial_report(&request.coordinates, *day_count);
+                Ok(Report::PastPartial(inner))
             }
             RequestKind::CurrentFull => todo!(),
             RequestKind::CurrentPartial(_attributes) => todo!(),
@@ -28,38 +32,14 @@ impl WeatherProvider for ConcreteWeatherProvider {
     }
 }
 
-fn fetch_past_full_report(
-    coordinates: &Coordinates,
-    day_count: DayCount,
-) -> Result<Report, FetchError> {
-    let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
-    let params = [
-        ("latitude", format!("{}", coordinates.latitude.raw())),
-        ("longitude", format!("{}", coordinates.longitude.raw())),
-        ("daily", build_daily_attribute_list(&attributes)),
-        ("timezone", "auto".to_string()),
-        ("past_days", day_count.to_string()),
-        ("forecast_days", 0.to_string()),
-        ("wind_speed_unit", "ms".to_string()),
-    ];
-    let client = reqwest::blocking::Client::new();
-    let response = client
-        .get("https://api.open-meteo.com/v1/forecast")
-        .query(&params)
-        .send()
-        .expect("Failed to fetch weather");
-    let response: DailyResponse = response.json().expect("Failed to decode");
-    Ok(Report::PastFull(response.to_daily_full_report(day_count)))
-}
-
-fn fetch_past_partial_report(
+fn fetch_past_daily_report(
     coordinates: &Coordinates,
     day_count: u8,
-    attributes: &HashSet<WeatherAttribute>,
-) -> Result<Report, FetchError> {
+    attributes: &WeatherAttributeSet,
+) -> Result<DailyResponse, FetchError> {
     let params = [
-        ("latitude", format!("{}", coordinates.latitude.raw())),
-        ("longitude", format!("{}", coordinates.longitude.raw())),
+        ("latitude", coordinates.latitude.raw().to_string()),
+        ("longitude", coordinates.longitude.raw().to_string()),
         ("daily", build_daily_attribute_list(attributes)),
         ("timezone", "auto".to_string()),
         ("past_days", day_count.to_string()),
@@ -71,11 +51,8 @@ fn fetch_past_partial_report(
         .get("https://api.open-meteo.com/v1/forecast")
         .query(&params)
         .send()
-        .expect("Failed to fetch weather");
-    let response: DailyResponse = response.json().expect("Failed to decode");
-    Ok(Report::PastPartial(
-        response.to_daily_partial_report(coordinates, day_count),
-    ))
+        .map_err(|_| FetchError::ConnectionFailure)?;
+    response.json().map_err(|_| FetchError::DecodingFailure)
 }
 
 struct ListBuilder {
