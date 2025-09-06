@@ -1604,7 +1604,6 @@ dependencies = [
  "mockall",
  "reqwest",
  "serde",
- "serde_json",
  "strum",
 ]
 
