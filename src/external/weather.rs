@@ -36,7 +36,7 @@ fn fetch_past_full_report(
     let params = [
         ("latitude", format!("{}", coordinates.latitude.raw())),
         ("longitude", format!("{}", coordinates.longitude.raw())),
-        ("daily", convert_attributes_to_list(&attributes)),
+        ("daily", build_daily_attribute_list(&attributes)),
         ("timezone", "auto".to_string()),
         ("past_days", day_count.to_string()),
         ("forecast_days", 0.to_string()),
@@ -60,7 +60,7 @@ fn fetch_past_partial_report(
     let params = [
         ("latitude", format!("{}", coordinates.latitude.raw())),
         ("longitude", format!("{}", coordinates.longitude.raw())),
-        ("daily", convert_attributes_to_list(attributes)),
+        ("daily", build_daily_attribute_list(attributes)),
         ("timezone", "auto".to_string()),
         ("past_days", day_count.to_string()),
         ("forecast_days", 0.to_string()),
@@ -101,7 +101,7 @@ impl ListBuilder {
     }
 }
 
-fn convert_attributes_to_list(attributes: &WeatherAttributeSet) -> String {
+fn build_daily_attribute_list(attributes: &WeatherAttributeSet) -> String {
     let mut builder = ListBuilder::new();
     for attribute in attributes {
         match attribute {
