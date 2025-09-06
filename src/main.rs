@@ -6,7 +6,8 @@ use what_weather::weather_reporter::WeatherReporter;
 
 fn main() {
     let parameters = cli::parse();
-    let weather_reporter = WeatherReporter::new(ConcreteGeolocationProvider, ConcreteWeatherProvider);
+    let weather_reporter =
+        WeatherReporter::new(ConcreteGeolocationProvider, ConcreteWeatherProvider);
     match weather_reporter.run(parameters) {
         Ok(report) => {
             let formatted_report = format::describe(&report);

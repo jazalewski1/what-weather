@@ -6,8 +6,8 @@ use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
 use serde::Deserialize;
-use strum::IntoEnumIterator;
 use std::collections::HashSet;
+use strum::IntoEnumIterator;
 
 pub struct ConcreteWeatherProvider;
 
@@ -21,9 +21,9 @@ impl WeatherProvider for ConcreteWeatherProvider {
                 fetch_past_partial_report(&request.coordinates, *day_count, attributes)
             }
             RequestKind::CurrentFull => todo!(),
-            RequestKind::CurrentPartial(attributes) => todo!(),
-            RequestKind::ForecastFull(day_count) => todo!(),
-            RequestKind::ForecastPartial(day_count, attributes) => todo!(),
+            RequestKind::CurrentPartial(_attributes) => todo!(),
+            RequestKind::ForecastFull(_day_count) => todo!(),
+            RequestKind::ForecastPartial(_day_count, _attributes) => todo!(),
         }
     }
 }
@@ -43,8 +43,8 @@ fn fetch_past_full_report(
         ("wind_speed_unit", "ms".to_string()),
     ];
     let client = reqwest::blocking::Client::new();
-    let response =
-        client.get("https://api.open-meteo.com/v1/forecast")
+    let response = client
+        .get("https://api.open-meteo.com/v1/forecast")
         .query(&params)
         .send()
         .expect("Failed to fetch weather");
@@ -60,20 +60,22 @@ fn fetch_past_partial_report(
     let params = [
         ("latitude", format!("{}", coordinates.latitude.raw())),
         ("longitude", format!("{}", coordinates.longitude.raw())),
-        ("daily", convert_attributes_to_list(&attributes)),
+        ("daily", convert_attributes_to_list(attributes)),
         ("timezone", "auto".to_string()),
         ("past_days", day_count.to_string()),
         ("forecast_days", 0.to_string()),
         ("wind_speed_unit", "ms".to_string()),
     ];
     let client = reqwest::blocking::Client::new();
-    let response =
-        client.get("https://api.open-meteo.com/v1/forecast")
+    let response = client
+        .get("https://api.open-meteo.com/v1/forecast")
         .query(&params)
         .send()
         .expect("Failed to fetch weather");
     let response: DailyResponse = response.json().expect("Failed to decode");
-    Ok(Report::PastPartial(response.to_daily_partial_report(coordinates, day_count)))
+    Ok(Report::PastPartial(
+        response.to_daily_partial_report(coordinates, day_count),
+    ))
 }
 
 struct ListBuilder {
@@ -149,45 +151,76 @@ struct DailyData {
 
 impl DailyData {
     fn date(&self, day_index: usize) -> Option<Date> {
-        self.time.as_ref().map(|values| convert_date(&values[day_index]))
+        self.time
+            .as_ref()
+            .map(|values| convert_date(&values[day_index]))
     }
     fn weather_kind(&self, day_index: usize) -> Option<Kind> {
-        self.weather_code.as_ref().map(|codes| convert_code_to_weather_kind(codes[day_index]))
+        self.weather_code
+            .as_ref()
+            .map(|codes| convert_code_to_weather_kind(codes[day_index]))
     }
     fn temperature_range(&self, day_index: usize) -> Option<TemperatureRange> {
-        if let (Some(min_values), Some(max_values))= (&self.temperature_2m_min, &self.temperature_2m_max) {
-            Some(TemperatureRange::new_celsius(min_values[day_index], max_values[day_index]))
+        if let (Some(min_values), Some(max_values)) =
+            (&self.temperature_2m_min, &self.temperature_2m_max)
+        {
+            Some(TemperatureRange::new_celsius(
+                min_values[day_index],
+                max_values[day_index],
+            ))
         } else {
             None
         }
     }
     fn cloud_coverage_range(&self, day_index: usize) -> Option<PercentageRange> {
-        if let (Some(min_values), Some(max_values))= (&self.cloud_cover_min, &self.cloud_cover_max) {
-            Some(PercentageRange::new(min_values[day_index] as i8, max_values[day_index] as i8))
+        if let (Some(min_values), Some(max_values)) = (&self.cloud_cover_min, &self.cloud_cover_max)
+        {
+            Some(PercentageRange::new(
+                min_values[day_index] as i8,
+                max_values[day_index] as i8,
+            ))
         } else {
             None
         }
     }
     fn humidity_range(&self, day_index: usize) -> Option<PercentageRange> {
-        if let (Some(min_values), Some(max_values))= (&self.relative_humidity_2m_min, &self.relative_humidity_2m_max) {
-            Some(PercentageRange::new(min_values[day_index] as i8, max_values[day_index] as i8))
+        if let (Some(min_values), Some(max_values)) = (
+            &self.relative_humidity_2m_min,
+            &self.relative_humidity_2m_max,
+        ) {
+            Some(PercentageRange::new(
+                min_values[day_index] as i8,
+                max_values[day_index] as i8,
+            ))
         } else {
             None
         }
     }
     fn wind_speed_range(&self, day_index: usize) -> Option<SpeedRange> {
-        if let (Some(min_values), Some(max_values))= (&self.wind_speed_10m_min, &self.wind_speed_10m_max) {
-            Some(SpeedRange::new_meters_per_second(min_values[day_index], max_values[day_index]))
+        if let (Some(min_values), Some(max_values)) =
+            (&self.wind_speed_10m_min, &self.wind_speed_10m_max)
+        {
+            Some(SpeedRange::new_meters_per_second(
+                min_values[day_index],
+                max_values[day_index],
+            ))
         } else {
             None
         }
     }
     fn wind_direction(&self, day_index: usize) -> Option<Azimuth> {
-        self.wind_direction_10m_dominant.as_ref().map(|values| Azimuth::from(values[day_index]))
+        self.wind_direction_10m_dominant
+            .as_ref()
+            .map(|values| Azimuth::from(values[day_index]))
     }
     fn pressure_range(&self, day_index: usize) -> Option<PressureRange> {
-        if let (Some(min_values), Some(max_values))= (&self.pressure_msl_min, &self.pressure_msl_max) {
-            Some(PressureRange::new_hpa(min_values[day_index], max_values[day_index]))
+        if let (Some(min_values), Some(max_values)) =
+            (&self.pressure_msl_min, &self.pressure_msl_max)
+        {
+            Some(PressureRange::new_hpa(
+                min_values[day_index],
+                max_values[day_index],
+            ))
         } else {
             None
         }
@@ -200,26 +233,47 @@ struct DailyResponse {
 }
 
 impl DailyResponse {
-    fn to_daily_full_report(self, day_count: DayCount) -> DailyFullReport {
+    fn to_daily_full_report(&self, day_count: DayCount) -> DailyFullReport {
         let mut data = Vec::new();
         let day_count: usize = day_count.into();
         for day_index in 0..day_count {
-            let date = self.daily.date(day_index).unwrap_or_else(|| panic!("Missing date at day {day_index}"));
-            let kind = self.daily.weather_kind(day_index).unwrap_or_else(|| panic!("Missing weather kind on day {day_index}"));
-            let temperature_range = self.daily.temperature_range(day_index).unwrap_or_else(|| panic!("Missing temperature on day {day_index}"));
-            let cloud_coverage_range = self.daily.cloud_coverage_range(day_index).unwrap_or_else(|| panic!("Missing cloud coverage on day {day_index}"));
-            let humidity_range = self.daily.humidity_range(day_index).unwrap_or_else(|| panic!("Missing humidity on day {day_index}"));
+            let date = self
+                .daily
+                .date(day_index)
+                .unwrap_or_else(|| panic!("Missing date at day {day_index}"));
+            let kind = self
+                .daily
+                .weather_kind(day_index)
+                .unwrap_or_else(|| panic!("Missing weather kind on day {day_index}"));
+            let temperature_range = self
+                .daily
+                .temperature_range(day_index)
+                .unwrap_or_else(|| panic!("Missing temperature on day {day_index}"));
+            let cloud_coverage_range = self
+                .daily
+                .cloud_coverage_range(day_index)
+                .unwrap_or_else(|| panic!("Missing cloud coverage on day {day_index}"));
+            let humidity_range = self
+                .daily
+                .humidity_range(day_index)
+                .unwrap_or_else(|| panic!("Missing humidity on day {day_index}"));
             let wind = {
-                let speed_range = self.daily.wind_speed_range(day_index)
+                let speed_range = self
+                    .daily
+                    .wind_speed_range(day_index)
                     .unwrap_or_else(|| panic!("Missing wind speed on day {day_index}"));
-                let dominant_direction = self.daily.wind_direction(day_index)
+                let dominant_direction = self
+                    .daily
+                    .wind_direction(day_index)
                     .unwrap_or_else(|| panic!("Missing wind direction on day {day_index}"));
                 WindScope {
                     speed_range,
                     dominant_direction,
                 }
             };
-            let pressure_range = self.daily.pressure_range(day_index)
+            let pressure_range = self
+                .daily
+                .pressure_range(day_index)
                 .unwrap_or_else(|| panic!("Missing pressure on day {day_index}"));
             let daily_data = DailyFullData {
                 date,
@@ -235,24 +289,29 @@ impl DailyResponse {
         DailyFullReport { data }
     }
 
-    fn to_daily_partial_report(self, coordinates: &Coordinates, day_count: DayCount) -> DailyPartialReport {
+    fn to_daily_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        day_count: DayCount,
+    ) -> DailyPartialReport {
         let mut data = Vec::new();
         let day_count: usize = day_count.into();
         for day_index in 0..day_count {
-            let date = self.daily.date(day_index).unwrap_or_else(|| panic!("Missing date at day {day_index}"));
+            let date = self
+                .daily
+                .date(day_index)
+                .unwrap_or_else(|| panic!("Missing date at day {day_index}"));
             let wind = {
                 let speed = self.daily.wind_speed_range(day_index);
                 let direction = self.daily.wind_direction(day_index);
                 match (speed, direction) {
-                    (Some(speed_range), Some(dominant_direction)) => {
-                        Some(WindScope {
-                            speed_range,
-                            dominant_direction,
-                        })
-                    }
+                    (Some(speed_range), Some(dominant_direction)) => Some(WindScope {
+                        speed_range,
+                        dominant_direction,
+                    }),
                     (None, Some(_)) => panic!("Missing wind speed on day {day_index}"),
                     (Some(_), None) => panic!("Missing wind direction on day {day_index}"),
-                    _ => None
+                    _ => None,
                 }
             };
             let daily_data = DailyPartialData {
@@ -266,7 +325,10 @@ impl DailyResponse {
             };
             data.push(daily_data);
         }
-        DailyPartialReport { coordinates: *coordinates, data }
+        DailyPartialReport {
+            coordinates: *coordinates,
+            data,
+        }
     }
 }
 
@@ -315,7 +377,7 @@ fn convert_code_to_weather_kind(code: u8) -> Kind {
             let intensity = match code {
                 71 => PrecipitationIntensity::Light,
                 73 => PrecipitationIntensity::Moderate,
-                75 | 85  => PrecipitationIntensity::Heavy,
+                75 | 85 => PrecipitationIntensity::Heavy,
                 86 => PrecipitationIntensity::Shower,
                 _ => panic!("Unknown weather code '{code}'"),
             };
@@ -544,7 +606,10 @@ mod tests {
         );
         assert_eq!(day1.cloud_coverage_range, PercentageRange::new(11, 21));
         assert_eq!(day1.humidity_range, PercentageRange::new(31, 41));
-        assert_eq!(day1.wind.speed_range, SpeedRange::new_meters_per_second(31.1, 41.1));
+        assert_eq!(
+            day1.wind.speed_range,
+            SpeedRange::new_meters_per_second(31.1, 41.1)
+        );
         assert_eq!(day1.wind.dominant_direction, Azimuth::from(90.1));
         assert_eq!(day1.pressure_range, PressureRange::new_hpa(1001.1, 1011.1));
 
@@ -556,7 +621,10 @@ mod tests {
         );
         assert_eq!(day2.cloud_coverage_range, PercentageRange::new(12, 22));
         assert_eq!(day2.humidity_range, PercentageRange::new(32, 42));
-        assert_eq!(day2.wind.speed_range, SpeedRange::new_meters_per_second(32.2, 42.2));
+        assert_eq!(
+            day2.wind.speed_range,
+            SpeedRange::new_meters_per_second(32.2, 42.2)
+        );
         assert_eq!(day2.wind.dominant_direction, Azimuth::from(180.2));
         assert_eq!(day2.pressure_range, PressureRange::new_hpa(1002.2, 1012.2));
 
@@ -568,7 +636,10 @@ mod tests {
         );
         assert_eq!(day3.cloud_coverage_range, PercentageRange::new(13, 23));
         assert_eq!(day3.humidity_range, PercentageRange::new(33, 43));
-        assert_eq!(day3.wind.speed_range, SpeedRange::new_meters_per_second(33.3, 43.3));
+        assert_eq!(
+            day3.wind.speed_range,
+            SpeedRange::new_meters_per_second(33.3, 43.3)
+        );
         assert_eq!(day3.wind.dominant_direction, Azimuth::from(270.3));
         assert_eq!(day3.pressure_range, PressureRange::new_hpa(1003.3, 1013.3));
     }
@@ -597,7 +668,9 @@ mod tests {
         expect_panic(generate_daily_response_without!(relative_humidity_2m_max));
         expect_panic(generate_daily_response_without!(wind_speed_10m_min));
         expect_panic(generate_daily_response_without!(wind_speed_10m_max));
-        expect_panic(generate_daily_response_without!(wind_direction_10m_dominant));
+        expect_panic(generate_daily_response_without!(
+            wind_direction_10m_dominant
+        ));
         expect_panic(generate_daily_response_without!(pressure_msl_min));
         expect_panic(generate_daily_response_without!(pressure_msl_min));
     }
@@ -614,15 +687,22 @@ mod tests {
             day1.temperature_range,
             Some(TemperatureRange::new_celsius(11.1, 21.1))
         );
-        assert_eq!(day1.cloud_coverage_range, Some(PercentageRange::new(11, 21)));
+        assert_eq!(
+            day1.cloud_coverage_range,
+            Some(PercentageRange::new(11, 21))
+        );
         assert_eq!(day1.humidity_range, Some(PercentageRange::new(31, 41)));
         assert_eq!(
             day1.wind,
             Some(WindScope {
                 speed_range: SpeedRange::new_meters_per_second(31.1, 41.1),
                 dominant_direction: Azimuth::from(90.1),
-            }));
-        assert_eq!(day1.pressure_range, Some(PressureRange::new_hpa(1001.1, 1011.1)));
+            })
+        );
+        assert_eq!(
+            day1.pressure_range,
+            Some(PressureRange::new_hpa(1001.1, 1011.1))
+        );
 
         let day2 = &report.data[1];
         assert_eq!(day2.kind, Some(Kind::Clouds(Clouds::Moderate)));
@@ -630,15 +710,22 @@ mod tests {
             day2.temperature_range,
             Some(TemperatureRange::new_celsius(12.2, 22.2))
         );
-        assert_eq!(day2.cloud_coverage_range, Some(PercentageRange::new(12, 22)));
+        assert_eq!(
+            day2.cloud_coverage_range,
+            Some(PercentageRange::new(12, 22))
+        );
         assert_eq!(day2.humidity_range, Some(PercentageRange::new(32, 42)));
         assert_eq!(
             day2.wind,
             Some(WindScope {
                 speed_range: SpeedRange::new_meters_per_second(32.2, 42.2),
                 dominant_direction: Azimuth::from(180.2),
-            }));
-        assert_eq!(day2.pressure_range, Some(PressureRange::new_hpa(1002.2, 1012.2)));
+            })
+        );
+        assert_eq!(
+            day2.pressure_range,
+            Some(PressureRange::new_hpa(1002.2, 1012.2))
+        );
 
         let day3 = &report.data[2];
         assert_eq!(day3.kind, Some(Kind::Clouds(Clouds::Light)));
@@ -646,14 +733,21 @@ mod tests {
             day3.temperature_range,
             Some(TemperatureRange::new_celsius(13.3, 23.3))
         );
-        assert_eq!(day3.cloud_coverage_range, Some(PercentageRange::new(13, 23)));
+        assert_eq!(
+            day3.cloud_coverage_range,
+            Some(PercentageRange::new(13, 23))
+        );
         assert_eq!(day3.humidity_range, Some(PercentageRange::new(33, 43)));
         assert_eq!(
             day3.wind,
             Some(WindScope {
                 speed_range: SpeedRange::new_meters_per_second(33.3, 43.3),
                 dominant_direction: Azimuth::from(270.3),
-            }));
-        assert_eq!(day3.pressure_range, Some(PressureRange::new_hpa(1003.3, 1013.3)));
+            })
+        );
+        assert_eq!(
+            day3.pressure_range,
+            Some(PressureRange::new_hpa(1003.3, 1013.3))
+        );
     }
 }
