@@ -1,0 +1,39 @@
+{
+  "latitude": 51.1,
+  "longitude": 17.039999,
+  "generationtime_ms": 0.25177001953125,
+  "utc_offset_seconds": 7200,
+  "timezone": "Europe/Warsaw",
+  "timezone_abbreviation": "GMT+2",
+  "elevation": 123,
+  "daily_units": {
+    "time": "iso8601",
+    "wind_direction_10m_dominant": "°",
+    "cloud_cover_max": "%",
+    "wind_speed_10m_max": "m/s",
+    "cloud_cover_min": "%",
+    "pressure_msl_max": "hPa",
+    "pressure_msl_min": "hPa",
+    "relative_humidity_2m_max": "%",
+    "relative_humidity_2m_min": "%",
+    "wind_speed_10m_min": "m/s",
+    "weather_code": "wmo code",
+    "temperature_2m_max": "°C",
+    "temperature_2m_min": "°C"
+  },
+  "daily": {
+    "time": [
+      "2025-09-01",
+      "2025-09-02",
+      "2025-09-03",
+      "2025-09-04"
+    ],
+    "wind_direction_10m_dominant": [124, 276, 174, 138],
+    "wind_speed_10m_max": [3.64, 4.94, 2.86, 2.51],
+    "wind_speed_10m_min": [0.71, 0.22, 0.28, 0.98],
+    "relative_humidity_2m_max": [90, 90, 95, 98],
+    "relative_humidity_2m_min": [41, 56, 41, 31],
+    "pressure_msl_max": [1012.7, 1012.5, 1015.4, 1015.9],
+    "pressure_msl_min": [1008.6, 1008.1, 1012.9, 1014]
+  }
+}
