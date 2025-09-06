@@ -1,5 +1,5 @@
-mod fake_weather;
 mod geolocation;
+mod weather;
 
-pub use fake_weather::FakeWeatherProvider;
 pub use geolocation::ConcreteGeolocationProvider;
+pub use weather::ConcreteWeatherProvider;
