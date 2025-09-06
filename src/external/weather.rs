@@ -558,7 +558,7 @@ mod tests {
                 time: Some(vec![
                     "2025-09-01".into(),
                     "2025-09-02".into(),
-                    "2025-09-01".into(),
+                    "2025-09-03".into(),
                 ]),
                 weather_code: Some(vec![3, 2, 1]),
                 temperature_2m_min: Some(vec![11.1, 12.2, 13.3]),
@@ -580,50 +580,47 @@ mod tests {
     fn converts_daily_response_to_daily_full_report() {
         let response = generate_daily_response();
         let report = response.to_daily_full_report(3);
-        let day1 = &report.data[0];
-        assert_eq!(day1.kind, Kind::Clouds(Clouds::Dense));
-        assert_eq!(
-            day1.temperature_range,
-            TemperatureRange::new_celsius(11.1, 21.1)
-        );
-        assert_eq!(day1.cloud_coverage_range, PercentageRange::new(11, 21));
-        assert_eq!(day1.humidity_range, PercentageRange::new(31, 41));
-        assert_eq!(
-            day1.wind.speed_range,
-            SpeedRange::new_meters_per_second(31.1, 41.1)
-        );
-        assert_eq!(day1.wind.dominant_direction, Azimuth::from(90.1));
-        assert_eq!(day1.pressure_range, PressureRange::new_hpa(1001.1, 1011.1));
+        let expected_day0 = DailyFullData {
+            date: Date::from_ymd_opt(2025, 9, 1).unwrap(),
+            kind: Kind::Clouds(Clouds::Dense),
+            temperature_range: TemperatureRange::new_celsius(11.1, 21.1),
+            cloud_coverage_range: PercentageRange::new(11, 21),
+            humidity_range: PercentageRange::new(31, 41),
+            wind: WindScope {
+                speed_range: SpeedRange::new_meters_per_second(31.1, 41.1),
+                dominant_direction: Azimuth::from(90.1),
+            },
+            pressure_range: PressureRange::new_hpa(1001.1, 1011.1),
+        };
+        assert_eq!(report.data[0], expected_day0);
 
-        let day2 = &report.data[1];
-        assert_eq!(day2.kind, Kind::Clouds(Clouds::Moderate));
-        assert_eq!(
-            day2.temperature_range,
-            TemperatureRange::new_celsius(12.2, 22.2)
-        );
-        assert_eq!(day2.cloud_coverage_range, PercentageRange::new(12, 22));
-        assert_eq!(day2.humidity_range, PercentageRange::new(32, 42));
-        assert_eq!(
-            day2.wind.speed_range,
-            SpeedRange::new_meters_per_second(32.2, 42.2)
-        );
-        assert_eq!(day2.wind.dominant_direction, Azimuth::from(180.2));
-        assert_eq!(day2.pressure_range, PressureRange::new_hpa(1002.2, 1012.2));
+        let expected_day1 = DailyFullData {
+            date: Date::from_ymd_opt(2025, 9, 2).unwrap(),
+            kind: Kind::Clouds(Clouds::Moderate),
+            temperature_range: TemperatureRange::new_celsius(12.2, 22.2),
+            cloud_coverage_range: PercentageRange::new(12, 22),
+            humidity_range: PercentageRange::new(32, 42),
+            wind: WindScope {
+                speed_range: SpeedRange::new_meters_per_second(32.2, 42.2),
+                dominant_direction: Azimuth::from(180.2),
+            },
+            pressure_range: PressureRange::new_hpa(1002.2, 1012.2),
+        };
+        assert_eq!(report.data[1], expected_day1);
 
-        let day3 = &report.data[2];
-        assert_eq!(day3.kind, Kind::Clouds(Clouds::Light));
-        assert_eq!(
-            day3.temperature_range,
-            TemperatureRange::new_celsius(13.3, 23.3)
-        );
-        assert_eq!(day3.cloud_coverage_range, PercentageRange::new(13, 23));
-        assert_eq!(day3.humidity_range, PercentageRange::new(33, 43));
-        assert_eq!(
-            day3.wind.speed_range,
-            SpeedRange::new_meters_per_second(33.3, 43.3)
-        );
-        assert_eq!(day3.wind.dominant_direction, Azimuth::from(270.3));
-        assert_eq!(day3.pressure_range, PressureRange::new_hpa(1003.3, 1013.3));
+        let expected_day2 = DailyFullData {
+            date: Date::from_ymd_opt(2025, 9, 3).unwrap(),
+            kind: Kind::Clouds(Clouds::Light),
+            temperature_range: TemperatureRange::new_celsius(13.3, 23.3),
+            cloud_coverage_range: PercentageRange::new(13, 23),
+            humidity_range: PercentageRange::new(33, 43),
+            wind: WindScope {
+                speed_range: SpeedRange::new_meters_per_second(33.3, 43.3),
+                dominant_direction: Azimuth::from(270.3),
+            },
+            pressure_range: PressureRange::new_hpa(1003.3, 1013.3),
+        };
+        assert_eq!(report.data[2], expected_day2);
     }
 
     macro_rules! generate_daily_response_without {
@@ -663,73 +660,97 @@ mod tests {
         let coordinates = Coordinates::new(1.23, 45.67);
         let report = response.to_daily_partial_report(&coordinates, 3);
 
-        let day1 = &report.data[0];
-        assert_eq!(day1.kind, Some(Kind::Clouds(Clouds::Dense)));
-        assert_eq!(
-            day1.temperature_range,
-            Some(TemperatureRange::new_celsius(11.1, 21.1))
-        );
-        assert_eq!(
-            day1.cloud_coverage_range,
-            Some(PercentageRange::new(11, 21))
-        );
-        assert_eq!(day1.humidity_range, Some(PercentageRange::new(31, 41)));
-        assert_eq!(
-            day1.wind,
-            Some(WindScope {
+        assert_eq!(report.coordinates, coordinates);
+
+        let expected_day0 = DailyPartialData {
+            date: Date::from_ymd_opt(2025, 9, 1).unwrap(),
+            kind: Some(Kind::Clouds(Clouds::Dense)),
+            temperature_range: Some(TemperatureRange::new_celsius(11.1, 21.1)),
+            cloud_coverage_range: Some(PercentageRange::new(11, 21)),
+            humidity_range: Some(PercentageRange::new(31, 41)),
+            wind: Some(WindScope {
                 speed_range: SpeedRange::new_meters_per_second(31.1, 41.1),
                 dominant_direction: Azimuth::from(90.1),
-            })
-        );
-        assert_eq!(
-            day1.pressure_range,
-            Some(PressureRange::new_hpa(1001.1, 1011.1))
-        );
+            }),
+            pressure_range: Some(PressureRange::new_hpa(1001.1, 1011.1)),
+        };
+        assert_eq!(report.data[0], expected_day0);
 
-        let day2 = &report.data[1];
-        assert_eq!(day2.kind, Some(Kind::Clouds(Clouds::Moderate)));
-        assert_eq!(
-            day2.temperature_range,
-            Some(TemperatureRange::new_celsius(12.2, 22.2))
-        );
-        assert_eq!(
-            day2.cloud_coverage_range,
-            Some(PercentageRange::new(12, 22))
-        );
-        assert_eq!(day2.humidity_range, Some(PercentageRange::new(32, 42)));
-        assert_eq!(
-            day2.wind,
-            Some(WindScope {
+        let expected_day1 = DailyPartialData {
+            date: Date::from_ymd_opt(2025, 9, 2).unwrap(),
+            kind: Some(Kind::Clouds(Clouds::Moderate)),
+            temperature_range: Some(TemperatureRange::new_celsius(12.2, 22.2)),
+            cloud_coverage_range: Some(PercentageRange::new(12, 22)),
+            humidity_range: Some(PercentageRange::new(32, 42)),
+            wind: Some(WindScope {
                 speed_range: SpeedRange::new_meters_per_second(32.2, 42.2),
                 dominant_direction: Azimuth::from(180.2),
-            })
-        );
-        assert_eq!(
-            day2.pressure_range,
-            Some(PressureRange::new_hpa(1002.2, 1012.2))
-        );
+            }),
+            pressure_range: Some(PressureRange::new_hpa(1002.2, 1012.2)),
+        };
+        assert_eq!(report.data[1], expected_day1);
 
-        let day3 = &report.data[2];
-        assert_eq!(day3.kind, Some(Kind::Clouds(Clouds::Light)));
-        assert_eq!(
-            day3.temperature_range,
-            Some(TemperatureRange::new_celsius(13.3, 23.3))
-        );
-        assert_eq!(
-            day3.cloud_coverage_range,
-            Some(PercentageRange::new(13, 23))
-        );
-        assert_eq!(day3.humidity_range, Some(PercentageRange::new(33, 43)));
-        assert_eq!(
-            day3.wind,
-            Some(WindScope {
+        let expected_day2 = DailyPartialData {
+            date: Date::from_ymd_opt(2025, 9, 3).unwrap(),
+            kind: Some(Kind::Clouds(Clouds::Light)),
+            temperature_range: Some(TemperatureRange::new_celsius(13.3, 23.3)),
+            cloud_coverage_range: Some(PercentageRange::new(13, 23)),
+            humidity_range: Some(PercentageRange::new(33, 43)),
+            wind: Some(WindScope {
                 speed_range: SpeedRange::new_meters_per_second(33.3, 43.3),
                 dominant_direction: Azimuth::from(270.3),
-            })
-        );
-        assert_eq!(
-            day3.pressure_range,
-            Some(PressureRange::new_hpa(1003.3, 1013.3))
-        );
+            }),
+            pressure_range: Some(PressureRange::new_hpa(1003.3, 1013.3)),
+        };
+        assert_eq!(report.data[2], expected_day2);
+    }
+
+    #[test]
+    fn converts_daily_response_to_daily_partial_report_with_some_parameters() {
+        let mut response = generate_daily_response();
+        response.daily.wind_direction_10m_dominant = None;
+        response.daily.wind_speed_10m_min = None;
+        response.daily.wind_speed_10m_max = None;
+        response.daily.temperature_2m_min = None;
+        response.daily.temperature_2m_max = None;
+        response.daily.cloud_cover_min = None;
+        response.daily.cloud_cover_max = None;
+        let coordinates = Coordinates::new(1.23, 45.67);
+        let report = response.to_daily_partial_report(&coordinates, 3);
+
+        assert_eq!(report.coordinates, coordinates);
+
+        let expected_day0 = DailyPartialData {
+            date: Date::from_ymd_opt(2025, 9, 1).unwrap(),
+            kind: Some(Kind::Clouds(Clouds::Dense)),
+            temperature_range: None,
+            cloud_coverage_range: None,
+            humidity_range: Some(PercentageRange::new(31, 41)),
+            wind: None,
+            pressure_range: Some(PressureRange::new_hpa(1001.1, 1011.1)),
+        };
+        assert_eq!(report.data[0], expected_day0);
+
+        let expected_day1 = DailyPartialData {
+            date: Date::from_ymd_opt(2025, 9, 2).unwrap(),
+            kind: Some(Kind::Clouds(Clouds::Moderate)),
+            temperature_range: None,
+            cloud_coverage_range: None,
+            humidity_range: Some(PercentageRange::new(32, 42)),
+            wind: None,
+            pressure_range: Some(PressureRange::new_hpa(1002.2, 1012.2)),
+        };
+        assert_eq!(report.data[1], expected_day1);
+
+        let expected_day2 = DailyPartialData {
+            date: Date::from_ymd_opt(2025, 9, 3).unwrap(),
+            kind: Some(Kind::Clouds(Clouds::Light)),
+            temperature_range: None,
+            cloud_coverage_range: None,
+            humidity_range: Some(PercentageRange::new(33, 43)),
+            wind: None,
+            pressure_range: Some(PressureRange::new_hpa(1003.3, 1013.3)),
+        };
+        assert_eq!(report.data[2], expected_day2);
     }
 }
