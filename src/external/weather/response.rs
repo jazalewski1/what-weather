@@ -271,6 +271,17 @@ impl CurrentResponse {
             pressure,
         }
     }
+    pub fn to_current_partial_report(&self, coordinates: &Coordinates) -> CurrentPartialReport {
+        CurrentPartialReport {
+            coordinates: *coordinates,
+            kind: self.current.weather_kind(),
+            temperature: self.current.temperature(),
+            cloud_coverage: self.current.cloud_coverage(),
+            humidity: self.current.humidity(),
+            wind: self.current.wind(),
+            pressure: self.current.pressure(),
+        }
+    }
 }
 
 fn convert_date(input: &str) -> Date {
@@ -563,6 +574,27 @@ mod tests {
         expect_panic(generate_current_response_without!(wind_speed_10m));
         expect_panic(generate_current_response_without!(wind_direction_10m));
         expect_panic(generate_current_response_without!(pressure_msl));
+    }
+
+    #[test]
+    fn converts_current_response_to_current_partial_report() {
+        let coordinates = Coordinates::new(1.23, 45.67);
+        let mut response = generate_current_response();
+        response.current.weather_code = None;
+        response.current.relative_humidity_2m = None;
+        response.current.wind_speed_10m = None;
+        response.current.wind_direction_10m = None;
+        let report = response.to_current_partial_report(&coordinates);
+        let expected = CurrentPartialReport {
+            coordinates,
+            kind: None,
+            temperature: Some(Temperature::new_celsius(12.3)),
+            cloud_coverage: Some(Percentage::from(23)),
+            humidity: None,
+            wind: None,
+            pressure: Some(Pressure::new_hpa(1012.3)),
+        };
+        assert_eq!(report, expected);
     }
 
     fn generate_daily_response() -> DailyResponse {
