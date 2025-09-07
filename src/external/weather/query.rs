@@ -6,6 +6,7 @@ mod keys {
     pub const LATITUDE: &str = "latitude";
     pub const LONGITUDE: &str = "longitude";
     pub const DAILY: &str = "daily";
+    pub const CURRENT: &str = "current";
     pub const PAST_DAYS: &str = "past_days";
     pub const FORECAST_DAYS: &str = "forecast_days";
     pub const TIMEZONE: &str = "timezone";
@@ -28,6 +29,19 @@ pub fn build_past_params(
         make_param(keys::DAILY, build_daily_attribute_list(attributes.iter())),
         make_param(keys::PAST_DAYS, day_count),
         make_param(keys::FORECAST_DAYS, 0),
+        make_param(keys::TIMEZONE, values::TZ_AUTO),
+        make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+    ]
+}
+
+pub fn build_current_params(coordinates: &Coordinates, attributes: &WeatherAttributeSet) -> Params {
+    vec![
+        make_param(keys::LATITUDE, coordinates.latitude.raw()),
+        make_param(keys::LONGITUDE, coordinates.longitude.raw()),
+        make_param(
+            keys::CURRENT,
+            build_current_attribute_list(attributes.iter()),
+        ),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
         make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
     ]
@@ -88,10 +102,45 @@ where
     variables.join(",")
 }
 
+fn build_current_attribute_list<I, T>(attribute_iter: I) -> String
+where
+    I: IntoIterator<Item = T>,
+    T: std::borrow::Borrow<WeatherAttribute>,
+{
+    let mut variables = Vec::new();
+    for attribute in attribute_iter {
+        match attribute.borrow() {
+            WeatherAttribute::WeatherKind => variables.push("weather_code"),
+            WeatherAttribute::Temperature => variables.push("temperature_2m"),
+            WeatherAttribute::CloudCoverage => variables.push("cloud_cover"),
+            WeatherAttribute::Humidity => variables.push("relative_humidity_2m"),
+            WeatherAttribute::Wind => {
+                variables.push("wind_speed_10m");
+                variables.push("wind_direction_10m");
+            }
+            WeatherAttribute::Pressure => variables.push("pressure_msl"),
+        }
+    }
+    variables.join(",")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use strum::IntoEnumIterator;
+
+    #[test]
+    fn builds_list_with_current_attributes() {
+        let result = build_current_attribute_list(WeatherAttribute::iter());
+        let expected = "weather_code\
+                        ,temperature_2m\
+                        ,cloud_cover\
+                        ,relative_humidity_2m\
+                        ,wind_speed_10m\
+                        ,wind_direction_10m\
+                        ,pressure_msl";
+        assert_eq!(result, expected);
+    }
 
     #[test]
     fn builds_list_with_daily_attributes() {
@@ -169,6 +218,24 @@ mod tests {
             ParamMatcher::any("daily"),
             ParamMatcher::some("past_days", "3"),
             ParamMatcher::some("forecast_days", "0"),
+            ParamMatcher::some("timezone", "auto"),
+            ParamMatcher::some("wind_speed_unit", "ms"),
+        ];
+        assert!(matches(&result, expected));
+    }
+
+    #[test]
+    fn builds_params_for_current_query() {
+        let coordinates = Coordinates::new(1.23, 45.67);
+        let attributes =
+            WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
+        let result = build_current_params(&coordinates, &attributes);
+
+        use utils::*;
+        let expected = vec![
+            ParamMatcher::some("latitude", "1.23"),
+            ParamMatcher::some("longitude", "45.67"),
+            ParamMatcher::any("current"),
             ParamMatcher::some("timezone", "auto"),
             ParamMatcher::some("wind_speed_unit", "ms"),
         ];
