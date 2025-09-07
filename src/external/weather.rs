@@ -28,7 +28,11 @@ impl WeatherProvider for ConcreteWeatherProvider {
                 let inner = resp.to_daily_partial_report(&request.coordinates, *day_count);
                 Ok(Report::PastPartial(inner))
             }
-            RequestKind::CurrentFull => todo!(),
+            RequestKind::CurrentFull => {
+                let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
+                let _params = query::build_current_params(&request.coordinates, &attributes);
+                todo!();
+            }
             RequestKind::CurrentPartial(_attributes) => todo!(),
             RequestKind::ForecastFull(day_count) => {
                 let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
