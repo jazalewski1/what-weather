@@ -197,6 +197,82 @@ impl DailyResponse {
     }
 }
 
+#[derive(Clone, Deserialize, Debug)]
+struct CurrentData {
+    weather_code: Option<u8>,
+    temperature_2m: Option<f32>,
+    cloud_cover: Option<u8>,
+    relative_humidity_2m: Option<u8>,
+    wind_speed_10m: Option<f32>,
+    wind_direction_10m: Option<f32>,
+    pressure_msl: Option<f32>,
+}
+
+impl CurrentData {
+    fn weather_kind(&self) -> Option<Kind> {
+        self.weather_code.map(convert_code_to_weather_kind)
+    }
+    fn temperature(&self) -> Option<Temperature> {
+        self.temperature_2m.map(Temperature::new_celsius)
+    }
+    fn cloud_coverage(&self) -> Option<Percentage> {
+        self.cloud_cover.map(|value| Percentage::from(value as i8))
+    }
+    fn humidity(&self) -> Option<Percentage> {
+        self.relative_humidity_2m
+            .map(|value| Percentage::from(value as i8))
+    }
+    fn wind(&self) -> Option<Wind> {
+        match (self.wind_speed_10m, self.wind_direction_10m) {
+            (Some(speed), Some(direction)) => {
+                let speed = Speed::new_meters_per_second(speed);
+                let direction = Azimuth::from(direction);
+                Some(Wind { speed, direction })
+            }
+            (None, Some(_)) => panic!("Missing wind speed"),
+            (Some(_), None) => panic!("Missing wind direction"),
+            _ => None,
+        }
+    }
+    fn pressure(&self) -> Option<Pressure> {
+        self.pressure_msl.map(Pressure::new_hpa)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct CurrentResponse {
+    current: CurrentData,
+}
+impl CurrentResponse {
+    pub fn to_current_full_report(&self) -> CurrentFullReport {
+        let data = &self.current;
+        let kind = data
+            .weather_kind()
+            .unwrap_or_else(|| panic!("Missing weather code"));
+        let temperature = data
+            .temperature()
+            .unwrap_or_else(|| panic!("Missing temperature"));
+        let cloud_coverage = data
+            .cloud_coverage()
+            .unwrap_or_else(|| panic!("Missing cloud cover"));
+        let humidity = data
+            .humidity()
+            .unwrap_or_else(|| panic!("Missing humidity"));
+        let wind = data.wind().unwrap_or_else(|| panic!("Missing wind"));
+        let pressure = data
+            .pressure()
+            .unwrap_or_else(|| panic!("Missing pressure"));
+        CurrentFullReport {
+            kind,
+            temperature,
+            cloud_coverage,
+            humidity,
+            wind,
+            pressure,
+        }
+    }
+}
+
 fn convert_date(input: &str) -> Date {
     Date::parse_from_str(input, "%Y-%m-%d").expect("Failed to parse date")
 }
@@ -433,6 +509,60 @@ mod tests {
         assert!(result.is_err());
         let result = std::panic::catch_unwind(|| convert_code_to_weather_kind(100));
         assert!(result.is_err());
+    }
+
+    fn generate_current_response() -> CurrentResponse {
+        let current = CurrentData {
+            weather_code: Some(1),
+            temperature_2m: Some(12.3),
+            cloud_cover: Some(23),
+            relative_humidity_2m: Some(34),
+            wind_speed_10m: Some(1.23),
+            wind_direction_10m: Some(90.0),
+            pressure_msl: Some(1012.3),
+        };
+        CurrentResponse { current }
+    }
+
+    macro_rules! generate_current_response_without {
+        ($field_to_skip:ident) => {{
+            let mut response = generate_current_response();
+            response.current.$field_to_skip = None;
+            response
+        }};
+    }
+
+    #[test]
+    fn converts_current_response_to_current_full_report() {
+        let response = generate_current_response();
+        let report = response.to_current_full_report();
+        let expected = CurrentFullReport {
+            kind: Kind::Clouds(Clouds::Light),
+            temperature: Temperature::new_celsius(12.3),
+            cloud_coverage: Percentage::from(23),
+            humidity: Percentage::from(34),
+            wind: Wind {
+                speed: Speed::new_meters_per_second(1.23),
+                direction: Azimuth::from(90.0),
+            },
+            pressure: Pressure::new_hpa(1012.3),
+        };
+        assert_eq!(report, expected);
+    }
+
+    #[test]
+    fn fails_to_convert_to_current_full_report_when_any_param_is_missing() {
+        let expect_panic = |response: CurrentResponse| {
+            let result = std::panic::catch_unwind(|| response.to_current_full_report());
+            assert!(result.is_err());
+        };
+        expect_panic(generate_current_response_without!(weather_code));
+        expect_panic(generate_current_response_without!(temperature_2m));
+        expect_panic(generate_current_response_without!(cloud_cover));
+        expect_panic(generate_current_response_without!(relative_humidity_2m));
+        expect_panic(generate_current_response_without!(wind_speed_10m));
+        expect_panic(generate_current_response_without!(wind_direction_10m));
+        expect_panic(generate_current_response_without!(pressure_msl));
     }
 
     fn generate_daily_response() -> DailyResponse {
