@@ -2,19 +2,34 @@ use super::connection::Params;
 use crate::types::attributes::*;
 use crate::types::units::Coordinates;
 
+mod keys {
+    pub const LATITUDE: &str = "latitude";
+    pub const LONGITUDE: &str = "longitude";
+    pub const DAILY: &str = "daily";
+    pub const PAST_DAYS: &str = "past_days";
+    pub const FORECAST_DAYS: &str = "forecast_days";
+    pub const TIMEZONE: &str = "timezone";
+    pub const WIND_SPEED_UNIT: &str = "wind_speed_unit";
+}
+
+mod values {
+    pub const TZ_AUTO: &str = "auto";
+    pub const METERS_PER_SECOND: &str = "ms";
+}
+
 pub fn build_past_params(
     coordinates: &Coordinates,
     day_count: u8,
     attributes: &WeatherAttributeSet,
 ) -> Params {
     vec![
-        ("latitude".into(), coordinates.latitude.raw().to_string()),
-        ("longitude".into(), coordinates.longitude.raw().to_string()),
-        ("daily".into(), build_daily_attribute_list(attributes)),
-        ("past_days".into(), day_count.to_string()),
-        ("forecast_days".into(), 0.to_string()),
-        ("timezone".into(), "auto".to_string()),
-        ("wind_speed_unit".into(), "ms".to_string()),
+        make_param(keys::LATITUDE, coordinates.latitude.raw()),
+        make_param(keys::LONGITUDE, coordinates.longitude.raw()),
+        make_param(keys::DAILY, build_daily_attribute_list(attributes)),
+        make_param(keys::PAST_DAYS, day_count),
+        make_param(keys::FORECAST_DAYS, 0),
+        make_param(keys::TIMEZONE, values::TZ_AUTO),
+        make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
     ]
 }
 
@@ -24,14 +39,18 @@ pub fn build_forecast_params(
     attributes: &WeatherAttributeSet,
 ) -> Params {
     vec![
-        ("latitude".into(), coordinates.latitude.raw().to_string()),
-        ("longitude".into(), coordinates.longitude.raw().to_string()),
-        ("daily".into(), build_daily_attribute_list(attributes)),
-        ("past_days".into(), 0.to_string()),
-        ("forecast_days".into(), day_count.to_string()),
-        ("timezone".into(), "auto".to_string()),
-        ("wind_speed_unit".into(), "ms".to_string()),
+        make_param(keys::LATITUDE, coordinates.latitude.raw()),
+        make_param(keys::LONGITUDE, coordinates.longitude.raw()),
+        make_param(keys::DAILY, build_daily_attribute_list(attributes)),
+        make_param(keys::PAST_DAYS, 0),
+        make_param(keys::FORECAST_DAYS, day_count),
+        make_param(keys::TIMEZONE, values::TZ_AUTO),
+        make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
     ]
+}
+
+fn make_param<T: std::fmt::Display>(key: &str, value: T) -> (String, String) {
+    (key.into(), value.to_string())
 }
 
 struct ListBuilder {
@@ -57,7 +76,7 @@ impl ListBuilder {
     }
 }
 
-pub fn build_daily_attribute_list(attributes: &WeatherAttributeSet) -> String {
+fn build_daily_attribute_list(attributes: &WeatherAttributeSet) -> String {
     let mut builder = ListBuilder::new();
     for attribute in attributes {
         match attribute {
