@@ -5,17 +5,16 @@ use crate::types::units::*;
 use crate::types::weather::*;
 
 pub fn describe(report: &DailyFullReport) -> String {
-    let mut data_iter = report.data.iter();
     let mut result = String::new();
-    if let Some(data) = data_iter.next() {
-        let date_desc = String::from("Yesterday");
-        let day_summary = describe_day(date_desc, data);
-        result.push_str(&day_summary);
-    }
-    for data in data_iter {
+    for data in report.data.iter().rev().skip(1).rev() {
         let date_desc = describe_date(&data.date);
         let day_summary = describe_day(date_desc, data);
+        result.push_str(&day_summary);
         result.push('\n');
+    }
+    if let Some(data) = report.data.last() {
+        let date_desc = String::from("Yesterday");
+        let day_summary = describe_day(date_desc, data);
         result.push_str(&day_summary);
     }
     result
@@ -220,7 +219,7 @@ mod tests {
     }
 
     fn generate_report_for_3_days() -> DailyFullReport {
-        let date = Date::from_ymd_opt(2025, 08, 24).unwrap();
+        let date = Date::from_ymd_opt(2025, 08, 22).unwrap();
         let daily_data_1 = DailyFullData {
             date,
             kind: Kind::Clouds(Clouds::Light),
@@ -239,7 +238,7 @@ mod tests {
             },
             pressure_range: PressureRange::new_hpa(995.8, 1019.8),
         };
-        let date = date.pred_opt().unwrap();
+        let date = date.succ_opt().unwrap();
         let daily_data_2 = DailyFullData {
             date,
             kind: Kind::Clouds(Clouds::Clear),
@@ -258,7 +257,7 @@ mod tests {
             },
             pressure_range: PressureRange::new_hpa(990.3, 1014.3),
         };
-        let date = date.pred_opt().unwrap();
+        let date = date.succ_opt().unwrap();
         let daily_data_3 = DailyFullData {
             date,
             kind: Kind::Precipitation(Precipitation {
@@ -290,7 +289,7 @@ mod tests {
     fn describe_full_report() {
         let report = generate_report_for_3_days();
         let result = describe(&report);
-        let expected_day1 = "Yesterday it was hot \
+        let expected_day1 = "On 22.08.2025 it was hot \
             with temperatures starting at 20.6°C and reaching 26.8°C.\n\
             The sky was mostly clear \
             and clouds covered from 27% to 29% of the sky.\n\
@@ -304,7 +303,7 @@ mod tests {
             The air was heavy at 29% to 86% humidity \
             with mostly gentle north breeze blowing at maximum 2.3 m/s.\n\
             Normal pressure reached 990.3 hPa at lowest up to 1014.3 hPa.\n";
-        let expected_day3 = "On 22.08.2025 it was cool \
+        let expected_day3 = "Yesterday it was cool \
             with temperatures starting at 9.5°C and reaching 15.5°C.\n\
             There was light snow falling \
             and clouds covered from 0% to 1% of the sky.\n\
