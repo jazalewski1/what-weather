@@ -25,7 +25,7 @@ pub fn build_past_params(
     vec![
         make_param(keys::LATITUDE, coordinates.latitude.raw()),
         make_param(keys::LONGITUDE, coordinates.longitude.raw()),
-        make_param(keys::DAILY, build_daily_attribute_list(attributes)),
+        make_param(keys::DAILY, build_daily_attribute_list(attributes.iter())),
         make_param(keys::PAST_DAYS, day_count),
         make_param(keys::FORECAST_DAYS, 0),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
@@ -41,7 +41,7 @@ pub fn build_forecast_params(
     vec![
         make_param(keys::LATITUDE, coordinates.latitude.raw()),
         make_param(keys::LONGITUDE, coordinates.longitude.raw()),
-        make_param(keys::DAILY, build_daily_attribute_list(attributes)),
+        make_param(keys::DAILY, build_daily_attribute_list(attributes.iter())),
         make_param(keys::PAST_DAYS, 0),
         make_param(keys::FORECAST_DAYS, day_count),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
@@ -53,63 +53,63 @@ fn make_param<T: std::fmt::Display>(key: &str, value: T) -> (String, String) {
     (key.into(), value.to_string())
 }
 
-struct ListBuilder {
-    result: String,
-}
-
-impl ListBuilder {
-    fn new() -> Self {
-        Self {
-            result: String::new(),
-        }
-    }
-
-    fn add(&mut self, value: &str) {
-        if !self.result.is_empty() {
-            self.result.push(',');
-        }
-        self.result.push_str(value);
-    }
-
-    fn string(self) -> String {
-        self.result
-    }
-}
-
-fn build_daily_attribute_list(attributes: &WeatherAttributeSet) -> String {
-    let mut builder = ListBuilder::new();
-    for attribute in attributes {
-        match attribute {
-            WeatherAttribute::WeatherKind => builder.add("weather_code"),
+fn build_daily_attribute_list<I, T>(attribute_iter: I) -> String
+where
+    I: IntoIterator<Item = T>,
+    T: std::borrow::Borrow<WeatherAttribute>,
+{
+    let mut variables = Vec::new();
+    for attribute in attribute_iter {
+        match attribute.borrow() {
+            WeatherAttribute::WeatherKind => variables.push("weather_code"),
             WeatherAttribute::Temperature => {
-                builder.add("temperature_2m_min");
-                builder.add("temperature_2m_max");
+                variables.push("temperature_2m_min");
+                variables.push("temperature_2m_max");
             }
             WeatherAttribute::CloudCoverage => {
-                builder.add("cloud_cover_min");
-                builder.add("cloud_cover_max");
+                variables.push("cloud_cover_min");
+                variables.push("cloud_cover_max");
             }
             WeatherAttribute::Humidity => {
-                builder.add("relative_humidity_2m_min");
-                builder.add("relative_humidity_2m_max");
+                variables.push("relative_humidity_2m_min");
+                variables.push("relative_humidity_2m_max");
             }
             WeatherAttribute::Wind => {
-                builder.add("wind_speed_10m_min");
-                builder.add("wind_speed_10m_max");
-                builder.add("wind_direction_10m_dominant");
+                variables.push("wind_speed_10m_min");
+                variables.push("wind_speed_10m_max");
+                variables.push("wind_direction_10m_dominant");
             }
             WeatherAttribute::Pressure => {
-                builder.add("pressure_msl_min");
-                builder.add("pressure_msl_max");
+                variables.push("pressure_msl_min");
+                variables.push("pressure_msl_max");
             }
         }
     }
-    builder.string()
+    variables.join(",")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use strum::IntoEnumIterator;
+
+    #[test]
+    fn builds_list_with_daily_attributes() {
+        let result = build_daily_attribute_list(WeatherAttribute::iter());
+        let expected = "weather_code\
+                        ,temperature_2m_min\
+                        ,temperature_2m_max\
+                        ,cloud_cover_min\
+                        ,cloud_cover_max\
+                        ,relative_humidity_2m_min\
+                        ,relative_humidity_2m_max\
+                        ,wind_speed_10m_min\
+                        ,wind_speed_10m_max\
+                        ,wind_direction_10m_dominant\
+                        ,pressure_msl_min\
+                        ,pressure_msl_max";
+        assert_eq!(result, expected);
+    }
 
     mod utils {
         use super::*;
