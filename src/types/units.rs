@@ -1,26 +1,58 @@
 use std::fmt::Display;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Celsius {
+pub struct Degrees {
     pub value: f32,
 }
 
-impl Display for Celsius {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let precision = f.precision().unwrap_or(1);
-        write!(f, "{:.precision$}°C", self.value)
+impl Degrees {
+    pub fn raw(&self) -> f32 {
+        self.value
     }
 }
 
-impl From<f32> for Celsius {
+impl From<f32> for Degrees {
     fn from(value: f32) -> Self {
         Self { value }
     }
 }
 
+impl From<Degrees> for f32 {
+    fn from(degrees: Degrees) -> Self {
+        degrees.value
+    }
+}
+
+impl Display for Degrees {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$}°", self.value)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Celsius {
+    pub degrees: Degrees,
+}
+
+impl Display for Celsius {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$}C", self.degrees)
+    }
+}
+
+impl From<f32> for Celsius {
+    fn from(value: f32) -> Self {
+        Self {
+            degrees: Degrees::from(value),
+        }
+    }
+}
+
 impl From<Celsius> for f32 {
-    fn from(value: Celsius) -> Self {
-        value.value
+    fn from(celsius: Celsius) -> Self {
+        celsius.degrees.value
     }
 }
 
@@ -31,7 +63,7 @@ pub enum Temperature {
 
 impl Temperature {
     pub fn new_celsius(value: f32) -> Self {
-        Self::Celsius(Celsius { value })
+        Self::Celsius(Celsius::from(value))
     }
 }
 
@@ -155,36 +187,6 @@ impl SpeedRange {
             min: MetersPerSecond::from(min),
             max: MetersPerSecond::from(max),
         }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Degrees {
-    pub value: f32,
-}
-
-impl Degrees {
-    pub fn raw(&self) -> f32 {
-        self.value
-    }
-}
-
-impl From<f32> for Degrees {
-    fn from(value: f32) -> Self {
-        Self { value }
-    }
-}
-
-impl From<Degrees> for f32 {
-    fn from(degrees: Degrees) -> Self {
-        degrees.value
-    }
-}
-
-impl Display for Degrees {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let precision = f.precision().unwrap_or(1);
-        write!(f, "{:.precision$}°", self.value)
     }
 }
 

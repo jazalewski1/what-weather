@@ -56,16 +56,17 @@ pub fn prepare_kind_description(kind: &Kind) -> KindDescription {
 
 pub fn describe_temperature_adjective(temperature: &Temperature) -> String {
     match temperature {
-        Temperature::Celsius(Celsius { value }) => {
-            if *value <= 0.0 {
+        Temperature::Celsius(Celsius { degrees }) => {
+            let value = degrees.raw();
+            if value <= 0.0 {
                 "freezing"
-            } else if *value <= 10.0 {
+            } else if value <= 7.0 {
                 "cold"
-            } else if *value <= 17.0 {
+            } else if value <= 15.0 {
                 "cool"
-            } else if *value <= 24.0 {
+            } else if value <= 26.0 {
                 "warm"
-            } else if *value <= 35.0 {
+            } else if value <= 35.0 {
                 "hot"
             } else {
                 "very hot"
@@ -160,17 +161,17 @@ mod tests {
 
         assert_eq!(describe(1.0), "cold");
         assert_eq!(describe(4.5), "cold");
-        assert_eq!(describe(10.0), "cold");
+        assert_eq!(describe(7.0), "cold");
 
-        assert_eq!(describe(10.1), "cool");
+        assert_eq!(describe(7.1), "cool");
         assert_eq!(describe(13.7), "cool");
-        assert_eq!(describe(17.0), "cool");
+        assert_eq!(describe(15.0), "cool");
 
-        assert_eq!(describe(17.1), "warm");
+        assert_eq!(describe(15.1), "warm");
         assert_eq!(describe(20.0), "warm");
-        assert_eq!(describe(24.0), "warm");
+        assert_eq!(describe(26.0), "warm");
 
-        assert_eq!(describe(24.1), "hot");
+        assert_eq!(describe(26.1), "hot");
         assert_eq!(describe(29.9), "hot");
         assert_eq!(describe(35.0), "hot");
 

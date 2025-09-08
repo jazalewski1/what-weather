@@ -296,14 +296,14 @@ mod tests {
             The air was dry at 14% to 19% humidity \
             with mostly gentle southeast breeze blowing at maximum 3.3 m/s.\n\
             Normal pressure reached 995.8 hPa at lowest up to 1019.8 hPa.\n";
-        let expected_day2 = "On 23.08.2025 it was cold \
+        let expected_day2 = "On 23.08.2025 it was cool \
             with temperatures starting at 3.4°C and reaching 9.0°C.\n\
             The sky was clear \
             and clouds covered from 19% to 96% of the sky.\n\
             The air was heavy at 29% to 86% humidity \
             with mostly gentle north breeze blowing at maximum 2.3 m/s.\n\
             Normal pressure reached 990.3 hPa at lowest up to 1014.3 hPa.\n";
-        let expected_day3 = "Yesterday it was cool \
+        let expected_day3 = "Yesterday it was warm \
             with temperatures starting at 9.5°C and reaching 15.5°C.\n\
             There was light snow falling \
             and clouds covered from 0% to 1% of the sky.\n\
