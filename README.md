@@ -1,9 +1,8 @@
 <h1>
-    <img src="docs/img/icon-64.png" height=24/>
+    <img src="docs/img/icon-64.png" height=32/>
     What-Weather: Weather Reporter for Command Line
 </h1>
 
-# What-Weather: Weather Reporter for Command Line
 A simple tool that fetches weather report from external service and presents it in a human-readable format.
 
 # Terms of use
