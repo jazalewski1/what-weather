@@ -86,6 +86,21 @@ enum Command {
     },
 }
 
+#[derive(Clone, Debug, PartialEq, ValueEnum)]
+pub enum TemperatureUnitArg {
+    Celsius,
+    Fahrenheit,
+}
+
+impl From<TemperatureUnitArg> for TemperatureUnit {
+    fn from(arg: TemperatureUnitArg) -> Self {
+        match arg {
+            TemperatureUnitArg::Celsius => TemperatureUnit::Celsius,
+            TemperatureUnitArg::Fahrenheit => TemperatureUnit::Fahrenheit,
+        }
+    }
+}
+
 #[derive(Parser)]
 struct Args {
     /// Report type
@@ -99,6 +114,10 @@ struct Args {
     /// Report from current location based on IP
     #[arg(long, group = "location")]
     here: bool,
+
+    /// Select temperature unit
+    #[arg(long)]
+    temp_unit: Option<TemperatureUnitArg>,
 }
 
 fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
@@ -147,9 +166,16 @@ fn convert_args_to_parameters(args: Args) -> Parameters {
             }
         }
     };
+    let units = Units {
+        temperature: args
+            .temp_unit
+            .map(TemperatureUnitArg::into)
+            .unwrap_or(TemperatureUnit::Celsius),
+    };
     Parameters {
         request_kind,
         coordinates: args.coords,
+        units,
     }
 }
 
@@ -168,6 +194,7 @@ mod tests {
             command: None,
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, RequestKind::CurrentFull);
@@ -182,6 +209,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, RequestKind::CurrentFull);
@@ -196,6 +224,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, RequestKind::CurrentFull);
@@ -213,6 +242,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -236,6 +266,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -252,6 +283,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -269,6 +301,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -286,6 +319,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -303,6 +337,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -321,6 +356,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DAY_COUNT);
@@ -339,6 +375,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DAY_COUNT);
@@ -359,6 +396,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -384,6 +422,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -409,6 +448,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -435,6 +475,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -452,6 +493,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -469,6 +511,7 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -494,9 +537,46 @@ mod tests {
             }),
             coords: None,
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
+    }
+
+    #[test]
+    fn parses_no_temperature_unit_into_celsius() {
+        let args = Args {
+            command: Some(Command::Now {
+                summary: true,
+                list: None,
+            }),
+            coords: None,
+            here: false,
+            temp_unit: None,
+        };
+        let params = convert_args_to_parameters(args);
+        let expected = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        assert_eq!(params.units, expected);
+    }
+
+    #[test]
+    fn parses_selected_temperature_unit() {
+        let args = Args {
+            command: Some(Command::Now {
+                summary: true,
+                list: None,
+            }),
+            coords: None,
+            here: false,
+            temp_unit: Some(TemperatureUnitArg::Fahrenheit),
+        };
+        let params = convert_args_to_parameters(args);
+        let expected = Units {
+            temperature: TemperatureUnit::Fahrenheit,
+        };
+        assert_eq!(params.units, expected);
     }
 
     #[test]
@@ -521,6 +601,7 @@ mod tests {
             command: None,
             coords: Some(coordinates.clone()),
             here: false,
+            temp_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.coordinates, Some(coordinates));
