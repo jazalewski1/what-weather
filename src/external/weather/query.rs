@@ -1,4 +1,5 @@
 use super::connection::Params;
+use crate::port::weather::*;
 use crate::types::attributes::*;
 use crate::types::units::Coordinates;
 
@@ -11,17 +12,21 @@ mod keys {
     pub const FORECAST_DAYS: &str = "forecast_days";
     pub const TIMEZONE: &str = "timezone";
     pub const WIND_SPEED_UNIT: &str = "wind_speed_unit";
+    pub const TEMPERATURE_UNIT: &str = "temperature_unit";
 }
 
 mod values {
     pub const TZ_AUTO: &str = "auto";
     pub const METERS_PER_SECOND: &str = "ms";
+    pub const CELSIUS: &str = "celsius";
+    pub const FAHRENHEIT: &str = "fahrenheit";
 }
 
 pub fn build_past_params(
     coordinates: &Coordinates,
     day_count: u8,
     attributes: &WeatherAttributeSet,
+    units: &Units,
 ) -> Params {
     vec![
         make_param(keys::LATITUDE, coordinates.latitude.raw()),
@@ -31,10 +36,18 @@ pub fn build_past_params(
         make_param(keys::FORECAST_DAYS, 0),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
         make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+        make_param(
+            keys::TEMPERATURE_UNIT,
+            select_temperature_unit(&units.temperature),
+        ),
     ]
 }
 
-pub fn build_current_params(coordinates: &Coordinates, attributes: &WeatherAttributeSet) -> Params {
+pub fn build_current_params(
+    coordinates: &Coordinates,
+    attributes: &WeatherAttributeSet,
+    units: &Units,
+) -> Params {
     vec![
         make_param(keys::LATITUDE, coordinates.latitude.raw()),
         make_param(keys::LONGITUDE, coordinates.longitude.raw()),
@@ -44,6 +57,10 @@ pub fn build_current_params(coordinates: &Coordinates, attributes: &WeatherAttri
         ),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
         make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+        make_param(
+            keys::TEMPERATURE_UNIT,
+            select_temperature_unit(&units.temperature),
+        ),
     ]
 }
 
@@ -51,6 +68,7 @@ pub fn build_forecast_params(
     coordinates: &Coordinates,
     day_count: u8,
     attributes: &WeatherAttributeSet,
+    units: &Units,
 ) -> Params {
     vec![
         make_param(keys::LATITUDE, coordinates.latitude.raw()),
@@ -60,6 +78,10 @@ pub fn build_forecast_params(
         make_param(keys::FORECAST_DAYS, day_count),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
         make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+        make_param(
+            keys::TEMPERATURE_UNIT,
+            select_temperature_unit(&units.temperature),
+        ),
     ]
 }
 
@@ -124,6 +146,13 @@ where
     variables.join(",")
 }
 
+fn select_temperature_unit(unit: &TemperatureUnit) -> &'static str {
+    match unit {
+        TemperatureUnit::Celsius => values::CELSIUS,
+        TemperatureUnit::Fahrenheit => values::FAHRENHEIT,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,6 +187,18 @@ mod tests {
                         ,pressure_msl_min\
                         ,pressure_msl_max";
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn selects_temperature_unit() {
+        assert_eq!(
+            select_temperature_unit(&TemperatureUnit::Celsius),
+            values::CELSIUS
+        );
+        assert_eq!(
+            select_temperature_unit(&TemperatureUnit::Fahrenheit),
+            values::FAHRENHEIT
+        );
     }
 
     mod utils {
@@ -209,7 +250,10 @@ mod tests {
         let day_count = 3;
         let attributes =
             WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
-        let result = build_past_params(&coordinates, day_count, &attributes);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let result = build_past_params(&coordinates, day_count, &attributes, &units);
 
         use utils::*;
         let expected = vec![
@@ -220,6 +264,7 @@ mod tests {
             ParamMatcher::some("forecast_days", "0"),
             ParamMatcher::some("timezone", "auto"),
             ParamMatcher::some("wind_speed_unit", "ms"),
+            ParamMatcher::some("temperature_unit", "celsius"),
         ];
         assert!(matches(&result, expected));
     }
@@ -229,7 +274,10 @@ mod tests {
         let coordinates = Coordinates::new(1.23, 45.67);
         let attributes =
             WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
-        let result = build_current_params(&coordinates, &attributes);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let result = build_current_params(&coordinates, &attributes, &units);
 
         use utils::*;
         let expected = vec![
@@ -238,6 +286,7 @@ mod tests {
             ParamMatcher::any("current"),
             ParamMatcher::some("timezone", "auto"),
             ParamMatcher::some("wind_speed_unit", "ms"),
+            ParamMatcher::some("temperature_unit", "celsius"),
         ];
         assert!(matches(&result, expected));
     }
@@ -248,7 +297,10 @@ mod tests {
         let day_count = 3;
         let attributes =
             WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
-        let result = build_forecast_params(&coordinates, day_count, &attributes);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let result = build_forecast_params(&coordinates, day_count, &attributes, &units);
 
         use utils::*;
         let expected = vec![
@@ -259,6 +311,7 @@ mod tests {
             ParamMatcher::some("forecast_days", "3"),
             ParamMatcher::some("timezone", "auto"),
             ParamMatcher::some("wind_speed_unit", "ms"),
+            ParamMatcher::some("temperature_unit", "celsius"),
         ];
         assert!(matches(&result, expected));
     }

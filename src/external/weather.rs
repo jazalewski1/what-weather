@@ -19,14 +19,23 @@ impl WeatherProvider for ConcreteWeatherProvider {
         match &request.kind {
             RequestKind::PastFull(day_count) => {
                 let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
-                let params =
-                    query::build_past_params(&request.coordinates, *day_count, &attributes);
+                let params = query::build_past_params(
+                    &request.coordinates,
+                    *day_count,
+                    &attributes,
+                    &request.units,
+                );
                 let resp: response::DailyResponse = self.client.fetch_response(&params)?;
                 let inner = resp.to_daily_full_report(*day_count, &request.units);
                 Ok(Report::PastFull(inner))
             }
             RequestKind::PastPartial(day_count, attributes) => {
-                let params = query::build_past_params(&request.coordinates, *day_count, attributes);
+                let params = query::build_past_params(
+                    &request.coordinates,
+                    *day_count,
+                    attributes,
+                    &request.units,
+                );
                 let resp: response::DailyResponse = self.client.fetch_response(&params)?;
                 let inner =
                     resp.to_daily_partial_report(&request.coordinates, *day_count, &request.units);
@@ -34,28 +43,38 @@ impl WeatherProvider for ConcreteWeatherProvider {
             }
             RequestKind::CurrentFull => {
                 let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
-                let params = query::build_current_params(&request.coordinates, &attributes);
+                let params =
+                    query::build_current_params(&request.coordinates, &attributes, &request.units);
                 let resp: response::CurrentResponse = self.client.fetch_response(&params)?;
                 let inner = resp.to_current_full_report(&request.units);
                 Ok(Report::CurrentFull(inner))
             }
             RequestKind::CurrentPartial(attributes) => {
-                let params = query::build_current_params(&request.coordinates, attributes);
+                let params =
+                    query::build_current_params(&request.coordinates, attributes, &request.units);
                 let resp: response::CurrentResponse = self.client.fetch_response(&params)?;
                 let inner = resp.to_current_partial_report(&request.coordinates, &request.units);
                 Ok(Report::CurrentPartial(inner))
             }
             RequestKind::ForecastFull(day_count) => {
                 let attributes: WeatherAttributeSet = WeatherAttribute::iter().collect();
-                let params =
-                    query::build_forecast_params(&request.coordinates, *day_count, &attributes);
+                let params = query::build_forecast_params(
+                    &request.coordinates,
+                    *day_count,
+                    &attributes,
+                    &request.units,
+                );
                 let resp: response::DailyResponse = self.client.fetch_response(&params)?;
                 let inner = resp.to_daily_full_report(*day_count, &request.units);
                 Ok(Report::ForecastFull(inner))
             }
             RequestKind::ForecastPartial(day_count, attributes) => {
-                let params =
-                    query::build_forecast_params(&request.coordinates, *day_count, attributes);
+                let params = query::build_forecast_params(
+                    &request.coordinates,
+                    *day_count,
+                    attributes,
+                    &request.units,
+                );
                 let resp: response::DailyResponse = self.client.fetch_response(&params)?;
                 let inner =
                     resp.to_daily_partial_report(&request.coordinates, *day_count, &request.units);
