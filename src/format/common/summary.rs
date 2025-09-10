@@ -55,25 +55,26 @@ pub fn prepare_kind_description(kind: &Kind) -> KindDescription {
 }
 
 pub fn describe_temperature_adjective(temperature: &Temperature) -> String {
+    const ADJECTIVES: [&str; 6] = ["freezing", "cold", "cool", "warm", "hot", "very hot"];
+
+    fn find_adjective(value: f32, thresholds: &[f32; 5]) -> String {
+        let index = thresholds
+            .iter()
+            .position(|t| value <= *t)
+            .unwrap_or(ADJECTIVES.len() - 1);
+        ADJECTIVES[index].to_string()
+    }
+
     match temperature {
         Temperature::Celsius(Celsius { degrees }) => {
-            let value = degrees.raw();
-            if value <= 0.0 {
-                "freezing"
-            } else if value <= 7.0 {
-                "cold"
-            } else if value <= 15.0 {
-                "cool"
-            } else if value <= 26.0 {
-                "warm"
-            } else if value <= 35.0 {
-                "hot"
-            } else {
-                "very hot"
-            }
+            let thresholds = [0.0, 7.0, 15.0, 26.0, 35.0];
+            find_adjective(degrees.raw(), &thresholds)
+        }
+        Temperature::Fahrenheit(Fahrenheit { degrees }) => {
+            let thresholds = [32.0, 44.6, 59.0, 78.8, 95.0];
+            find_adjective(degrees.raw(), &thresholds)
         }
     }
-    .into()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -152,7 +153,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn describes_values_of_temperatures_as_adjectives() {
+    fn describes_temperature_in_celsius_as_adjectives() {
         let describe = |value| describe_temperature_adjective(&Temperature::new_celsius(value));
 
         assert_eq!(describe(-3.0), "freezing");
@@ -177,6 +178,33 @@ mod tests {
 
         assert_eq!(describe(35.1), "very hot");
         assert_eq!(describe(40.2), "very hot");
+    }
+
+    #[test]
+    fn describes_temperature_in_fahrenheit_as_adjectives() {
+        let describe = |value| describe_temperature_adjective(&Temperature::new_fahrenheit(value));
+
+        assert_eq!(describe(0.0), "freezing");
+        assert_eq!(describe(32.0), "freezing");
+
+        assert_eq!(describe(32.1), "cold");
+        assert_eq!(describe(40.0), "cold");
+        assert_eq!(describe(44.6), "cold");
+
+        assert_eq!(describe(44.7), "cool");
+        assert_eq!(describe(50.0), "cool");
+        assert_eq!(describe(59.0), "cool");
+
+        assert_eq!(describe(59.1), "warm");
+        assert_eq!(describe(65.0), "warm");
+        assert_eq!(describe(78.8), "warm");
+
+        assert_eq!(describe(78.9), "hot");
+        assert_eq!(describe(85.0), "hot");
+        assert_eq!(describe(95.0), "hot");
+
+        assert_eq!(describe(95.1), "very hot");
+        assert_eq!(describe(100.0), "very hot");
     }
 
     #[test]

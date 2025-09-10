@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::format::common::summary::*;
 use crate::types::report::{DailyFullData, DailyFullReport};
 use crate::types::units::*;
@@ -67,10 +69,17 @@ fn describe_kind(kind: &Kind) -> String {
 }
 
 fn describe_temperature_range(temperature_range: &TemperatureRange) -> String {
+    fn fmt(adj: String, min: impl Display, max: impl Display) -> String {
+        format!("it will be {adj} with temperatures starting at {min} and reaching {max}")
+    }
     match temperature_range {
         TemperatureRange::Celsius { min, max } => {
             let adjective = describe_temperature_adjective(&Temperature::Celsius(*max));
-            format!("it will be {adjective} with temperatures starting at {min} and reaching {max}")
+            fmt(adjective, min, max)
+        }
+        TemperatureRange::Fahrenheit { min, max } => {
+            let adjective = describe_temperature_adjective(&Temperature::Fahrenheit(*max));
+            fmt(adjective, min, max)
         }
     }
 }
@@ -200,10 +209,18 @@ mod tests {
     }
 
     #[test]
-    fn describes_temperature_range() {
+    fn describes_temperature_range_in_celsius() {
         let range = TemperatureRange::new_celsius(15.1, 33.3);
         let result = describe_temperature_range(&range);
         let expected = "it will be hot with temperatures starting at 15.1°C and reaching 33.3°C";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn describes_temperature_range_in_fahrenheit() {
+        let range = TemperatureRange::new_fahrenheit(79.0, 88.0);
+        let result = describe_temperature_range(&range);
+        let expected = "it will be hot with temperatures starting at 79.0°F and reaching 88.0°F";
         assert_eq!(result, expected);
     }
 

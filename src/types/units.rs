@@ -50,20 +50,52 @@ impl From<f32> for Celsius {
     }
 }
 
-impl From<Celsius> for f32 {
-    fn from(celsius: Celsius) -> Self {
-        celsius.degrees.value
+impl From<Fahrenheit> for Celsius {
+    fn from(f: Fahrenheit) -> Self {
+        let value = (f.degrees.raw() - 32.0) * 5.0 / 9.0;
+        Self::from(value)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Fahrenheit {
+    pub degrees: Degrees,
+}
+
+impl Display for Fahrenheit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$}F", self.degrees)
+    }
+}
+
+impl From<f32> for Fahrenheit {
+    fn from(value: f32) -> Self {
+        Self {
+            degrees: Degrees::from(value),
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Temperature {
     Celsius(Celsius),
+    Fahrenheit(Fahrenheit),
+}
+
+impl From<Celsius> for Fahrenheit {
+    fn from(c: Celsius) -> Self {
+        let value = c.degrees.raw() * 9.0 / 5.0 + 32.0;
+        Self::from(value)
+    }
 }
 
 impl Temperature {
     pub fn new_celsius(value: f32) -> Self {
         Self::Celsius(Celsius::from(value))
+    }
+    pub fn new_fahrenheit(value: f32) -> Self {
+        Self::Fahrenheit(Fahrenheit::from(value))
     }
 }
 
@@ -71,6 +103,7 @@ impl Display for Temperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Celsius(inner) => inner.fmt(f),
+            Self::Fahrenheit(inner) => inner.fmt(f),
         }
     }
 }
@@ -78,6 +111,7 @@ impl Display for Temperature {
 #[derive(Clone, Debug, PartialEq)]
 pub enum TemperatureRange {
     Celsius { min: Celsius, max: Celsius },
+    Fahrenheit { min: Fahrenheit, max: Fahrenheit },
 }
 
 impl TemperatureRange {
@@ -86,6 +120,13 @@ impl TemperatureRange {
         Self::Celsius {
             min: Celsius::from(min),
             max: Celsius::from(max),
+        }
+    }
+    pub fn new_fahrenheit(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min temperature is greater than max");
+        Self::Fahrenheit {
+            min: Fahrenheit::from(min),
+            max: Fahrenheit::from(max),
         }
     }
 }
@@ -401,6 +442,18 @@ mod tests {
         assert_eq!(format!("{temperature:.1}"), "1.2°C");
         let temperature = Temperature::new_celsius(34.56);
         assert_eq!(format!("{temperature:.3}"), "34.560°C");
+    }
+
+    #[test]
+    fn displays_temperature_in_fahrenheit() {
+        let temperature = Temperature::new_fahrenheit(-4_f32);
+        assert_eq!(format!("{temperature}"), "-4.0°F");
+        let temperature = Temperature::new_fahrenheit(0.000);
+        assert_eq!(format!("{temperature}"), "0.0°F");
+        let temperature = Temperature::new_fahrenheit(1.234);
+        assert_eq!(format!("{temperature:.1}"), "1.2°F");
+        let temperature = Temperature::new_fahrenheit(34.56);
+        assert_eq!(format!("{temperature:.3}"), "34.560°F");
     }
 
     #[test]
