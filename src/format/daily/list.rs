@@ -27,21 +27,14 @@ fn describe_report(report: &DailyPartialReport) -> Result<String, std::fmt::Erro
     Ok(result)
 }
 
-fn format_range<T: std::fmt::Display>(min: T, max: T) -> String {
-    format!("{min} - {max}")
-}
-
 fn describe_day(result: &mut String, data: &DailyPartialData) {
     let date_str = data.date.format("%d.%m.%Y").to_string();
     write_param(result, "Date", date_str);
     if let Some(kind) = data.kind {
         write_param(result, "Weather", describe_kind(&kind));
     }
-    if let Some(temperature) = &data.temperature_range {
-        let value = match temperature {
-            TemperatureRange::Celsius { min, max } => format_range(min, max),
-        };
-        write_param(result, "Temperature", value);
+    if let Some(range) = &data.temperature_range {
+        write_temperature(result, range);
     }
     if let Some(PercentageRange { min, max }) = data.cloud_coverage_range {
         write_param(result, "Cloud coverage", format_range(min, max));
@@ -69,9 +62,35 @@ fn describe_day(result: &mut String, data: &DailyPartialData) {
     }
 }
 
+fn format_range<T: std::fmt::Display>(min: T, max: T) -> String {
+    format!("{min} - {max}")
+}
+
+fn write_temperature(result: &mut String, range: &TemperatureRange) {
+    let value = match range {
+        TemperatureRange::Celsius { min, max } => format_range(min, max),
+        TemperatureRange::Fahrenheit { min, max } => format_range(min, max),
+    };
+    write_param(result, "Temperature", value);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn writes_temperature_range_in_celsius() {
+        let mut result = String::new();
+        write_temperature(&mut result, &TemperatureRange::new_celsius(12.3, 23.4));
+        assert_eq!(result, "Temperature: 12.3°C - 23.4°C\n");
+    }
+
+    #[test]
+    fn writes_temperature_range_in_fahrenheit() {
+        let mut result = String::new();
+        write_temperature(&mut result, &TemperatureRange::new_fahrenheit(12.3, 23.4));
+        assert_eq!(result, "Temperature: 12.3°F - 23.4°F\n");
+    }
 
     fn generate_coordinates() -> Coordinates {
         Coordinates::new(1.23, 45.67)

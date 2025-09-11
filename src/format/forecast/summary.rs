@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::format::common::summary::*;
 use crate::types::report::{DailyFullData, DailyFullReport};
 use crate::types::units::*;
@@ -67,10 +69,17 @@ fn describe_kind(kind: &Kind) -> String {
 }
 
 fn describe_temperature_range(temperature_range: &TemperatureRange) -> String {
+    fn fmt(adj: String, min: impl Display, max: impl Display) -> String {
+        format!("it will be {adj} with temperatures starting at {min} and reaching {max}")
+    }
     match temperature_range {
         TemperatureRange::Celsius { min, max } => {
             let adjective = describe_temperature_adjective(&Temperature::Celsius(*max));
-            format!("it will be {adjective} with temperatures starting at {min} and reaching {max}")
+            fmt(adjective, min, max)
+        }
+        TemperatureRange::Fahrenheit { min, max } => {
+            let adjective = describe_temperature_adjective(&Temperature::Fahrenheit(*max));
+            fmt(adjective, min, max)
         }
     }
 }
@@ -200,10 +209,18 @@ mod tests {
     }
 
     #[test]
-    fn describes_temperature_range() {
+    fn describes_temperature_range_in_celsius() {
         let range = TemperatureRange::new_celsius(15.1, 33.3);
         let result = describe_temperature_range(&range);
         let expected = "it will be hot with temperatures starting at 15.1°C and reaching 33.3°C";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn describes_temperature_range_in_fahrenheit() {
+        let range = TemperatureRange::new_fahrenheit(79.0, 88.0);
+        let result = describe_temperature_range(&range);
+        let expected = "it will be hot with temperatures starting at 79.0°F and reaching 88.0°F";
         assert_eq!(result, expected);
     }
 
@@ -308,14 +325,14 @@ mod tests {
             The air will be dry at 14% to 19% humidity \
             with mostly gentle southeast breeze blowing at maximum 3.3 m/s.\n\
             Normal pressure will reach 995.8 hPa at lowest up to 1019.8 hPa.\n";
-        let expected_day2 = "Tomorrow it will be cold \
+        let expected_day2 = "Tomorrow it will be cool \
             with temperatures starting at 3.4°C and reaching 9.0°C.\n\
             The sky will be clear \
             and clouds will cover from 19% to 96% of the sky.\n\
             The air will be heavy at 29% to 86% humidity \
             with mostly gentle north breeze blowing at maximum 2.3 m/s.\n\
             Normal pressure will reach 990.3 hPa at lowest up to 1014.3 hPa.\n";
-        let expected_day3 = "On 26.08.2025 it will be cool \
+        let expected_day3 = "On 26.08.2025 it will be warm \
             with temperatures starting at 9.5°C and reaching 15.5°C.\n\
             There will be light snow falling \
             and clouds will cover from 0% to 1% of the sky.\n\

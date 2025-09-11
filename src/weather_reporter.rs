@@ -1,11 +1,12 @@
 use crate::port::geolocation::GeolocationProvider;
-use crate::port::weather::{ReportRequest, RequestKind, WeatherProvider};
+use crate::port::weather::*;
 use crate::types::report::*;
 use crate::types::units::Coordinates;
 
 pub struct Parameters {
     pub coordinates: Option<Coordinates>,
     pub request_kind: RequestKind,
+    pub units: Units,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,6 +45,7 @@ impl<GP: GeolocationProvider, WP: WeatherProvider> WeatherReporter<GP, WP> {
         let request = ReportRequest {
             coordinates,
             kind: parameters.request_kind,
+            units: parameters.units,
         };
         self.get_report(&request)
     }
@@ -117,6 +119,9 @@ mod tests {
         let parameters = Parameters {
             coordinates: None,
             request_kind: RequestKind::CurrentFull,
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
         };
         let result = sut.run(parameters);
         assert!(result.is_ok());
@@ -148,6 +153,9 @@ mod tests {
         let parameters = Parameters {
             coordinates: None,
             request_kind: RequestKind::CurrentFull,
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
         };
         let result = sut.run(parameters);
         assert!(result.is_ok());
@@ -168,6 +176,9 @@ mod tests {
         let parameters = Parameters {
             coordinates: None,
             request_kind: RequestKind::CurrentFull,
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
         };
         let result = sut.run(parameters);
         assert!(result.is_err());
@@ -192,6 +203,9 @@ mod tests {
         let parameters = Parameters {
             coordinates: Some(coordinates),
             request_kind: RequestKind::CurrentFull,
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
         };
         let result = sut.run(parameters);
         assert!(result.is_ok());
@@ -213,6 +227,9 @@ mod tests {
         let parameters = Parameters {
             coordinates: Some(coordinates),
             request_kind: RequestKind::CurrentFull,
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
         };
         let actual_report = sut.run(parameters);
         assert_eq!(actual_report, Ok(report));
@@ -238,6 +255,9 @@ mod tests {
         let parameters = Parameters {
             coordinates: Some(Coordinates::new(1.23, 45.67)),
             request_kind: RequestKind::CurrentFull,
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
         };
         let actual_report = sut.run(parameters);
         assert_eq!(actual_report, Ok(report));
@@ -257,6 +277,9 @@ mod tests {
         let sut = WeatherReporter::new(geolocation_provider, weather_provider);
         let parameters = Parameters {
             coordinates: Some(Coordinates::new(1.23, 45.67)),
+            units: Units {
+                temperature: TemperatureUnit::Celsius,
+            },
             request_kind: RequestKind::CurrentFull,
         };
         let result = sut.run(parameters);

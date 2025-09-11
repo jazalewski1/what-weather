@@ -1,3 +1,4 @@
+use crate::port::weather::*;
 use crate::types::report::*;
 use crate::types::units::*;
 use crate::types::weather::*;
@@ -35,7 +36,11 @@ impl DailyData {
             .map(|code| convert_code_to_weather_kind(*code))
             .or_else(|| panic!("Missing weather code for day {day_index}"))
     }
-    fn temperature_range(&self, day_index: usize) -> Option<TemperatureRange> {
+    fn temperature_range(
+        &self,
+        day_index: usize,
+        unit: &TemperatureUnit,
+    ) -> Option<TemperatureRange> {
         let min = self
             .temperature_2m_min
             .as_ref()?
@@ -46,8 +51,11 @@ impl DailyData {
             .as_ref()?
             .get(day_index)
             .or_else(|| panic!("Missing max temperature for day {day_index}"));
-        min.zip(max)
-            .map(|(min, max)| TemperatureRange::new_celsius(*min, *max))
+        let init = |(&min, &max)| match unit {
+            TemperatureUnit::Celsius => TemperatureRange::new_celsius(min, max),
+            TemperatureUnit::Fahrenheit => TemperatureRange::new_fahrenheit(min, max),
+        };
+        min.zip(max).map(init)
     }
     fn cloud_coverage_range(&self, day_index: usize) -> Option<PercentageRange> {
         let min = self
@@ -125,7 +133,7 @@ pub struct DailyResponse {
 }
 
 impl DailyResponse {
-    pub fn to_daily_full_report(&self, day_count: DayCount) -> DailyFullReport {
+    pub fn to_daily_full_report(&self, day_count: DayCount, units: &Units) -> DailyFullReport {
         let mut data = Vec::new();
         let day_count: usize = day_count.into();
         let daily = &self.daily;
@@ -137,7 +145,7 @@ impl DailyResponse {
                 .weather_kind(day_index)
                 .unwrap_or_else(|| panic!("Missing weather kind for day {day_index}"));
             let temperature_range = daily
-                .temperature_range(day_index)
+                .temperature_range(day_index, &units.temperature)
                 .unwrap_or_else(|| panic!("Missing temperature for day {day_index}"));
             let cloud_coverage_range = daily
                 .cloud_coverage_range(day_index)
@@ -170,6 +178,7 @@ impl DailyResponse {
         &self,
         coordinates: &Coordinates,
         day_count: DayCount,
+        units: &Units,
     ) -> DailyPartialReport {
         let mut data = Vec::new();
         let day_count: usize = day_count.into();
@@ -181,7 +190,7 @@ impl DailyResponse {
             let daily_data = DailyPartialData {
                 date,
                 kind: self.daily.weather_kind(day_index),
-                temperature_range: self.daily.temperature_range(day_index),
+                temperature_range: self.daily.temperature_range(day_index, &units.temperature),
                 cloud_coverage_range: self.daily.cloud_coverage_range(day_index),
                 humidity_range: self.daily.humidity_range(day_index),
                 wind: self.daily.wind_scope(day_index),
@@ -212,8 +221,11 @@ impl CurrentData {
     fn weather_kind(&self) -> Option<Kind> {
         self.weather_code.map(convert_code_to_weather_kind)
     }
-    fn temperature(&self) -> Option<Temperature> {
-        self.temperature_2m.map(Temperature::new_celsius)
+    fn temperature(&self, unit: &TemperatureUnit) -> Option<Temperature> {
+        match unit {
+            TemperatureUnit::Celsius => self.temperature_2m.map(Temperature::new_celsius),
+            TemperatureUnit::Fahrenheit => self.temperature_2m.map(Temperature::new_fahrenheit),
+        }
     }
     fn cloud_coverage(&self) -> Option<Percentage> {
         self.cloud_cover.map(|value| Percentage::from(value as i8))
@@ -244,13 +256,13 @@ pub struct CurrentResponse {
     current: CurrentData,
 }
 impl CurrentResponse {
-    pub fn to_current_full_report(&self) -> CurrentFullReport {
+    pub fn to_current_full_report(&self, units: &Units) -> CurrentFullReport {
         let data = &self.current;
         let kind = data
             .weather_kind()
             .unwrap_or_else(|| panic!("Missing weather code"));
         let temperature = data
-            .temperature()
+            .temperature(&units.temperature)
             .unwrap_or_else(|| panic!("Missing temperature"));
         let cloud_coverage = data
             .cloud_coverage()
@@ -271,11 +283,15 @@ impl CurrentResponse {
             pressure,
         }
     }
-    pub fn to_current_partial_report(&self, coordinates: &Coordinates) -> CurrentPartialReport {
+    pub fn to_current_partial_report(
+        &self,
+        coordinates: &Coordinates,
+        units: &Units,
+    ) -> CurrentPartialReport {
         CurrentPartialReport {
             coordinates: *coordinates,
             kind: self.current.weather_kind(),
-            temperature: self.current.temperature(),
+            temperature: self.current.temperature(&units.temperature),
             cloud_coverage: self.current.cloud_coverage(),
             humidity: self.current.humidity(),
             wind: self.current.wind(),
@@ -522,8 +538,8 @@ mod tests {
         assert!(result.is_err());
     }
 
-    fn generate_current_response() -> CurrentResponse {
-        let current = CurrentData {
+    fn generate_current_data() -> CurrentData {
+        CurrentData {
             weather_code: Some(1),
             temperature_2m: Some(12.3),
             cloud_cover: Some(23),
@@ -531,8 +547,24 @@ mod tests {
             wind_speed_10m: Some(1.23),
             wind_direction_10m: Some(90.0),
             pressure_msl: Some(1012.3),
-        };
-        CurrentResponse { current }
+        }
+    }
+
+    #[test]
+    fn converts_current_data_temperature_to_specified_unit() {
+        let data = generate_current_data();
+        let result = data.temperature(&TemperatureUnit::Celsius);
+        assert_eq!(result.unwrap(), Temperature::new_celsius(12.3));
+
+        let data = generate_current_data();
+        let result = data.temperature(&TemperatureUnit::Fahrenheit);
+        assert_eq!(result.unwrap(), Temperature::new_fahrenheit(12.3));
+    }
+
+    fn generate_current_response() -> CurrentResponse {
+        CurrentResponse {
+            current: generate_current_data(),
+        }
     }
 
     macro_rules! generate_current_response_without {
@@ -546,7 +578,10 @@ mod tests {
     #[test]
     fn converts_current_response_to_current_full_report() {
         let response = generate_current_response();
-        let report = response.to_current_full_report();
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let report = response.to_current_full_report(&units);
         let expected = CurrentFullReport {
             kind: Kind::Clouds(Clouds::Light),
             temperature: Temperature::new_celsius(12.3),
@@ -563,8 +598,11 @@ mod tests {
 
     #[test]
     fn fails_to_convert_to_current_full_report_when_any_param_is_missing() {
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
         let expect_panic = |response: CurrentResponse| {
-            let result = std::panic::catch_unwind(|| response.to_current_full_report());
+            let result = std::panic::catch_unwind(|| response.to_current_full_report(&units));
             assert!(result.is_err());
         };
         expect_panic(generate_current_response_without!(weather_code));
@@ -584,7 +622,10 @@ mod tests {
         response.current.relative_humidity_2m = None;
         response.current.wind_speed_10m = None;
         response.current.wind_direction_10m = None;
-        let report = response.to_current_partial_report(&coordinates);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let report = response.to_current_partial_report(&coordinates, &units);
         let expected = CurrentPartialReport {
             coordinates,
             kind: None,
@@ -597,34 +638,54 @@ mod tests {
         assert_eq!(report, expected);
     }
 
+    fn generate_daily_data() -> DailyData {
+        DailyData {
+            time: Some(vec![
+                "2025-09-01".into(),
+                "2025-09-02".into(),
+                "2025-09-03".into(),
+            ]),
+            weather_code: Some(vec![3, 2, 1]),
+            temperature_2m_min: Some(vec![11.1, 12.2, 13.3]),
+            temperature_2m_max: Some(vec![21.1, 22.2, 23.3]),
+            cloud_cover_min: Some(vec![11, 12, 13]),
+            cloud_cover_max: Some(vec![21, 22, 23]),
+            relative_humidity_2m_min: Some(vec![31, 32, 33]),
+            relative_humidity_2m_max: Some(vec![41, 42, 43]),
+            wind_speed_10m_min: Some(vec![31.1, 32.2, 33.3]),
+            wind_speed_10m_max: Some(vec![41.1, 42.2, 43.3]),
+            wind_direction_10m_dominant: Some(vec![90.1, 180.2, 270.3]),
+            pressure_msl_min: Some(vec![1001.1, 1002.2, 1003.3]),
+            pressure_msl_max: Some(vec![1011.1, 1012.2, 1013.3]),
+        }
+    }
+
+    #[test]
+    fn converts_daily_data_temperature_range_to_specified_unit() {
+        let data = generate_daily_data();
+        let result = data.temperature_range(0, &TemperatureUnit::Celsius);
+        assert_eq!(result.unwrap(), TemperatureRange::new_celsius(11.1, 21.1));
+
+        let result = data.temperature_range(0, &TemperatureUnit::Fahrenheit);
+        assert_eq!(
+            result.unwrap(),
+            TemperatureRange::new_fahrenheit(11.1, 21.1)
+        );
+    }
+
     fn generate_daily_response() -> DailyResponse {
         DailyResponse {
-            daily: DailyData {
-                time: Some(vec![
-                    "2025-09-01".into(),
-                    "2025-09-02".into(),
-                    "2025-09-03".into(),
-                ]),
-                weather_code: Some(vec![3, 2, 1]),
-                temperature_2m_min: Some(vec![11.1, 12.2, 13.3]),
-                temperature_2m_max: Some(vec![21.1, 22.2, 23.3]),
-                cloud_cover_min: Some(vec![11, 12, 13]),
-                cloud_cover_max: Some(vec![21, 22, 23]),
-                relative_humidity_2m_min: Some(vec![31, 32, 33]),
-                relative_humidity_2m_max: Some(vec![41, 42, 43]),
-                wind_speed_10m_min: Some(vec![31.1, 32.2, 33.3]),
-                wind_speed_10m_max: Some(vec![41.1, 42.2, 43.3]),
-                wind_direction_10m_dominant: Some(vec![90.1, 180.2, 270.3]),
-                pressure_msl_min: Some(vec![1001.1, 1002.2, 1003.3]),
-                pressure_msl_max: Some(vec![1011.1, 1012.2, 1013.3]),
-            },
+            daily: generate_daily_data(),
         }
     }
 
     #[test]
     fn converts_daily_response_to_daily_full_report() {
         let response = generate_daily_response();
-        let report = response.to_daily_full_report(3);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let report = response.to_daily_full_report(3, &units);
 
         let expected = DailyFullData {
             date: Date::from_ymd_opt(2025, 9, 1).unwrap(),
@@ -680,7 +741,10 @@ mod tests {
     #[test]
     fn fails_to_convert_daily_response_to_daily_full_report_when_any_param_is_missing() {
         let expect_panic = |response: DailyResponse| {
-            let result = std::panic::catch_unwind(|| response.to_daily_full_report(3));
+            let units = Units {
+                temperature: TemperatureUnit::Celsius,
+            };
+            let result = std::panic::catch_unwind(|| response.to_daily_full_report(3, &units));
             assert!(result.is_err());
         };
         expect_panic(generate_daily_response_without!(time));
@@ -704,7 +768,10 @@ mod tests {
     fn converts_daily_response_to_daily_partial_report_with_all_parameters() {
         let response = generate_daily_response();
         let coordinates = Coordinates::new(1.23, 45.67);
-        let report = response.to_daily_partial_report(&coordinates, 3);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let report = response.to_daily_partial_report(&coordinates, 3, &units);
 
         assert_eq!(report.coordinates, coordinates);
 
@@ -762,7 +829,10 @@ mod tests {
         response.daily.cloud_cover_min = None;
         response.daily.cloud_cover_max = None;
         let coordinates = Coordinates::new(1.23, 45.67);
-        let report = response.to_daily_partial_report(&coordinates, 3);
+        let units = Units {
+            temperature: TemperatureUnit::Celsius,
+        };
+        let report = response.to_daily_partial_report(&coordinates, 3, &units);
 
         assert_eq!(report.coordinates, coordinates);
 
