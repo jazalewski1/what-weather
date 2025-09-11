@@ -14,9 +14,21 @@ pub enum RequestKind {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum TemperatureUnit {
+    Celsius,
+    Fahrenheit,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Units {
+    pub temperature: TemperatureUnit,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct ReportRequest {
     pub coordinates: Coordinates,
     pub kind: RequestKind,
+    pub units: Units,
 }
 
 #[mockall::automock]

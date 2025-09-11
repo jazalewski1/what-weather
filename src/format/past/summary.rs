@@ -61,12 +61,17 @@ fn describe_kind(kind: &Kind) -> String {
 }
 
 fn describe_temperature_range(temperature_range: &TemperatureRange) -> String {
-    match temperature_range {
+    let (min, max, adj) = match temperature_range {
         TemperatureRange::Celsius { min, max } => {
             let adjective = describe_temperature_adjective(&Temperature::Celsius(*max));
-            format!("it was {adjective} with temperatures starting at {min} and reaching {max}")
+            (min.to_string(), max.to_string(), adjective)
         }
-    }
+        TemperatureRange::Fahrenheit { min, max } => {
+            let adjective = describe_temperature_adjective(&Temperature::Fahrenheit(*max));
+            (min.to_string(), max.to_string(), adjective)
+        }
+    };
+    format!("it was {adj} with temperatures starting at {min} and reaching {max}")
 }
 
 fn describe_cloud_coverage_range(range: &PercentageRange) -> String {
@@ -124,10 +129,18 @@ mod tests {
     }
 
     #[test]
-    fn describes_temperature_range() {
+    fn describes_temperature_range_in_celsius() {
         let range = TemperatureRange::new_celsius(15.1, 33.3);
         let result = describe_temperature_range(&range);
         let expected = "it was hot with temperatures starting at 15.1°C and reaching 33.3°C";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn describes_temperature_range_in_fahrenheit() {
+        let range = TemperatureRange::new_fahrenheit(79.0, 88.0);
+        let result = describe_temperature_range(&range);
+        let expected = "it was hot with temperatures starting at 79.0°F and reaching 88.0°F";
         assert_eq!(result, expected);
     }
 
@@ -296,14 +309,14 @@ mod tests {
             The air was dry at 14% to 19% humidity \
             with mostly gentle southeast breeze blowing at maximum 3.3 m/s.\n\
             Normal pressure reached 995.8 hPa at lowest up to 1019.8 hPa.\n";
-        let expected_day2 = "On 23.08.2025 it was cold \
+        let expected_day2 = "On 23.08.2025 it was cool \
             with temperatures starting at 3.4°C and reaching 9.0°C.\n\
             The sky was clear \
             and clouds covered from 19% to 96% of the sky.\n\
             The air was heavy at 29% to 86% humidity \
             with mostly gentle north breeze blowing at maximum 2.3 m/s.\n\
             Normal pressure reached 990.3 hPa at lowest up to 1014.3 hPa.\n";
-        let expected_day3 = "Yesterday it was cool \
+        let expected_day3 = "Yesterday it was warm \
             with temperatures starting at 9.5°C and reaching 15.5°C.\n\
             There was light snow falling \
             and clouds covered from 0% to 1% of the sky.\n\

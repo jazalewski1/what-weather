@@ -112,7 +112,7 @@ mod tests {
     #[test]
     fn describes_values_of_temperature_in_celsius() {
         let string = describe_temperature(&Temperature::new_celsius(24.5));
-        assert_eq!(string, "It's hot at 24.5°C");
+        assert_eq!(string, "It's warm at 24.5°C");
     }
 
     #[test]
