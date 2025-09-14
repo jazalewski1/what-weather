@@ -85,7 +85,7 @@ impl DailyData {
         min.zip(max)
             .map(|(min, max)| PercentageRange::new(*min as i8, *max as i8))
     }
-    fn wind_scope(&self, day_index: usize) -> Option<WindScope> {
+    fn wind_scope(&self, day_index: usize, unit: &SpeedUnit) -> Option<WindScope> {
         let min_speed = self
             .wind_speed_10m_min
             .as_ref()?
@@ -101,10 +101,18 @@ impl DailyData {
             .as_ref()
             .map(|values| Azimuth::from(values[day_index]));
         match (min_speed, max_speed, azimuth) {
-            (Some(min), Some(max), Some(dominant_direction)) => Some(WindScope {
-                speed_range: SpeedRange::new_meters_per_second(*min, *max),
-                dominant_direction,
-            }),
+            (Some(min), Some(max), Some(dominant_direction)) => {
+                let speed_range = match unit {
+                    SpeedUnit::MetersPerSecond => SpeedRange::new_meters_per_second(*min, *max),
+                    SpeedUnit::KilometersPerHour => SpeedRange::new_kilometers_per_hour(*min, *max),
+                    SpeedUnit::MilesPerHour => SpeedRange::new_miles_per_hour(*min, *max),
+                    SpeedUnit::Knots => SpeedRange::new_knots(*min, *max),
+                };
+                Some(WindScope {
+                    speed_range,
+                    dominant_direction,
+                })
+            }
             (None, Some(_), Some(_)) => panic!("Missing values for min wind speed"),
             (Some(_), None, Some(_)) => panic!("Missing values for max wind speed"),
             (Some(_), Some(_), None) => panic!("Missing values for wind direction"),
@@ -154,7 +162,7 @@ impl DailyResponse {
                 .humidity_range(day_index)
                 .unwrap_or_else(|| panic!("Missing humidity for day {day_index}"));
             let wind = daily
-                .wind_scope(day_index)
+                .wind_scope(day_index, &units.speed)
                 .unwrap_or_else(|| panic!("Missing wind for day {day_index}"));
             let pressure_range = daily
                 .pressure_range(day_index)
@@ -193,7 +201,7 @@ impl DailyResponse {
                 temperature_range: self.daily.temperature_range(day_index, &units.temperature),
                 cloud_coverage_range: self.daily.cloud_coverage_range(day_index),
                 humidity_range: self.daily.humidity_range(day_index),
-                wind: self.daily.wind_scope(day_index),
+                wind: self.daily.wind_scope(day_index, &units.speed),
                 pressure_range: self.daily.pressure_range(day_index),
             };
             data.push(daily_data);
@@ -234,10 +242,15 @@ impl CurrentData {
         self.relative_humidity_2m
             .map(|value| Percentage::from(value as i8))
     }
-    fn wind(&self) -> Option<Wind> {
+    fn wind(&self, unit: &SpeedUnit) -> Option<Wind> {
         match (self.wind_speed_10m, self.wind_direction_10m) {
             (Some(speed), Some(direction)) => {
-                let speed = Speed::new_meters_per_second(speed);
+                let speed = match unit {
+                    SpeedUnit::MetersPerSecond => Speed::new_meters_per_second(speed),
+                    SpeedUnit::KilometersPerHour => Speed::new_kilometers_per_hour(speed),
+                    SpeedUnit::MilesPerHour => Speed::new_miles_per_hour(speed),
+                    SpeedUnit::Knots => Speed::new_knots(speed),
+                };
                 let direction = Azimuth::from(direction);
                 Some(Wind { speed, direction })
             }
@@ -270,7 +283,9 @@ impl CurrentResponse {
         let humidity = data
             .humidity()
             .unwrap_or_else(|| panic!("Missing humidity"));
-        let wind = data.wind().unwrap_or_else(|| panic!("Missing wind"));
+        let wind = data
+            .wind(&units.speed)
+            .unwrap_or_else(|| panic!("Missing wind"));
         let pressure = data
             .pressure()
             .unwrap_or_else(|| panic!("Missing pressure"));
@@ -294,7 +309,7 @@ impl CurrentResponse {
             temperature: self.current.temperature(&units.temperature),
             cloud_coverage: self.current.cloud_coverage(),
             humidity: self.current.humidity(),
-            wind: self.current.wind(),
+            wind: self.current.wind(&units.speed),
             pressure: self.current.pressure(),
         }
     }
@@ -561,6 +576,25 @@ mod tests {
         assert_eq!(result.unwrap(), Temperature::new_fahrenheit(12.3));
     }
 
+    #[test]
+    fn converts_current_data_speed_to_specified_unit() {
+        let data = generate_current_data();
+        let result = data.wind(&SpeedUnit::MetersPerSecond);
+        assert_eq!(result.unwrap().speed, Speed::new_meters_per_second(1.23));
+
+        let data = generate_current_data();
+        let result = data.wind(&SpeedUnit::KilometersPerHour);
+        assert_eq!(result.unwrap().speed, Speed::new_kilometers_per_hour(1.23));
+
+        let data = generate_current_data();
+        let result = data.wind(&SpeedUnit::MilesPerHour);
+        assert_eq!(result.unwrap().speed, Speed::new_miles_per_hour(1.23));
+
+        let data = generate_current_data();
+        let result = data.wind(&SpeedUnit::Knots);
+        assert_eq!(result.unwrap().speed, Speed::new_knots(1.23));
+    }
+
     fn generate_current_response() -> CurrentResponse {
         CurrentResponse {
             current: generate_current_data(),
@@ -580,6 +614,7 @@ mod tests {
         let response = generate_current_response();
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let report = response.to_current_full_report(&units);
         let expected = CurrentFullReport {
@@ -600,6 +635,7 @@ mod tests {
     fn fails_to_convert_to_current_full_report_when_any_param_is_missing() {
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let expect_panic = |response: CurrentResponse| {
             let result = std::panic::catch_unwind(|| response.to_current_full_report(&units));
@@ -624,6 +660,7 @@ mod tests {
         response.current.wind_direction_10m = None;
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let report = response.to_current_partial_report(&coordinates, &units);
         let expected = CurrentPartialReport {
@@ -673,6 +710,37 @@ mod tests {
         );
     }
 
+    #[test]
+    fn converts_daily_data_speed_range_to_specified_unit() {
+        let data = generate_daily_data();
+        let result = data.wind_scope(0, &SpeedUnit::MetersPerSecond);
+        assert_eq!(
+            result.unwrap().speed_range,
+            SpeedRange::new_meters_per_second(31.1, 41.1)
+        );
+
+        let data = generate_daily_data();
+        let result = data.wind_scope(0, &SpeedUnit::KilometersPerHour);
+        assert_eq!(
+            result.unwrap().speed_range,
+            SpeedRange::new_kilometers_per_hour(31.1, 41.1)
+        );
+
+        let data = generate_daily_data();
+        let result = data.wind_scope(0, &SpeedUnit::MilesPerHour);
+        assert_eq!(
+            result.unwrap().speed_range,
+            SpeedRange::new_miles_per_hour(31.1, 41.1)
+        );
+
+        let data = generate_daily_data();
+        let result = data.wind_scope(0, &SpeedUnit::Knots);
+        assert_eq!(
+            result.unwrap().speed_range,
+            SpeedRange::new_knots(31.1, 41.1)
+        );
+    }
+
     fn generate_daily_response() -> DailyResponse {
         DailyResponse {
             daily: generate_daily_data(),
@@ -684,6 +752,7 @@ mod tests {
         let response = generate_daily_response();
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let report = response.to_daily_full_report(3, &units);
 
@@ -743,6 +812,7 @@ mod tests {
         let expect_panic = |response: DailyResponse| {
             let units = Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             };
             let result = std::panic::catch_unwind(|| response.to_daily_full_report(3, &units));
             assert!(result.is_err());
@@ -770,6 +840,7 @@ mod tests {
         let coordinates = Coordinates::new(1.23, 45.67);
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let report = response.to_daily_partial_report(&coordinates, 3, &units);
 
@@ -831,6 +902,7 @@ mod tests {
         let coordinates = Coordinates::new(1.23, 45.67);
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let report = response.to_daily_partial_report(&coordinates, 3, &units);
 

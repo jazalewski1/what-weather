@@ -112,6 +112,9 @@ fn describe_humidity_range(range: &PercentageRange) -> String {
 fn describe_wind_scope(scope: &WindScope) -> String {
     let max_speed = match scope.speed_range {
         SpeedRange::MetersPerSecond { max, .. } => Speed::MetersPerSecond(max),
+        SpeedRange::KilometersPerHour { max, .. } => Speed::KilometersPerHour(max),
+        SpeedRange::MilesPerHour { max, .. } => Speed::MilesPerHour(max),
+        SpeedRange::Knots { max, .. } => Speed::Knots(max),
     };
     let desc = prepare_wind_description(&max_speed, &scope.dominant_direction);
     match desc {
@@ -288,7 +291,7 @@ mod tests {
     }
 
     #[test]
-    fn describes_wind_scope() {
+    fn describes_wind_scope_in_ms() {
         let wind = WindScope {
             speed_range: SpeedRange::new_meters_per_second(0.05, 0.15),
             dominant_direction: Azimuth::from(273.3),
@@ -302,6 +305,63 @@ mod tests {
         };
         let result = describe_wind_scope(&wind);
         assert_eq!(result, "mostly strong west wind blowing at maximum 9.7 m/s");
+    }
+
+    #[test]
+    fn describes_wind_scope_in_kmh() {
+        let wind = WindScope {
+            speed_range: SpeedRange::new_kilometers_per_hour(0.05, 0.15),
+            dominant_direction: Azimuth::from(273.3),
+        };
+        let result = describe_wind_scope(&wind);
+        assert_eq!(result, "mostly no wind");
+
+        let wind = WindScope {
+            speed_range: SpeedRange::new_kilometers_per_hour(5.3, 40.0),
+            dominant_direction: Azimuth::from(273.3),
+        };
+        let result = describe_wind_scope(&wind);
+        assert_eq!(
+            result,
+            "mostly strong west wind blowing at maximum 40.0 km/h"
+        );
+    }
+
+    #[test]
+    fn describes_wind_scope_in_mph() {
+        let wind = WindScope {
+            speed_range: SpeedRange::new_miles_per_hour(0.05, 0.15),
+            dominant_direction: Azimuth::from(273.3),
+        };
+        let result = describe_wind_scope(&wind);
+        assert_eq!(result, "mostly no wind");
+
+        let wind = WindScope {
+            speed_range: SpeedRange::new_miles_per_hour(5.3, 30.0),
+            dominant_direction: Azimuth::from(273.3),
+        };
+        let result = describe_wind_scope(&wind);
+        assert_eq!(
+            result,
+            "mostly strong west wind blowing at maximum 30.0 mph"
+        );
+    }
+
+    #[test]
+    fn describes_wind_scope_in_kn() {
+        let wind = WindScope {
+            speed_range: SpeedRange::new_knots(0.05, 0.15),
+            dominant_direction: Azimuth::from(273.3),
+        };
+        let result = describe_wind_scope(&wind);
+        assert_eq!(result, "mostly no wind");
+
+        let wind = WindScope {
+            speed_range: SpeedRange::new_knots(5.3, 26.0),
+            dominant_direction: Azimuth::from(273.3),
+        };
+        let result = describe_wind_scope(&wind);
+        assert_eq!(result, "mostly strong west wind blowing at maximum 26.0 kn");
     }
 
     #[test]
@@ -323,7 +383,7 @@ mod tests {
             The sky will be mostly clear \
             and clouds will cover from 27% to 29% of the sky.\n\
             The air will be dry at 14% to 19% humidity \
-            with mostly gentle southeast breeze blowing at maximum 3.3 m/s.\n\
+            with mostly southeast wind blowing at maximum 3.3 m/s.\n\
             Normal pressure will reach 995.8 hPa at lowest up to 1019.8 hPa.\n";
         let expected_day2 = "Tomorrow it will be cool \
             with temperatures starting at 3.4°C and reaching 9.0°C.\n\

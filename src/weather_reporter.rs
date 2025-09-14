@@ -121,6 +121,7 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
         };
         let result = sut.run(parameters);
@@ -155,6 +156,7 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
         };
         let result = sut.run(parameters);
@@ -178,6 +180,7 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
         };
         let result = sut.run(parameters);
@@ -205,6 +208,7 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
         };
         let result = sut.run(parameters);
@@ -229,6 +233,7 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
         };
         let actual_report = sut.run(parameters);
@@ -257,6 +262,7 @@ mod tests {
             request_kind: RequestKind::CurrentFull,
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
         };
         let actual_report = sut.run(parameters);
@@ -279,6 +285,7 @@ mod tests {
             coordinates: Some(Coordinates::new(1.23, 45.67)),
             units: Units {
                 temperature: TemperatureUnit::Celsius,
+                speed: SpeedUnit::MetersPerSecond,
             },
             request_kind: RequestKind::CurrentFull,
         };

@@ -43,16 +43,7 @@ fn describe_day(result: &mut String, data: &DailyPartialData) {
         write_param(result, "Humidity", format_range(min, max));
     }
     if let Some(scope) = &data.wind {
-        let WindScope {
-            speed_range,
-            dominant_direction,
-        } = scope;
-        let speed_desc = match speed_range {
-            SpeedRange::MetersPerSecond { min, max } => format_range(min, max),
-        };
-        let cardinal_symbol = dominant_direction.to_cardinal_direction().to_symbol();
-        let value = format!("{speed_desc}, {dominant_direction} ({cardinal_symbol})");
-        write_param(result, "Wind", value);
+        write_wind(result, scope);
     }
     if let Some(pressure) = &data.pressure_range {
         let value = match pressure {
@@ -74,6 +65,22 @@ fn write_temperature(result: &mut String, range: &TemperatureRange) {
     write_param(result, "Temperature", value);
 }
 
+fn write_wind(result: &mut String, scope: &WindScope) {
+    let WindScope {
+        speed_range,
+        dominant_direction,
+    } = scope;
+    let speed_desc = match speed_range {
+        SpeedRange::MetersPerSecond { min, max } => format_range(min, max),
+        SpeedRange::KilometersPerHour { min, max } => format_range(min, max),
+        SpeedRange::MilesPerHour { min, max } => format_range(min, max),
+        SpeedRange::Knots { min, max } => format_range(min, max),
+    };
+    let cardinal_symbol = dominant_direction.to_cardinal_direction().to_symbol();
+    let value = format!("{speed_desc}, {dominant_direction} ({cardinal_symbol})");
+    write_param(result, "Wind", value);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,6 +97,50 @@ mod tests {
         let mut result = String::new();
         write_temperature(&mut result, &TemperatureRange::new_fahrenheit(12.3, 23.4));
         assert_eq!(result, "Temperature: 12.3°F - 23.4°F\n");
+    }
+
+    #[test]
+    fn writes_wind_scope_with_ms_speed() {
+        let mut result = String::new();
+        let scope = WindScope {
+            speed_range: SpeedRange::new_meters_per_second(1.2, 3.4),
+            dominant_direction: Azimuth::from(90.1),
+        };
+        write_wind(&mut result, &scope);
+        assert_eq!(result, "Wind: 1.2 m/s - 3.4 m/s, 90.1° (E)\n");
+    }
+
+    #[test]
+    fn writes_wind_scope_with_kmh_speed() {
+        let mut result = String::new();
+        let scope = WindScope {
+            speed_range: SpeedRange::new_kilometers_per_hour(1.2, 3.4),
+            dominant_direction: Azimuth::from(90.1),
+        };
+        write_wind(&mut result, &scope);
+        assert_eq!(result, "Wind: 1.2 km/h - 3.4 km/h, 90.1° (E)\n");
+    }
+
+    #[test]
+    fn writes_wind_scope_with_mph_speed() {
+        let mut result = String::new();
+        let scope = WindScope {
+            speed_range: SpeedRange::new_miles_per_hour(1.2, 3.4),
+            dominant_direction: Azimuth::from(90.1),
+        };
+        write_wind(&mut result, &scope);
+        assert_eq!(result, "Wind: 1.2 mph - 3.4 mph, 90.1° (E)\n");
+    }
+
+    #[test]
+    fn writes_wind_scope_with_kn_speed() {
+        let mut result = String::new();
+        let scope = WindScope {
+            speed_range: SpeedRange::new_knots(1.2, 3.4),
+            dominant_direction: Azimuth::from(90.1),
+        };
+        write_wind(&mut result, &scope);
+        assert_eq!(result, "Wind: 1.2 kn - 3.4 kn, 90.1° (E)\n");
     }
 
     fn generate_coordinates() -> Coordinates {
