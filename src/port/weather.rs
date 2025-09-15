@@ -20,8 +20,17 @@ pub enum TemperatureUnit {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum SpeedUnit {
+    MetersPerSecond,
+    KilometersPerHour,
+    MilesPerHour,
+    Knots,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Units {
     pub temperature: TemperatureUnit,
+    pub speed: SpeedUnit,
 }
 
 #[derive(Debug, PartialEq)]

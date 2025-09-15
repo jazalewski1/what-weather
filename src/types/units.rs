@@ -195,13 +195,97 @@ impl From<MetersPerSecond> for f32 {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub struct KilometersPerHour {
+    pub value: f32,
+}
+
+impl Display for KilometersPerHour {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$} km/h", self.value)
+    }
+}
+
+impl From<f32> for KilometersPerHour {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<KilometersPerHour> for f32 {
+    fn from(speed: KilometersPerHour) -> Self {
+        speed.value
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MilesPerHour {
+    pub value: f32,
+}
+
+impl Display for MilesPerHour {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$} mph", self.value)
+    }
+}
+
+impl From<f32> for MilesPerHour {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<MilesPerHour> for f32 {
+    fn from(speed: MilesPerHour) -> Self {
+        speed.value
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Knots {
+    pub value: f32,
+}
+
+impl Display for Knots {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let precision = f.precision().unwrap_or(1);
+        write!(f, "{:.precision$} kn", self.value)
+    }
+}
+
+impl From<f32> for Knots {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
+impl From<Knots> for f32 {
+    fn from(speed: Knots) -> Self {
+        speed.value
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Speed {
     MetersPerSecond(MetersPerSecond),
+    KilometersPerHour(KilometersPerHour),
+    MilesPerHour(MilesPerHour),
+    Knots(Knots),
 }
 
 impl Speed {
     pub fn new_meters_per_second(value: f32) -> Self {
         Self::MetersPerSecond(MetersPerSecond::from(value))
+    }
+    pub fn new_kilometers_per_hour(value: f32) -> Self {
+        Self::KilometersPerHour(KilometersPerHour::from(value))
+    }
+    pub fn new_miles_per_hour(value: f32) -> Self {
+        Self::MilesPerHour(MilesPerHour::from(value))
+    }
+    pub fn new_knots(value: f32) -> Self {
+        Self::Knots(Knots::from(value))
     }
 }
 
@@ -209,6 +293,9 @@ impl Display for Speed {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::MetersPerSecond(inner) => inner.fmt(f),
+            Self::KilometersPerHour(inner) => inner.fmt(f),
+            Self::MilesPerHour(inner) => inner.fmt(f),
+            Self::Knots(inner) => inner.fmt(f),
         }
     }
 }
@@ -219,6 +306,18 @@ pub enum SpeedRange {
         min: MetersPerSecond,
         max: MetersPerSecond,
     },
+    KilometersPerHour {
+        min: KilometersPerHour,
+        max: KilometersPerHour,
+    },
+    MilesPerHour {
+        min: MilesPerHour,
+        max: MilesPerHour,
+    },
+    Knots {
+        min: Knots,
+        max: Knots,
+    },
 }
 
 impl SpeedRange {
@@ -227,6 +326,27 @@ impl SpeedRange {
         Self::MetersPerSecond {
             min: MetersPerSecond::from(min),
             max: MetersPerSecond::from(max),
+        }
+    }
+    pub fn new_kilometers_per_hour(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min speed is greater than max");
+        Self::KilometersPerHour {
+            min: KilometersPerHour::from(min),
+            max: KilometersPerHour::from(max),
+        }
+    }
+    pub fn new_miles_per_hour(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min speed is greater than max");
+        Self::MilesPerHour {
+            min: MilesPerHour::from(min),
+            max: MilesPerHour::from(max),
+        }
+    }
+    pub fn new_knots(min: f32, max: f32) -> Self {
+        assert!(min <= max, "Min speed is greater than max");
+        Self::Knots {
+            min: Knots::from(min),
+            max: Knots::from(max),
         }
     }
 }
@@ -485,10 +605,43 @@ mod tests {
     }
 
     #[test]
+    fn displays_speed_in_kilometers_per_hour() {
+        let speed = Speed::new_kilometers_per_hour(0.0);
+        assert_eq!(format!("{speed}"), "0.0 km/h");
+        let speed = Speed::new_kilometers_per_hour(12.345);
+        assert_eq!(format!("{speed:.2}"), "12.35 km/h");
+    }
+
+    #[test]
+    fn displays_speed_in_miles_per_hour() {
+        let speed = Speed::new_miles_per_hour(0.0);
+        assert_eq!(format!("{speed}"), "0.0 mph");
+        let speed = Speed::new_miles_per_hour(12.345);
+        assert_eq!(format!("{speed:.2}"), "12.35 mph");
+    }
+
+    #[test]
+    fn displays_speed_in_knots() {
+        let speed = Speed::new_knots(0.0);
+        assert_eq!(format!("{speed}"), "0.0 kn");
+        let speed = Speed::new_knots(12.345);
+        assert_eq!(format!("{speed:.2}"), "12.35 kn");
+    }
+
+    #[test]
     fn validates_speed_range() {
         assert_panics(|| SpeedRange::new_meters_per_second(32.0, 31.0));
         assert_no_panic(|| SpeedRange::new_meters_per_second(32.0, 32.0));
         assert_no_panic(|| SpeedRange::new_meters_per_second(32.0, 33.0));
+        assert_panics(|| SpeedRange::new_kilometers_per_hour(32.0, 31.0));
+        assert_no_panic(|| SpeedRange::new_kilometers_per_hour(32.0, 32.0));
+        assert_no_panic(|| SpeedRange::new_kilometers_per_hour(32.0, 33.0));
+        assert_panics(|| SpeedRange::new_miles_per_hour(32.0, 31.0));
+        assert_no_panic(|| SpeedRange::new_miles_per_hour(32.0, 32.0));
+        assert_no_panic(|| SpeedRange::new_miles_per_hour(32.0, 33.0));
+        assert_panics(|| SpeedRange::new_knots(32.0, 31.0));
+        assert_no_panic(|| SpeedRange::new_knots(32.0, 32.0));
+        assert_no_panic(|| SpeedRange::new_knots(32.0, 33.0));
     }
 
     #[test]
