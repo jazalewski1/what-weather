@@ -108,21 +108,29 @@ pub enum WindDescription {
 
 pub fn prepare_wind_description(speed: &Speed, direction: &Azimuth) -> WindDescription {
     let direction_definition = direction.to_cardinal_direction().to_name();
-    match *speed {
-        Speed::MetersPerSecond(MetersPerSecond { value }) => {
-            if value <= 0.2 {
-                return WindDescription::NoWind;
-            }
-            let description = if value <= 3.3 {
-                format!("gentle {direction_definition} breeze")
-            } else if value <= 8.0 {
-                format!("{direction_definition} wind")
-            } else if value <= 13.8 {
-                format!("strong {direction_definition} wind")
-            } else {
-                format!("very strong {direction_definition} wind")
-            };
-            WindDescription::Wind { description }
+    let strength = match *speed {
+        Speed::MetersPerSecond(MetersPerSecond { value }) => value / 14.0 * 100.0,
+        Speed::KilometersPerHour(KilometersPerHour { value }) => value / 50.0 * 100.0,
+        Speed::MilesPerHour(MilesPerHour { value }) => value / 32.0 * 100.0,
+        Speed::Knots(Knots { value }) => value / 28.0 * 100.0,
+    };
+    if strength <= 1.5 {
+        WindDescription::NoWind
+    } else if strength <= 23.0 {
+        WindDescription::Wind {
+            description: format!("gentle {direction_definition} breeze"),
+        }
+    } else if strength <= 58.0 {
+        WindDescription::Wind {
+            description: format!("{direction_definition} wind"),
+        }
+    } else if strength <= 100.0 {
+        WindDescription::Wind {
+            description: format!("strong {direction_definition} wind"),
+        }
+    } else {
+        WindDescription::Wind {
+            description: format!("very strong {direction_definition} wind"),
         }
     }
 }
@@ -341,7 +349,7 @@ mod tests {
     }
 
     #[test]
-    fn prepares_wind_description_from_params() {
+    fn prepares_wind_description_with_ms() {
         let prepare = |speed_value| {
             prepare_wind_description(
                 &Speed::new_meters_per_second(speed_value),
@@ -353,22 +361,96 @@ mod tests {
         };
 
         assert_eq!(prepare(0.0), WindDescription::NoWind);
-        assert_eq!(prepare(0.2), WindDescription::NoWind);
+        assert_eq!(prepare(0.21), WindDescription::NoWind);
 
-        assert_eq!(prepare(0.21), make_wind_desc("gentle east breeze"));
-        assert_eq!(prepare(2.9), make_wind_desc("gentle east breeze"));
-        assert_eq!(prepare(3.3), make_wind_desc("gentle east breeze"));
+        assert_eq!(prepare(0.22), make_wind_desc("gentle east breeze"));
+        assert_eq!(prepare(3.22), make_wind_desc("gentle east breeze"));
 
-        assert_eq!(prepare(3.31), make_wind_desc("east wind"));
-        assert_eq!(prepare(5.57), make_wind_desc("east wind"));
-        assert_eq!(prepare(8.0), make_wind_desc("east wind"));
+        assert_eq!(prepare(3.23), make_wind_desc("east wind"));
+        assert_eq!(prepare(8.12), make_wind_desc("east wind"));
 
-        assert_eq!(prepare(8.01), make_wind_desc("strong east wind"));
-        assert_eq!(prepare(10.3), make_wind_desc("strong east wind"));
-        assert_eq!(prepare(13.8), make_wind_desc("strong east wind"));
+        assert_eq!(prepare(8.13), make_wind_desc("strong east wind"));
+        assert_eq!(prepare(14.0), make_wind_desc("strong east wind"));
 
-        assert_eq!(prepare(13.81), make_wind_desc("very strong east wind"));
-        assert_eq!(prepare(15.0), make_wind_desc("very strong east wind"));
+        assert_eq!(prepare(14.1), make_wind_desc("very strong east wind"));
+    }
+
+    #[test]
+    fn prepares_wind_description_with_kmh() {
+        let prepare = |speed_value| {
+            prepare_wind_description(
+                &Speed::new_kilometers_per_hour(speed_value),
+                &Azimuth::from(89.5),
+            )
+        };
+        let make_wind_desc = |desc: &str| WindDescription::Wind {
+            description: desc.into(),
+        };
+
+        assert_eq!(prepare(0.0), WindDescription::NoWind);
+        assert_eq!(prepare(0.75), WindDescription::NoWind);
+
+        assert_eq!(prepare(0.76), make_wind_desc("gentle east breeze"));
+        assert_eq!(prepare(11.5), make_wind_desc("gentle east breeze"));
+
+        assert_eq!(prepare(11.6), make_wind_desc("east wind"));
+        assert_eq!(prepare(29.0), make_wind_desc("east wind"));
+
+        assert_eq!(prepare(29.1), make_wind_desc("strong east wind"));
+        assert_eq!(prepare(50.0), make_wind_desc("strong east wind"));
+
+        assert_eq!(prepare(50.1), make_wind_desc("very strong east wind"));
+    }
+
+    #[test]
+    fn prepares_wind_description_with_mph() {
+        let prepare = |speed_value| {
+            prepare_wind_description(
+                &Speed::new_miles_per_hour(speed_value),
+                &Azimuth::from(89.5),
+            )
+        };
+        let make_wind_desc = |desc: &str| WindDescription::Wind {
+            description: desc.into(),
+        };
+
+        assert_eq!(prepare(0.0), WindDescription::NoWind);
+        assert_eq!(prepare(0.48), WindDescription::NoWind);
+
+        assert_eq!(prepare(0.49), make_wind_desc("gentle east breeze"));
+        assert_eq!(prepare(7.36), make_wind_desc("gentle east breeze"));
+
+        assert_eq!(prepare(7.37), make_wind_desc("east wind"));
+        assert_eq!(prepare(18.56), make_wind_desc("east wind"));
+
+        assert_eq!(prepare(18.57), make_wind_desc("strong east wind"));
+        assert_eq!(prepare(32.0), make_wind_desc("strong east wind"));
+
+        assert_eq!(prepare(32.1), make_wind_desc("very strong east wind"));
+    }
+
+    #[test]
+    fn prepares_wind_description_with_kn() {
+        let prepare = |speed_value| {
+            prepare_wind_description(&Speed::new_knots(speed_value), &Azimuth::from(89.5))
+        };
+        let make_wind_desc = |desc: &str| WindDescription::Wind {
+            description: desc.into(),
+        };
+
+        assert_eq!(prepare(0.0), WindDescription::NoWind);
+        assert_eq!(prepare(0.42), WindDescription::NoWind);
+
+        assert_eq!(prepare(0.43), make_wind_desc("gentle east breeze"));
+        assert_eq!(prepare(6.44), make_wind_desc("gentle east breeze"));
+
+        assert_eq!(prepare(6.45), make_wind_desc("east wind"));
+        assert_eq!(prepare(16.24), make_wind_desc("east wind"));
+
+        assert_eq!(prepare(16.25), make_wind_desc("strong east wind"));
+        assert_eq!(prepare(28.0), make_wind_desc("strong east wind"));
+
+        assert_eq!(prepare(28.1), make_wind_desc("very strong east wind"));
     }
 
     #[test]

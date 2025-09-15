@@ -101,6 +101,25 @@ impl From<TemperatureUnitArg> for TemperatureUnit {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, ValueEnum)]
+pub enum SpeedUnitArg {
+    Ms,
+    Kmh,
+    Mph,
+    Kn,
+}
+
+impl From<SpeedUnitArg> for SpeedUnit {
+    fn from(arg: SpeedUnitArg) -> Self {
+        match arg {
+            SpeedUnitArg::Ms => SpeedUnit::MetersPerSecond,
+            SpeedUnitArg::Kmh => SpeedUnit::KilometersPerHour,
+            SpeedUnitArg::Mph => SpeedUnit::MilesPerHour,
+            SpeedUnitArg::Kn => SpeedUnit::Knots,
+        }
+    }
+}
+
 #[derive(Parser)]
 struct Args {
     /// Report type
@@ -118,6 +137,10 @@ struct Args {
     /// Select temperature unit
     #[arg(long)]
     temp_unit: Option<TemperatureUnitArg>,
+
+    /// Select speed unit
+    #[arg(long)]
+    speed_unit: Option<SpeedUnitArg>,
 }
 
 fn convert_to_attribute_set(attributes: &[WeatherAttribute]) -> WeatherAttributeSet {
@@ -171,6 +194,10 @@ fn convert_args_to_parameters(args: Args) -> Parameters {
             .temp_unit
             .map(TemperatureUnitArg::into)
             .unwrap_or(TemperatureUnit::Celsius),
+        speed: args
+            .speed_unit
+            .map(SpeedUnitArg::into)
+            .unwrap_or(SpeedUnit::MetersPerSecond),
     };
     Parameters {
         request_kind,
@@ -195,6 +222,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, RequestKind::CurrentFull);
@@ -210,6 +238,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, RequestKind::CurrentFull);
@@ -225,6 +254,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, RequestKind::CurrentFull);
@@ -243,6 +273,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -267,6 +298,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -284,6 +316,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -302,6 +335,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -320,6 +354,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -338,6 +373,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DayCount::from(1));
@@ -357,6 +393,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DAY_COUNT);
@@ -376,6 +413,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         let expected = RequestKind::ForecastFull(DAY_COUNT);
@@ -397,6 +435,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -423,6 +462,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -449,6 +489,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -476,6 +517,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -494,6 +536,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -512,6 +555,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -538,6 +582,7 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.request_kind, expected);
@@ -553,12 +598,10 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
-        let expected = Units {
-            temperature: TemperatureUnit::Celsius,
-        };
-        assert_eq!(params.units, expected);
+        assert_eq!(params.units.temperature, TemperatureUnit::Celsius);
     }
 
     #[test]
@@ -571,12 +614,74 @@ mod tests {
             coords: None,
             here: false,
             temp_unit: Some(TemperatureUnitArg::Fahrenheit),
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
-        let expected = Units {
-            temperature: TemperatureUnit::Fahrenheit,
+        assert_eq!(params.units.temperature, TemperatureUnit::Fahrenheit);
+    }
+
+    #[test]
+    fn parses_no_speed_unit_into_ms() {
+        let args = Args {
+            command: Some(Command::Now {
+                summary: true,
+                list: None,
+            }),
+            coords: None,
+            here: false,
+            temp_unit: None,
+            speed_unit: None,
         };
-        assert_eq!(params.units, expected);
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.units.speed, SpeedUnit::MetersPerSecond);
+    }
+
+    #[test]
+    fn parses_speed_unit_into_kmh() {
+        let args = Args {
+            command: Some(Command::Now {
+                summary: true,
+                list: None,
+            }),
+            coords: None,
+            here: false,
+            temp_unit: None,
+            speed_unit: Some(SpeedUnitArg::Kmh),
+        };
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.units.speed, SpeedUnit::KilometersPerHour);
+    }
+
+    #[test]
+    fn parses_speed_unit_into_mph() {
+        let args = Args {
+            command: Some(Command::Now {
+                summary: true,
+                list: None,
+            }),
+            coords: None,
+            here: false,
+            temp_unit: None,
+            speed_unit: Some(SpeedUnitArg::Mph),
+        };
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.units.speed, SpeedUnit::MilesPerHour);
+    }
+
+    #[test]
+    fn parses_speed_unit_into_kn() {
+        let args = Args {
+            command: Some(Command::Now {
+                summary: true,
+                list: None,
+            }),
+            coords: None,
+            here: false,
+            temp_unit: None,
+            speed_unit: Some(SpeedUnitArg::Kn),
+        };
+        let params = convert_args_to_parameters(args);
+        assert_eq!(params.units.speed, SpeedUnit::Knots);
     }
 
     #[test]
@@ -602,6 +707,7 @@ mod tests {
             coords: Some(coordinates.clone()),
             here: false,
             temp_unit: None,
+            speed_unit: None,
         };
         let params = convert_args_to_parameters(args);
         assert_eq!(params.coordinates, Some(coordinates));

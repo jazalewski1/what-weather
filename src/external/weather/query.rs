@@ -18,6 +18,9 @@ mod keys {
 mod values {
     pub const TZ_AUTO: &str = "auto";
     pub const METERS_PER_SECOND: &str = "ms";
+    pub const KILOMETERS_PER_HOUR: &str = "kmh";
+    pub const MILES_PER_HOUR: &str = "mph";
+    pub const KNOTS: &str = "kn";
     pub const CELSIUS: &str = "celsius";
     pub const FAHRENHEIT: &str = "fahrenheit";
 }
@@ -35,7 +38,7 @@ pub fn build_past_params(
         make_param(keys::PAST_DAYS, day_count),
         make_param(keys::FORECAST_DAYS, 0),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
-        make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+        make_param(keys::WIND_SPEED_UNIT, select_speed_unit(&units.speed)),
         make_param(
             keys::TEMPERATURE_UNIT,
             select_temperature_unit(&units.temperature),
@@ -56,7 +59,7 @@ pub fn build_current_params(
             build_current_attribute_list(attributes.iter()),
         ),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
-        make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+        make_param(keys::WIND_SPEED_UNIT, select_speed_unit(&units.speed)),
         make_param(
             keys::TEMPERATURE_UNIT,
             select_temperature_unit(&units.temperature),
@@ -77,7 +80,7 @@ pub fn build_forecast_params(
         make_param(keys::PAST_DAYS, 0),
         make_param(keys::FORECAST_DAYS, day_count),
         make_param(keys::TIMEZONE, values::TZ_AUTO),
-        make_param(keys::WIND_SPEED_UNIT, values::METERS_PER_SECOND),
+        make_param(keys::WIND_SPEED_UNIT, select_speed_unit(&units.speed)),
         make_param(
             keys::TEMPERATURE_UNIT,
             select_temperature_unit(&units.temperature),
@@ -153,6 +156,15 @@ fn select_temperature_unit(unit: &TemperatureUnit) -> &'static str {
     }
 }
 
+fn select_speed_unit(unit: &SpeedUnit) -> &'static str {
+    match unit {
+        SpeedUnit::MetersPerSecond => values::METERS_PER_SECOND,
+        SpeedUnit::KilometersPerHour => values::KILOMETERS_PER_HOUR,
+        SpeedUnit::MilesPerHour => values::MILES_PER_HOUR,
+        SpeedUnit::Knots => values::KNOTS,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,6 +211,23 @@ mod tests {
             select_temperature_unit(&TemperatureUnit::Fahrenheit),
             values::FAHRENHEIT
         );
+    }
+
+    #[test]
+    fn selects_speed_unit() {
+        assert_eq!(
+            select_speed_unit(&SpeedUnit::MetersPerSecond),
+            values::METERS_PER_SECOND
+        );
+        assert_eq!(
+            select_speed_unit(&SpeedUnit::KilometersPerHour),
+            values::KILOMETERS_PER_HOUR
+        );
+        assert_eq!(
+            select_speed_unit(&SpeedUnit::MilesPerHour),
+            values::MILES_PER_HOUR
+        );
+        assert_eq!(select_speed_unit(&SpeedUnit::Knots), values::KNOTS);
     }
 
     mod utils {
@@ -252,6 +281,7 @@ mod tests {
             WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let result = build_past_params(&coordinates, day_count, &attributes, &units);
 
@@ -276,6 +306,7 @@ mod tests {
             WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let result = build_current_params(&coordinates, &attributes, &units);
 
@@ -299,6 +330,7 @@ mod tests {
             WeatherAttributeSet::from([WeatherAttribute::Temperature, WeatherAttribute::Humidity]);
         let units = Units {
             temperature: TemperatureUnit::Celsius,
+            speed: SpeedUnit::MetersPerSecond,
         };
         let result = build_forecast_params(&coordinates, day_count, &attributes, &units);
 
